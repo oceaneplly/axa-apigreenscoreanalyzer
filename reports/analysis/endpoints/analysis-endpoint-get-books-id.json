@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-30T15:24:52Z",
+  "service_base_url": "http://localhost:8081",
+  "endpoint": {
+    "method": "get",
+    "path": "/books/{id}",
+    "url": "http://localhost:8081/books/1",
+    "http_code": 200,
+    "size_download": 184,
+    "time_total": 0.032288,
+    "speed_download": 5698,
+    "energy_network_wh": 1.0281801223754883e-05,
+    "energy_server_wh": 0.0002242222222222222,
+    "energy_total_wh": 0.00023450402344597708
+  }
+}

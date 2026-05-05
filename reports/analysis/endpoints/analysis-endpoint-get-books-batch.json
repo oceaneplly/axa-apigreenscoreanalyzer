@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-30T15:24:52Z",
+  "service_base_url": "http://localhost:8081",
+  "endpoint": {
+    "method": "get",
+    "path": "/books/batch",
+    "url": "http://localhost:8081/books/batch?ids=1%2C2%2C3",
+    "http_code": 429,
+    "size_download": 20,
+    "time_total": 0.0117,
+    "speed_download": 1709,
+    "energy_network_wh": 1.1175870895385742e-06,
+    "energy_server_wh": 8.125e-05,
+    "energy_total_wh": 8.236758708953857e-05
+  }
+}
