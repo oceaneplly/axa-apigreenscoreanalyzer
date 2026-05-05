@@ -25,6 +25,12 @@ schedules:
     always: false
 
 variables:
+  - name: JAVA_VERSION
+    value: "17"
+  - name: MAVEN_CACHE_FOLDER
+    value: "$(Pipeline.Workspace)/.m2/repository"
+  - name: MAVEN_OPTS
+    value: "-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)"
   - name: ANALYZER_REPO
     value: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
   - name: ANALYZER_BRANCH
