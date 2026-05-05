@@ -1926,6 +1926,7 @@ ANALYSIS_SUCCESS=false
 if echo "$PLUGIN_KEYS" | grep -q "java" && [ -n "$JAVA_MODULE_DIR" ] && [ -f "$JAVA_MODULE_DIR/pom.xml" ] && mvn -B --version &>/dev/null; then
 
   if [ "$USE_REACTOR_POM" = true ]; then
+    mvn clean package -DskipTests
     echo -e "  Using: ${CYAN}mvn sonar:sonar via REACTOR POM (all modules → single project key)${NC}"
   else
     echo -e "  Using: ${CYAN}mvn sonar:sonar (Java/Maven — most reliable)${NC}"
