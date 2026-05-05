@@ -30,19 +30,19 @@ variables:
   - name: ANALYZER_BRANCH
     value: "develop"
   - name: TARGETS
-    value: ""
+    value: "http://localhost:8080"
   - name: SWAGGERS
-    value: ""
+    value: "http://localhost:8080/v3/api-docs"
   - name: APPNAME
-    value: "green-api-workshop"
+    value: "green-api"
   - name: BEARER_TOKEN
     value: ""
   - name: RUN_CREEDENGO
-    value: "false"
+    value: "true"
   - name: GIT_REPO
-    value: ""
+    value: "https://axafrance.visualstudio.com/GreenIT/_git/green-api-workshop"
   - name: GIT_BRANCH
-    value: ""
+    value: "feat/devoxx-creedengo"
   - name: GIT_SUBDIR
     value: ""
   - name: GIT_KEEP
@@ -52,19 +52,19 @@ variables:
   - name: SOURCE_DIR
     value: "."
   - name: BUILD_AND_RUN
-    value: "false"
+    value: "true"
   - name: DEBUG_MODE
-    value: "false"
+    value: "true"
   - name: CONSUMER_REGION
     value: "FR"
   - name: ENABLE_GEOIP
-    value: "false"
+    value: "true"
   - name: CLOUD_FOOTPRINT_CONFIRMED
-    value: "false"
+    value: "true"
   - name: REPEAT
     value: "3"
   - name: EXTRA_ARGS
-    value: ""
+    value: "--analyze --build-and-run"
 
 pool:
   name: ubuntu-22
@@ -82,7 +82,7 @@ stages:
         displayName: "Run Analyzer"
         timeoutInMinutes: 30
         steps:
-          - checkout: self
+          - checkout: "$(ANALYZER_REPO)"
             persistCredentials: true
             clean: false
 
@@ -91,7 +91,6 @@ stages:
               set -e
               ANALYZER_DIR="$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
               echo "📥 Cloning analyzer repo (branch: $(ANALYZER_BRANCH))..."
-              git clone --depth 1 --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$ANALYZER_DIR"
               echo "✅ Analyzer cloned into $ANALYZER_DIR"
               ls -la "$ANALYZER_DIR/scripts/start.sh"
               echo "##vso[task.setvariable variable=ANALYZER_DIR]$ANALYZER_DIR"
