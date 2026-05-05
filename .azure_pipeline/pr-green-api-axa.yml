@@ -77,8 +77,8 @@ pool:
   demands:
     - maven
     - python
-    - java
     - dotnet
+    - java
     - AGENT_JDK_VERSION -equals 17
 
 stages:
