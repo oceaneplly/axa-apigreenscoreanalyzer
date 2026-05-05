@@ -91,7 +91,7 @@ stages:
               set -e
               ANALYZER_DIR="$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
               echo "📥 Cloning analyzer repo (branch: $(ANALYZER_BRANCH))..."
-              git clone --depth 1 --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$ANALYZER_DIR"
+              git clone --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$ANALYZER_DIR"
               echo "✅ Analyzer cloned into $ANALYZER_DIR"
               ls -la "$ANALYZER_DIR/scripts/start.sh"
               echo "##vso[task.setvariable variable=ANALYZER_DIR]$ANALYZER_DIR"
