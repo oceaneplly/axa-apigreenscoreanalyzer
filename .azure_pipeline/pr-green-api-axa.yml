@@ -40,7 +40,7 @@ variables:
   - name: RUN_CREEDENGO
     value: "true"
   - name: GIT_REPO
-    value: "https://axafrance.visualstudio.com/GreenIT/_git/green-api-workshop"
+    value: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/GreenIT/_git/green-api-workshop"
   - name: GIT_BRANCH
     value: "feat/devoxx-creedengo"
   - name: GIT_SUBDIR
