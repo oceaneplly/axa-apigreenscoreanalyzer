@@ -1,0 +1,294 @@
+# ─────────────────────────────────────────────────────────────
+#  🌿 Green API Score CI — Azure DevOps Pipeline (mode AXA)
+#  Dynamique : clone l'analyzer, exécute start.sh avec paramètres
+# ─────────────────────────────────────────────────────────────
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+      - develop
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+
+schedules:
+  - cron: "0 0 * * 0"
+    displayName: "Weekly Sunday midnight build"
+    branches:
+      include:
+        - main
+    always: false
+
+parameters:
+  - name: targets
+    displayName: "API target URLs (comma-separated)"
+    type: string
+    default: ""
+  - name: swaggers
+    displayName: "OpenAPI spec URLs/files (comma-separated)"
+    type: string
+    default: ""
+  - name: appname
+    displayName: "Application name for reports"
+    type: string
+    default: "green-api-workshop"
+  - name: bearerToken
+    displayName: "Bearer token for authenticated endpoints"
+    type: string
+    default: ""
+  - name: runCreedengo
+    displayName: "Run Creedengo eco-design analysis"
+    type: boolean
+    default: false
+  - name: gitRepo
+    displayName: "Git repo URL for Creedengo source analysis"
+    type: string
+    default: ""
+  - name: gitBranch
+    displayName: "Branch/tag to checkout for --git-repo"
+    type: string
+    default: ""
+  - name: gitSubdir
+    displayName: "Sub-directory inside --git-repo"
+    type: string
+    default: ""
+  - name: gitKeep
+    displayName: "Keep cloned repo after analysis"
+    type: boolean
+    default: false
+  - name: stack
+    displayName: "Stack override (auto | java | dotnet)"
+    type: string
+    default: "auto"
+    values:
+      - auto
+      - java
+      - dotnet
+  - name: sourceDir
+    displayName: "Local source directory for build-and-run / Creedengo"
+    type: string
+    default: ""
+  - name: buildAndRun
+    displayName: "Build & run the API locally before analysis"
+    type: boolean
+    default: false
+  - name: debugMode
+    displayName: "Enable debug output"
+    type: boolean
+    default: false
+  - name: consumerRegion
+    displayName: "ISO-3166 alpha-2 consumer region (AR02)"
+    type: string
+    default: ""
+  - name: enableGeoip
+    displayName: "Enable GeoIP lookup (AR02)"
+    type: boolean
+    default: false
+  - name: cloudFootprintConfirmed
+    displayName: "Confirm cloud carbon dashboard (AR05)"
+    type: boolean
+    default: false
+  - name: repeat
+    displayName: "Number of measurement repeats"
+    type: string
+    default: "3"
+  - name: extraArgs
+    displayName: "Extra arguments passed to start.sh"
+    type: string
+    default: ""
+  - name: analyzerBranch
+    displayName: "Analyzer repo branch to clone"
+    type: string
+    default: "develop"
+
+variables:
+  ANALYZER_REPO: "https://axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
+  ANALYZER_BRANCH: ${{ parameters.analyzerBranch }}
+  ANALYZER_DIR: "$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
+  APPNAME: ${{ parameters.appname }}
+
+pool:
+  name: ubuntu-22
+  demands:
+    - maven
+    - python
+    - java
+    - dotnet
+
+stages:
+  - stage: GreenAnalysis
+    displayName: "🌿 Green API Analysis"
+    jobs:
+      - job: RunAnalyzer
+        displayName: "Run Analyzer"
+        timeoutInMinutes: 30
+        steps:
+          - checkout: self
+            persistCredentials: true
+            clean: false
+
+          # ── Clone the analyzer repository ──
+          - bash: |
+              set -e
+              echo "📥 Cloning analyzer repo (branch: $(ANALYZER_BRANCH))..."
+              git clone --depth 1 --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$(ANALYZER_DIR)"
+              echo "✅ Analyzer cloned into $(ANALYZER_DIR)"
+              ls -la "$(ANALYZER_DIR)/scripts/start.sh"
+            displayName: "Clone Green API Analyzer"
+
+          # ── Run start.sh with dynamic arguments ──
+          - bash: |
+              set -e
+              cd "$(ANALYZER_DIR)"
+              chmod +x scripts/start.sh
+
+              # Build the command arguments
+              ARGS=""
+
+              # --targets
+              TARGETS="${{ parameters.targets }}"
+              if [ -n "$TARGETS" ]; then
+                ARGS="$ARGS --targets $TARGETS"
+              fi
+
+              # --swaggers
+              SWAGGERS="${{ parameters.swaggers }}"
+              if [ -n "$SWAGGERS" ]; then
+                ARGS="$ARGS --swaggers $SWAGGERS"
+              fi
+
+              # --appname
+              APPNAME="${{ parameters.appname }}"
+              if [ -n "$APPNAME" ]; then
+                ARGS="$ARGS --appname $APPNAME"
+              fi
+
+              # --bearer
+              BEARER="${{ parameters.bearerToken }}"
+              if [ -n "$BEARER" ]; then
+                ARGS="$ARGS --bearer $BEARER"
+              fi
+
+              # --creedengo
+              if [ "${{ parameters.runCreedengo }}" = "True" ]; then
+                ARGS="$ARGS --creedengo"
+              fi
+
+              # --git-repo
+              GIT_REPO="${{ parameters.gitRepo }}"
+              if [ -n "$GIT_REPO" ]; then
+                ARGS="$ARGS --git-repo $GIT_REPO"
+              fi
+
+              # --git-branch
+              GIT_BRANCH="${{ parameters.gitBranch }}"
+              if [ -n "$GIT_BRANCH" ]; then
+                ARGS="$ARGS --git-branch $GIT_BRANCH"
+              fi
+
+              # --git-subdir
+              GIT_SUBDIR="${{ parameters.gitSubdir }}"
+              if [ -n "$GIT_SUBDIR" ]; then
+                ARGS="$ARGS --git-subdir $GIT_SUBDIR"
+              fi
+
+              # --git-keep
+              if [ "${{ parameters.gitKeep }}" = "True" ]; then
+                ARGS="$ARGS --git-keep"
+              fi
+
+              # --stack
+              STACK="${{ parameters.stack }}"
+              if [ "$STACK" != "auto" ]; then
+                ARGS="$ARGS --stack $STACK"
+              fi
+
+              # --source-dir
+              SOURCE_DIR="${{ parameters.sourceDir }}"
+              if [ -n "$SOURCE_DIR" ]; then
+                ARGS="$ARGS --source-dir $SOURCE_DIR"
+              fi
+
+              # --build-and-run
+              if [ "${{ parameters.buildAndRun }}" = "True" ]; then
+                ARGS="$ARGS --build-and-run"
+              fi
+
+              # --debug
+              if [ "${{ parameters.debugMode }}" = "True" ]; then
+                ARGS="$ARGS --debug"
+              fi
+
+              # --consumer-region
+              CONSUMER_REGION="${{ parameters.consumerRegion }}"
+              if [ -n "$CONSUMER_REGION" ]; then
+                ARGS="$ARGS --consumer-region $CONSUMER_REGION"
+              fi
+
+              # --enable-geoip
+              if [ "${{ parameters.enableGeoip }}" = "True" ]; then
+                ARGS="$ARGS --enable-geoip"
+              fi
+
+              # --cloud-footprint-confirmed
+              if [ "${{ parameters.cloudFootprintConfirmed }}" = "True" ]; then
+                ARGS="$ARGS --cloud-footprint-confirmed"
+              fi
+
+              # Extra args (free-form)
+              EXTRA="${{ parameters.extraArgs }}"
+              if [ -n "$EXTRA" ]; then
+                ARGS="$ARGS $EXTRA"
+              fi
+
+              echo "🚀 Running: bash scripts/start.sh $ARGS"
+              echo "────────────────────────────────────────"
+
+              export REPEAT="${{ parameters.repeat }}"
+              export APPNAME="${{ parameters.appname }}"
+              export PYTHONIOENCODING="utf-8"
+              export INTERACTIVE_BRIDGE="1"
+
+              bash scripts/start.sh $ARGS
+            displayName: "Run Analyzer with parameters"
+            env:
+              REPEAT: ${{ parameters.repeat }}
+              APPNAME: ${{ parameters.appname }}
+              PYTHONIOENCODING: "utf-8"
+
+          # ── Publish reports ──
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload reports"
+            condition: always()
+            inputs:
+              targetPath: $(ANALYZER_DIR)/reports
+              artifact: green-score-reports
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload badges"
+            condition: always()
+            inputs:
+              targetPath: $(ANALYZER_DIR)/badges
+              artifact: green-score-badges
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload dashboard"
+            condition: always()
+            inputs:
+              targetPath: $(ANALYZER_DIR)/dashboard
+              artifact: green-score-dashboard
+            continueOnError: true
+
+          # ── Cleanup: remove cloned analyzer ──
+          - bash: |
+              echo "🧹 Removing analyzer directory..."
+              rm -rf "$(ANALYZER_DIR)" 2>/dev/null || true
+              echo "✅ Cleanup done."
+            displayName: "Cleanup analyzer clone"
+            condition: always()
