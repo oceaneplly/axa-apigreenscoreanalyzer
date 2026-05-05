@@ -26,7 +26,7 @@ schedules:
 
 variables:
   - name: ANALYZER_REPO
-    value: "https://axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
+    value: "https://axafrance@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
   - name: ANALYZER_BRANCH
     value: "develop"
   - name: TARGETS
