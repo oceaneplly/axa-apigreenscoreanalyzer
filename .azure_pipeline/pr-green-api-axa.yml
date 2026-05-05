@@ -96,6 +96,7 @@ stages:
           
           # ── Clone the analyzer repository ──
           - bash: |
+              java -version
               set -e
               ANALYZER_DIR="$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
               echo "📥 Cloning analyzer repo (branch: $(ANALYZER_BRANCH))..."
@@ -107,7 +108,6 @@ stages:
 
           # ── Run start.sh with dynamic arguments ──
           - bash: |
-              java --version
               cd "$(ANALYZER_DIR)"
               chmod +x scripts/start.sh
 
