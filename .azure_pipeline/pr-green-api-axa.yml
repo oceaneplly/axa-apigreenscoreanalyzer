@@ -48,6 +48,13 @@ variables:
   CLOUD_FOOTPRINT_CONFIRMED: "true"
   REPEAT: "3"
   EXTRA_ARGS: "--analyze --build-and-run"
+  SOBRIIT_BASE_URL: ""
+  SOBRIIT_API_KEY: ""
+  SOBRIIT_APP_CODE: ""
+  SOBRIIT_APP_DSI: ""
+  SOBRIIT_APP_TRIBE: ""
+  SOBRIIT_APP_TRIBE_ID: ""
+  SEND_TO_SOBRIIT: "false"
 
 pool:
   name: ubuntu-22
@@ -196,6 +203,50 @@ stages:
               REPEAT: $(REPEAT)
               APPNAME: $(APPNAME)
               PYTHONIOENCODING: "utf-8"
+
+          # ── Send results to SobriIT ──
+          - bash: |
+              cd "$(ANALYZER_DIR)"
+
+              SOBRIIT_ARGS="--appname $(APPNAME)"
+
+              if [ -f "reports/latest-report.json" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --green-report reports/latest-report.json"
+              fi
+
+              if [ -f "reports/creedengo-report.json" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --creedengo-report reports/creedengo-report.json"
+              fi
+
+              if [ -n "$(SOBRIIT_BASE_URL)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --base-url $(SOBRIIT_BASE_URL)"
+              fi
+
+              if [ -n "$(SOBRIIT_API_KEY)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --api-key $(SOBRIIT_API_KEY)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_CODE)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-code $(SOBRIIT_APP_CODE)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_DSI)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-dsi $(SOBRIIT_APP_DSI)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_TRIBE)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-tribe $(SOBRIIT_APP_TRIBE)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_TRIBE_ID)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-tribe-id $(SOBRIIT_APP_TRIBE_ID)"
+              fi
+
+              echo "📤 Sending to SobriIT: python3 scripts/sobriit_sender.py $SOBRIIT_ARGS"
+              python3 scripts/sobriit_sender.py $SOBRIIT_ARGS || echo "⚠️ SobriIT send failed (non-blocking)"
+            displayName: "Send results to SobriIT"
+            condition: and(always(), eq(variables['SEND_TO_SOBRIIT'], 'true'))
+            continueOnError: true
 
           # ── Publish reports ──
           - task: PublishPipelineArtifact@1
