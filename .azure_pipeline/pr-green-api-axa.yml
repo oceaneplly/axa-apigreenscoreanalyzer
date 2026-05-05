@@ -107,6 +107,7 @@ stages:
 
           # ── Run start.sh with dynamic arguments ──
           - bash: |
+              java --version
               cd "$(ANALYZER_DIR)"
               chmod +x scripts/start.sh
 
