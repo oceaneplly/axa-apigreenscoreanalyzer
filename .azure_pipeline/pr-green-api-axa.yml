@@ -28,19 +28,19 @@ parameters:
   - name: targets
     displayName: "API target URLs (comma-separated)"
     type: string
-    default: ""
+    default: " "
   - name: swaggers
     displayName: "OpenAPI spec URLs/files (comma-separated)"
     type: string
-    default: ""
+    default: " "
   - name: appname
     displayName: "Application name for reports"
     type: string
     default: "green-api-workshop"
   - name: bearerToken
-    displayName: "Bearer token for authenticated endpoints"
+    displayName: "Bearer token for authenticated endpoints (optional)"
     type: string
-    default: ""
+    default: " "
   - name: runCreedengo
     displayName: "Run Creedengo eco-design analysis"
     type: boolean
@@ -48,15 +48,15 @@ parameters:
   - name: gitRepo
     displayName: "Git repo URL for Creedengo source analysis"
     type: string
-    default: ""
+    default: " "
   - name: gitBranch
     displayName: "Branch/tag to checkout for --git-repo"
     type: string
-    default: ""
+    default: " "
   - name: gitSubdir
     displayName: "Sub-directory inside --git-repo"
     type: string
-    default: ""
+    default: " "
   - name: gitKeep
     displayName: "Keep cloned repo after analysis"
     type: boolean
@@ -72,7 +72,7 @@ parameters:
   - name: sourceDir
     displayName: "Local source directory for build-and-run / Creedengo"
     type: string
-    default: ""
+    default: " "
   - name: buildAndRun
     displayName: "Build & run the API locally before analysis"
     type: boolean
@@ -84,7 +84,7 @@ parameters:
   - name: consumerRegion
     displayName: "ISO-3166 alpha-2 consumer region (AR02)"
     type: string
-    default: ""
+    default: " "
   - name: enableGeoip
     displayName: "Enable GeoIP lookup (AR02)"
     type: boolean
@@ -98,9 +98,9 @@ parameters:
     type: string
     default: "3"
   - name: extraArgs
-    displayName: "Extra arguments passed to start.sh"
+    displayName: "Extra arguments passed to start.sh (optional)"
     type: string
-    default: ""
+    default: " "
   - name: analyzerBranch
     displayName: "Analyzer repo branch to clone"
     type: string
@@ -147,29 +147,32 @@ stages:
               cd "$(ANALYZER_DIR)"
               chmod +x scripts/start.sh
 
+              # Trim function (strips leading/trailing whitespace)
+              trim() { echo "$1" | xargs; }
+
               # Build the command arguments
               ARGS=""
 
               # --targets
-              TARGETS="${{ parameters.targets }}"
+              TARGETS=$(trim "${{ parameters.targets }}")
               if [ -n "$TARGETS" ]; then
                 ARGS="$ARGS --targets $TARGETS"
               fi
 
               # --swaggers
-              SWAGGERS="${{ parameters.swaggers }}"
+              SWAGGERS=$(trim "${{ parameters.swaggers }}")
               if [ -n "$SWAGGERS" ]; then
                 ARGS="$ARGS --swaggers $SWAGGERS"
               fi
 
               # --appname
-              APPNAME="${{ parameters.appname }}"
+              APPNAME=$(trim "${{ parameters.appname }}")
               if [ -n "$APPNAME" ]; then
                 ARGS="$ARGS --appname $APPNAME"
               fi
 
               # --bearer
-              BEARER="${{ parameters.bearerToken }}"
+              BEARER=$(trim "${{ parameters.bearerToken }}")
               if [ -n "$BEARER" ]; then
                 ARGS="$ARGS --bearer $BEARER"
               fi
@@ -180,19 +183,19 @@ stages:
               fi
 
               # --git-repo
-              GIT_REPO="${{ parameters.gitRepo }}"
+              GIT_REPO=$(trim "${{ parameters.gitRepo }}")
               if [ -n "$GIT_REPO" ]; then
                 ARGS="$ARGS --git-repo $GIT_REPO"
               fi
 
               # --git-branch
-              GIT_BRANCH="${{ parameters.gitBranch }}"
+              GIT_BRANCH=$(trim "${{ parameters.gitBranch }}")
               if [ -n "$GIT_BRANCH" ]; then
                 ARGS="$ARGS --git-branch $GIT_BRANCH"
               fi
 
               # --git-subdir
-              GIT_SUBDIR="${{ parameters.gitSubdir }}"
+              GIT_SUBDIR=$(trim "${{ parameters.gitSubdir }}")
               if [ -n "$GIT_SUBDIR" ]; then
                 ARGS="$ARGS --git-subdir $GIT_SUBDIR"
               fi
@@ -203,13 +206,13 @@ stages:
               fi
 
               # --stack
-              STACK="${{ parameters.stack }}"
-              if [ "$STACK" != "auto" ]; then
+              STACK=$(trim "${{ parameters.stack }}")
+              if [ "$STACK" != "auto" ] && [ -n "$STACK" ]; then
                 ARGS="$ARGS --stack $STACK"
               fi
 
               # --source-dir
-              SOURCE_DIR="${{ parameters.sourceDir }}"
+              SOURCE_DIR=$(trim "${{ parameters.sourceDir }}")
               if [ -n "$SOURCE_DIR" ]; then
                 ARGS="$ARGS --source-dir $SOURCE_DIR"
               fi
@@ -225,7 +228,7 @@ stages:
               fi
 
               # --consumer-region
-              CONSUMER_REGION="${{ parameters.consumerRegion }}"
+              CONSUMER_REGION=$(trim "${{ parameters.consumerRegion }}")
               if [ -n "$CONSUMER_REGION" ]; then
                 ARGS="$ARGS --consumer-region $CONSUMER_REGION"
               fi
@@ -241,7 +244,7 @@ stages:
               fi
 
               # Extra args (free-form)
-              EXTRA="${{ parameters.extraArgs }}"
+              EXTRA=$(trim "${{ parameters.extraArgs }}")
               if [ -n "$EXTRA" ]; then
                 ARGS="$ARGS $EXTRA"
               fi
@@ -250,7 +253,7 @@ stages:
               echo "────────────────────────────────────────"
 
               export REPEAT="${{ parameters.repeat }}"
-              export APPNAME="${{ parameters.appname }}"
+              export APPNAME=$(trim "${{ parameters.appname }}")
               export PYTHONIOENCODING="utf-8"
               export INTERACTIVE_BRIDGE="1"
 
