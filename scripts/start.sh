@@ -57,7 +57,7 @@ SOURCE_DIR=""         # local source folder for --build-and-run / --creedengo
 BUILD_AND_RUN=false   # if true: build + start the API locally before health-checks
 APP_PID=""            # PID of the locally-launched app (when --build-and-run)
 APP_LOG=""            # log file of the locally-launched app
-
+SEND_TO_SOBRIIT=false
 # AR02 Phase 3 / AR04 Phase 2 controls (forwarded to green-api-auto-discover.py)
 CONSUMER_REGION="${CONSUMER_REGION:-}"   # ISO-3166 alpha-2 (e.g. FR, US) — AR02
 ENABLE_GEOIP="${ENABLE_GEOIP:-false}"    # true → ipinfo.io lookup for AR02
@@ -102,6 +102,9 @@ while [ $i -lt ${#args[@]} ]; do
     --git-keep)
       GIT_KEEP=true
       RUN_CREEDENGO=true
+      ;;
+    --send-to-sobriit)
+      SEND_TO_SOBRIIT=true
       ;;
     --root)
       # Explicit project folder for Creedengo (defaults to CWD otherwise).
