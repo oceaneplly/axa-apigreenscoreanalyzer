@@ -30,9 +30,9 @@ variables:
   - name: ANALYZER_BRANCH
     value: "develop"
   - name: TARGETS
-    value: "http://localhost:8080"
+    value: "http://localhost:8081"
   - name: SWAGGERS
-    value: "http://localhost:8080/v3/api-docs"
+    value: "http://localhost:8081/v3/api-docs"
   - name: APPNAME
     value: "green-api"
   - name: BEARER_TOKEN
