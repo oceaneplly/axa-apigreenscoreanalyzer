@@ -25,59 +25,35 @@ schedules:
     always: false
 
 variables:
-  - name: JAVA_VERSION
-    value: "17"
-  - name: MAVEN_CACHE_FOLDER
-    value: "$(Pipeline.Workspace)/.m2/repository"
-  - name: MAVEN_OPTS
-    value: "-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)"
-  - name: ANALYZER_REPO
-    value: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
-  - name: ANALYZER_BRANCH
-    value: "develop"
-  - name: TARGETS
-    value: "http://localhost:8080"
-  - name: SWAGGERS
-    value: "http://localhost:8080/v3/api-docs"
-  - name: APPNAME
-    value: "green-api"
-  - name: BEARER_TOKEN
-    value: ""
-  - name: RUN_CREEDENGO
-    value: "true"
-  - name: GIT_REPO
-    value: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/GreenIT/_git/green-api-workshop"
-  - name: GIT_BRANCH
-    value: "feat/devoxx-creedengo"
-  - name: GIT_SUBDIR
-    value: ""
-  - name: GIT_KEEP
-    value: "false"
-  - name: STACK
-    value: "auto"
-  - name: SOURCE_DIR
-    value: "."
-  - name: BUILD_AND_RUN
-    value: "true"
-  - name: DEBUG_MODE
-    value: "true"
-  - name: CONSUMER_REGION
-    value: "FR"
-  - name: ENABLE_GEOIP
-    value: "true"
-  - name: CLOUD_FOOTPRINT_CONFIRMED
-    value: "true"
-  - name: REPEAT
-    value: "3"
-  - name: EXTRA_ARGS
-    value: "--analyze --build-and-run"
+  JAVA_VERSION: "17"
+  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  MAVEN_OPTS: "-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)"
+  ANALYZER_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
+  ANALYZER_BRANCH: "develop"
+  TARGETS: "http://localhost:8080"
+  SWAGGERS: "http://localhost:8080/v3/api-docs"
+  APPNAME: "green-api"
+  BEARER_TOKEN: ""
+  RUN_CREEDENGO: "true"
+  GIT_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/GreenIT/_git/green-api-workshop"
+  GIT_BRANCH: "feat/devoxx-creedengo"
+  GIT_SUBDIR: ""
+  GIT_KEEP: "false"
+  STACK: "auto"
+  SOURCE_DIR: "."
+  BUILD_AND_RUN: "true"
+  DEBUG_MODE: "true"
+  CONSUMER_REGION: "FR"
+  ENABLE_GEOIP: "true"
+  CLOUD_FOOTPRINT_CONFIRMED: "true"
+  REPEAT: "3"
+  EXTRA_ARGS: "--analyze --build-and-run"
 
 pool:
   name: ubuntu-22
   demands:
     - maven
     - python
-    - dotnet
     - java
     - AGENT_JDK_VERSION -equals 17
 
