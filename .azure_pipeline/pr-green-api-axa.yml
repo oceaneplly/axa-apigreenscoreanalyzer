@@ -61,6 +61,7 @@ stages:
   - stage: GreenAnalysis
     displayName: "🌿 Green API Analysis"
     jobs:
+      
       - job: RunAnalyzer
         displayName: "Run Analyzer"
         timeoutInMinutes: 30
@@ -68,7 +69,20 @@ stages:
           - checkout: self
             persistCredentials: true
             clean: false
+          - task: JavaToolInstaller@0
+            displayName: "Setup JDK $(JAVA_VERSION)"
+            inputs:
+              versionSpec: $(JAVA_VERSION)
+              jdkArchitectureOption: x64
+              jdkSourceOption: PreInstalled
 
+          - task: Cache@2
+            displayName: "Cache Maven packages"
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+              path: $(MAVEN_CACHE_FOLDER)
           
           # ── Clone the analyzer repository ──
           - bash: |
