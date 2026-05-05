@@ -24,93 +24,47 @@ schedules:
         - main
     always: false
 
-parameters:
-  - name: targets
-    displayName: "API target URLs (comma-separated)"
-    type: string
-    default: " "
-  - name: swaggers
-    displayName: "OpenAPI spec URLs/files (comma-separated)"
-    type: string
-    default: " "
-  - name: appname
-    displayName: "Application name for reports"
-    type: string
-    default: "green-api-workshop"
-  - name: bearerToken
-    displayName: "Bearer token for authenticated endpoints (optional)"
-    type: string
-    default: " "
-  - name: runCreedengo
-    displayName: "Run Creedengo eco-design analysis"
-    type: boolean
-    default: false
-  - name: gitRepo
-    displayName: "Git repo URL for Creedengo source analysis"
-    type: string
-    default: " "
-  - name: gitBranch
-    displayName: "Branch/tag to checkout for --git-repo"
-    type: string
-    default: " "
-  - name: gitSubdir
-    displayName: "Sub-directory inside --git-repo"
-    type: string
-    default: " "
-  - name: gitKeep
-    displayName: "Keep cloned repo after analysis"
-    type: boolean
-    default: false
-  - name: stack
-    displayName: "Stack override (auto | java | dotnet)"
-    type: string
-    default: "auto"
-    values:
-      - auto
-      - java
-      - dotnet
-  - name: sourceDir
-    displayName: "Local source directory for build-and-run / Creedengo"
-    type: string
-    default: " "
-  - name: buildAndRun
-    displayName: "Build & run the API locally before analysis"
-    type: boolean
-    default: false
-  - name: debugMode
-    displayName: "Enable debug output"
-    type: boolean
-    default: false
-  - name: consumerRegion
-    displayName: "ISO-3166 alpha-2 consumer region (AR02)"
-    type: string
-    default: " "
-  - name: enableGeoip
-    displayName: "Enable GeoIP lookup (AR02)"
-    type: boolean
-    default: false
-  - name: cloudFootprintConfirmed
-    displayName: "Confirm cloud carbon dashboard (AR05)"
-    type: boolean
-    default: false
-  - name: repeat
-    displayName: "Number of measurement repeats"
-    type: string
-    default: "3"
-  - name: extraArgs
-    displayName: "Extra arguments passed to start.sh (optional)"
-    type: string
-    default: " "
-  - name: analyzerBranch
-    displayName: "Analyzer repo branch to clone"
-    type: string
-    default: "develop"
-
 variables:
-  ANALYZER_REPO: "https://axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
-  ANALYZER_BRANCH: ${{ parameters.analyzerBranch }}
-  ANALYZER_DIR: "$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
-  APPNAME: ${{ parameters.appname }}
+  - name: ANALYZER_REPO
+    value: "https://axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
+  - name: ANALYZER_BRANCH
+    value: "develop"
+  - name: TARGETS
+    value: ""
+  - name: SWAGGERS
+    value: ""
+  - name: APPNAME
+    value: "green-api-workshop"
+  - name: BEARER_TOKEN
+    value: ""
+  - name: RUN_CREEDENGO
+    value: "false"
+  - name: GIT_REPO
+    value: ""
+  - name: GIT_BRANCH
+    value: ""
+  - name: GIT_SUBDIR
+    value: ""
+  - name: GIT_KEEP
+    value: "false"
+  - name: STACK
+    value: "auto"
+  - name: SOURCE_DIR
+    value: "."
+  - name: BUILD_AND_RUN
+    value: "false"
+  - name: DEBUG_MODE
+    value: "false"
+  - name: CONSUMER_REGION
+    value: "FR"
+  - name: ENABLE_GEOIP
+    value: "false"
+  - name: CLOUD_FOOTPRINT_CONFIRMED
+    value: "false"
+  - name: REPEAT
+    value: "3"
+  - name: EXTRA_ARGS
+    value: ""
 
 pool:
   name: ubuntu-22
@@ -135,10 +89,12 @@ stages:
           # ── Clone the analyzer repository ──
           - bash: |
               set -e
+              ANALYZER_DIR="$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
               echo "📥 Cloning analyzer repo (branch: $(ANALYZER_BRANCH))..."
-              git clone --depth 1 --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$(ANALYZER_DIR)"
-              echo "✅ Analyzer cloned into $(ANALYZER_DIR)"
-              ls -la "$(ANALYZER_DIR)/scripts/start.sh"
+              git clone --depth 1 --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$ANALYZER_DIR"
+              echo "✅ Analyzer cloned into $ANALYZER_DIR"
+              ls -la "$ANALYZER_DIR/scripts/start.sh"
+              echo "##vso[task.setvariable variable=ANALYZER_DIR]$ANALYZER_DIR"
             displayName: "Clone Green API Analyzer"
 
           # ── Run start.sh with dynamic arguments ──
@@ -147,121 +103,107 @@ stages:
               cd "$(ANALYZER_DIR)"
               chmod +x scripts/start.sh
 
-              # Trim function (strips leading/trailing whitespace)
-              trim() { echo "$1" | xargs; }
-
               # Build the command arguments
               ARGS=""
 
               # --targets
-              TARGETS=$(trim "${{ parameters.targets }}")
-              if [ -n "$TARGETS" ]; then
-                ARGS="$ARGS --targets $TARGETS"
+              if [ -n "$(TARGETS)" ]; then
+                ARGS="$ARGS --targets $(TARGETS)"
               fi
 
               # --swaggers
-              SWAGGERS=$(trim "${{ parameters.swaggers }}")
-              if [ -n "$SWAGGERS" ]; then
-                ARGS="$ARGS --swaggers $SWAGGERS"
+              if [ -n "$(SWAGGERS)" ]; then
+                ARGS="$ARGS --swaggers $(SWAGGERS)"
               fi
 
               # --appname
-              APPNAME=$(trim "${{ parameters.appname }}")
-              if [ -n "$APPNAME" ]; then
-                ARGS="$ARGS --appname $APPNAME"
+              if [ -n "$(APPNAME)" ]; then
+                ARGS="$ARGS --appname $(APPNAME)"
               fi
 
               # --bearer
-              BEARER=$(trim "${{ parameters.bearerToken }}")
-              if [ -n "$BEARER" ]; then
-                ARGS="$ARGS --bearer $BEARER"
+              if [ -n "$(BEARER_TOKEN)" ]; then
+                ARGS="$ARGS --bearer $(BEARER_TOKEN)"
               fi
 
               # --creedengo
-              if [ "${{ parameters.runCreedengo }}" = "True" ]; then
+              if [ "$(RUN_CREEDENGO)" = "true" ]; then
                 ARGS="$ARGS --creedengo"
               fi
 
               # --git-repo
-              GIT_REPO=$(trim "${{ parameters.gitRepo }}")
-              if [ -n "$GIT_REPO" ]; then
-                ARGS="$ARGS --git-repo $GIT_REPO"
+              if [ -n "$(GIT_REPO)" ]; then
+                ARGS="$ARGS --git-repo $(GIT_REPO)"
               fi
 
               # --git-branch
-              GIT_BRANCH=$(trim "${{ parameters.gitBranch }}")
-              if [ -n "$GIT_BRANCH" ]; then
-                ARGS="$ARGS --git-branch $GIT_BRANCH"
+              if [ -n "$(GIT_BRANCH)" ]; then
+                ARGS="$ARGS --git-branch $(GIT_BRANCH)"
               fi
 
               # --git-subdir
-              GIT_SUBDIR=$(trim "${{ parameters.gitSubdir }}")
-              if [ -n "$GIT_SUBDIR" ]; then
-                ARGS="$ARGS --git-subdir $GIT_SUBDIR"
+              if [ -n "$(GIT_SUBDIR)" ]; then
+                ARGS="$ARGS --git-subdir $(GIT_SUBDIR)"
               fi
 
               # --git-keep
-              if [ "${{ parameters.gitKeep }}" = "True" ]; then
+              if [ "$(GIT_KEEP)" = "true" ]; then
                 ARGS="$ARGS --git-keep"
               fi
 
               # --stack
-              STACK=$(trim "${{ parameters.stack }}")
-              if [ "$STACK" != "auto" ] && [ -n "$STACK" ]; then
-                ARGS="$ARGS --stack $STACK"
+              if [ "$(STACK)" != "auto" ] && [ -n "$(STACK)" ]; then
+                ARGS="$ARGS --stack $(STACK)"
               fi
 
               # --source-dir
-              SOURCE_DIR=$(trim "${{ parameters.sourceDir }}")
-              if [ -n "$SOURCE_DIR" ]; then
-                ARGS="$ARGS --source-dir $SOURCE_DIR"
+              if [ -n "$(SOURCE_DIR)" ]; then
+                ARGS="$ARGS --source-dir $(SOURCE_DIR)"
               fi
 
               # --build-and-run
-              if [ "${{ parameters.buildAndRun }}" = "True" ]; then
+              if [ "$(BUILD_AND_RUN)" = "true" ]; then
                 ARGS="$ARGS --build-and-run"
               fi
 
               # --debug
-              if [ "${{ parameters.debugMode }}" = "True" ]; then
+              if [ "$(DEBUG_MODE)" = "true" ]; then
                 ARGS="$ARGS --debug"
               fi
 
               # --consumer-region
-              CONSUMER_REGION=$(trim "${{ parameters.consumerRegion }}")
-              if [ -n "$CONSUMER_REGION" ]; then
-                ARGS="$ARGS --consumer-region $CONSUMER_REGION"
+              if [ -n "$(CONSUMER_REGION)" ]; then
+                ARGS="$ARGS --consumer-region $(CONSUMER_REGION)"
               fi
 
               # --enable-geoip
-              if [ "${{ parameters.enableGeoip }}" = "True" ]; then
+              if [ "$(ENABLE_GEOIP)" = "true" ]; then
                 ARGS="$ARGS --enable-geoip"
               fi
 
               # --cloud-footprint-confirmed
-              if [ "${{ parameters.cloudFootprintConfirmed }}" = "True" ]; then
+              if [ "$(CLOUD_FOOTPRINT_CONFIRMED)" = "true" ]; then
                 ARGS="$ARGS --cloud-footprint-confirmed"
               fi
 
               # Extra args (free-form)
-              EXTRA=$(trim "${{ parameters.extraArgs }}")
-              if [ -n "$EXTRA" ]; then
-                ARGS="$ARGS $EXTRA"
+              if [ -n "$(EXTRA_ARGS)" ]; then
+                ARGS="$ARGS $(EXTRA_ARGS)"
               fi
 
               echo "🚀 Running: bash scripts/start.sh $ARGS"
-              echo "────────────────────────────────────────"
+              echo "─────────────────────────────────��──────"
 
-              export REPEAT="${{ parameters.repeat }}"
-              export APPNAME=$(trim "${{ parameters.appname }}")
+              export REPEAT="$(REPEAT)"
+              export APPNAME="$(APPNAME)"
               export PYTHONIOENCODING="utf-8"
               export INTERACTIVE_BRIDGE="1"
 
               bash scripts/start.sh $ARGS
             displayName: "Run Analyzer with parameters"
             env:
-              REPEAT: ${{ parameters.repeat }}
-              APPNAME: ${{ parameters.appname }}
+              REPEAT: $(REPEAT)
+              APPNAME: $(APPNAME)
               PYTHONIOENCODING: "utf-8"
 
           # ── Publish reports ──
