@@ -48,6 +48,7 @@ variables:
   CLOUD_FOOTPRINT_CONFIRMED: "true"
   REPEAT: "3"
   EXTRA_ARGS: "--analyze --build-and-run"
+  SONAR_JAVA_BINARIES: "green-api-optimized/target/classes"
 
 pool:
   name: ubuntu-22
@@ -188,6 +189,7 @@ stages:
               export APPNAME="$(APPNAME)"
               export PYTHONIOENCODING="utf-8"
               export INTERACTIVE_BRIDGE="1"
+              export SONAR_JAVA_BINARIES="$(SONAR_JAVA_BINARIES)"
 
               bash scripts/start.sh $ARGS
             displayName: "Run Analyzer with parameters"
