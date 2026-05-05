@@ -92,6 +92,7 @@ stages:
           # ── Run start.sh with dynamic arguments ──
           - bash: |
               cd "$(ANALYZER_DIR)"
+              mvn clean install 
               chmod +x scripts/start.sh
 
               # Build the command arguments
