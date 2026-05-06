@@ -972,8 +972,9 @@ PYEOF
       ENTRY=""
 
       # 1) Look for a .csproj inside a folder matching *Api* pattern (common ASP.NET naming)
+      #    Exclude folders containing *UnitTest* or *Test* in their name
       if [ -z "$ENTRY" ]; then
-        for dir in $(find "$SOURCE_DIR_ABS" -maxdepth 5 -type d -name "*Api*" 2>/dev/null); do
+        for dir in $(find "$SOURCE_DIR_ABS" -maxdepth 5 -type d -name "*Api*" ! -name "*UnitTest*" ! -name "*Test*" 2>/dev/null); do
           csproj=$(ls "$dir"/*.csproj 2>/dev/null | head -1)
           if [ -n "$csproj" ]; then
             ENTRY="$csproj"
