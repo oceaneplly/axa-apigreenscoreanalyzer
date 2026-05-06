@@ -921,59 +921,59 @@ PYEOF
         _DOTNET_CHANNEL="${DOTNET_CHANNEL:-8.0}"
         _OS="$(uname -s 2>/dev/null || echo Unknown)"
 
-        # 1) Online install via the official Microsoft script.
-        case "$_OS" in
-          Linux*|Darwin*|*BSD*)
-            _installer="/tmp/dotnet-install-$$.sh"
-            if curl -fsSL "https://dot.net/v1/dotnet-install.sh" -o "$_installer" 2>/dev/null \
-               || wget -qO "$_installer" "https://dot.net/v1/dotnet-install.sh" 2>/dev/null; then
-              chmod +x "$_installer"
-              echo "  ⚙  bash $_installer --channel $_DOTNET_CHANNEL --install-dir $DOTNET_LOCAL_ROOT"
-              bash "$_installer" --channel "$_DOTNET_CHANNEL" --install-dir "$DOTNET_LOCAL_ROOT" --no-path \
-                 >/tmp/dotnet-install-$$.log 2>&1 || true
-              rm -f "$_installer"
-              # macOS Gatekeeper: strip quarantine + ad-hoc sign so the host launches.
-              if [ "$_OS" = "Darwin" ]; then
-                xattr -dr com.apple.quarantine "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
-                if [ -x "$DOTNET_LOCAL_ROOT/dotnet" ] && command -v codesign >/dev/null 2>&1; then
-                  codesign --force --deep --sign - "$DOTNET_LOCAL_ROOT/dotnet" >/dev/null 2>&1 || true
+        # 1) Offline backup FIRST: <repo>/.creedengo/.dotnet/{*.pkg,*.tar.gz}
+        _backup="$ROOT/.creedengo/.dotnet"
+        if [ -d "$_backup" ]; then
+          echo "  📦 Tentative depuis le backup local .creedengo/.dotnet/..."
+          for pkg in "$_backup"/dotnet-*.pkg "$_backup"/*.pkg; do
+            [ -f "$pkg" ] || continue
+            echo "  📦 Extracting $(basename "$pkg")"
+            _tmp="$(mktemp -d /tmp/dotnet-pkg-XXXXX)"
+            if pkgutil --expand-full "$pkg" "$_tmp/x" >/dev/null 2>&1; then
+              find "$_tmp/x" -type d -name Payload | while read _P; do
+                if [ -d "$_P/usr/local/share/dotnet" ]; then
+                  cp -R "$_P/usr/local/share/dotnet/." "$DOTNET_LOCAL_ROOT/" 2>/dev/null
+                elif [ -d "$_P/shared" ] || [ -d "$_P/host" ] || [ -d "$_P/sdk" ] || [ -f "$_P/dotnet" ]; then
+                  cp -R "$_P/." "$DOTNET_LOCAL_ROOT/" 2>/dev/null
+                fi
+              done
+            fi
+            rm -rf "$_tmp"
+          done
+          for tarball in "$_backup"/dotnet-*.tar.gz "$_backup"/*.tar.gz; do
+            [ -f "$tarball" ] || continue
+            echo "  📦 Extracting $(basename "$tarball")"
+            tar -xzf "$tarball" -C "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
+          done
+          if [ "$(uname -s 2>/dev/null)" = "Darwin" ]; then
+            xattr -dr com.apple.quarantine "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
+            [ -x "$DOTNET_LOCAL_ROOT/dotnet" ] && command -v codesign >/dev/null 2>&1 \
+              && codesign --force --deep --sign - "$DOTNET_LOCAL_ROOT/dotnet" >/dev/null 2>&1 || true
+          fi
+        fi
+
+        # 2) Online install via the official Microsoft script (fallback if offline failed)
+        if ! command -v dotnet >/dev/null 2>&1; then
+          case "$_OS" in
+            Linux*|Darwin*|*BSD*)
+              _installer="/tmp/dotnet-install-$$.sh"
+              if curl -fsSL "https://dot.net/v1/dotnet-install.sh" -o "$_installer" 2>/dev/null \
+                 || wget -qO "$_installer" "https://dot.net/v1/dotnet-install.sh" 2>/dev/null; then
+                chmod +x "$_installer"
+                echo "  ⚙  bash $_installer --channel $_DOTNET_CHANNEL --install-dir $DOTNET_LOCAL_ROOT"
+                bash "$_installer" --channel "$_DOTNET_CHANNEL" --install-dir "$DOTNET_LOCAL_ROOT" --no-path \
+                   >/tmp/dotnet-install-$$.log 2>&1 || true
+                rm -f "$_installer"
+                # macOS Gatekeeper: strip quarantine + ad-hoc sign so the host launches.
+                if [ "$_OS" = "Darwin" ]; then
+                  xattr -dr com.apple.quarantine "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
+                  if [ -x "$DOTNET_LOCAL_ROOT/dotnet" ] && command -v codesign >/dev/null 2>&1; then
+                    codesign --force --deep --sign - "$DOTNET_LOCAL_ROOT/dotnet" >/dev/null 2>&1 || true
+                  fi
                 fi
               fi
-            fi
-            ;;
-        esac
-
-        # 2) Offline backup fallback at <repo>/.creedengo/.dotnet/{*.pkg,*.tar.gz}
-        if ! command -v dotnet >/dev/null 2>&1; then
-          echo "⚠ Online install échoué — tentative depuis le backup .creedengo/.dotnet/..."
-          _backup="$ROOT/.creedengo/.dotnet"
-          if [ -d "$_backup" ]; then
-            for pkg in "$_backup"/dotnet-*.pkg "$_backup"/*.pkg; do
-              [ -f "$pkg" ] || continue
-              echo "  📦 Extracting $(basename "$pkg")"
-              _tmp="$(mktemp -d /tmp/dotnet-pkg-XXXXX)"
-              if pkgutil --expand-full "$pkg" "$_tmp/x" >/dev/null 2>&1; then
-                find "$_tmp/x" -type d -name Payload | while read _P; do
-                  if [ -d "$_P/usr/local/share/dotnet" ]; then
-                    cp -R "$_P/usr/local/share/dotnet/." "$DOTNET_LOCAL_ROOT/" 2>/dev/null
-                  elif [ -d "$_P/shared" ] || [ -d "$_P/host" ] || [ -d "$_P/sdk" ] || [ -f "$_P/dotnet" ]; then
-                    cp -R "$_P/." "$DOTNET_LOCAL_ROOT/" 2>/dev/null
-                  fi
-                done
-              fi
-              rm -rf "$_tmp"
-            done
-            for tarball in "$_backup"/dotnet-*.tar.gz "$_backup"/*.tar.gz; do
-              [ -f "$tarball" ] || continue
-              echo "  📦 Extracting $(basename "$tarball")"
-              tar -xzf "$tarball" -C "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
-            done
-            if [ "$(uname -s 2>/dev/null)" = "Darwin" ]; then
-              xattr -dr com.apple.quarantine "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
-              [ -x "$DOTNET_LOCAL_ROOT/dotnet" ] && command -v codesign >/dev/null 2>&1 \
-                && codesign --force --deep --sign - "$DOTNET_LOCAL_ROOT/dotnet" >/dev/null 2>&1 || true
-            fi
-          fi
+              ;;
+          esac
         fi
 
         # Refresh DOTNET_HOST_PATH now that we may have a new binary.
