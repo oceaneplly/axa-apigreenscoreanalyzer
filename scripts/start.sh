@@ -273,11 +273,15 @@ detect_stack_from_dir() {
   [ -f "$dir/build.gradle" ]       && { echo "java"; return; }
   [ -f "$dir/build.gradle.kts" ]   && { echo "java"; return; }
 
-  # .NET markers (classic .sln, new XML .slnx, or any .csproj at root or one level deep)
+  # .NET markers — search recursively for .csproj / .sln / .slnx
   shopt -s nullglob
   local matches=( "$dir"/*.sln "$dir"/*.slnx "$dir"/*.csproj "$dir"/*/*.csproj )
   shopt -u nullglob
   if [ ${#matches[@]} -gt 0 ]; then
+    echo "dotnet"; return
+  fi
+  # Deep recursive search
+  if find "$dir" -maxdepth 4 -name "*.csproj" -o -name "*.sln" -o -name "*.slnx" 2>/dev/null | grep -q .; then
     echo "dotnet"; return
   fi
 
@@ -963,17 +967,53 @@ PYEOF
         echo "✓ dotnet SDK installé localement: $(dotnet --version 2>/dev/null || echo '?')"
       fi
       # Prefer a .csproj (works reliably with `dotnet run --project`).
-      # Fall back to .sln / .slnx if no csproj is found at root or one level deep.
-      ENTRY=$(ls "$SOURCE_DIR_ABS"/*.csproj 2>/dev/null | head -1)
+      # Search recursively, preferring projects matching *.Api*.csproj pattern.
+      # Fall back to .sln / .slnx if no csproj is found.
+      ENTRY=""
+
+      # 1) Look for a .csproj inside a folder matching *Api* pattern (common ASP.NET naming)
+      if [ -z "$ENTRY" ]; then
+        for dir in $(find "$SOURCE_DIR_ABS" -maxdepth 5 -type d -name "*Api*" 2>/dev/null); do
+          csproj=$(ls "$dir"/*.csproj 2>/dev/null | head -1)
+          if [ -n "$csproj" ]; then
+            ENTRY="$csproj"
+            break
+          fi
+        done
+      fi
+
+      # 2) Look for any .csproj containing "Microsoft.NET.Sdk.Web" (ASP.NET projects)
+      if [ -z "$ENTRY" ]; then
+        for csproj in $(find "$SOURCE_DIR_ABS" -maxdepth 5 -name "*.csproj" 2>/dev/null); do
+          if grep -q "Microsoft.NET.Sdk.Web" "$csproj" 2>/dev/null; then
+            ENTRY="$csproj"
+            break
+          fi
+        done
+      fi
+
+      # 3) Any .csproj at root or one level deep
+      if [ -z "$ENTRY" ]; then
+        ENTRY=$(ls "$SOURCE_DIR_ABS"/*.csproj 2>/dev/null | head -1)
+      fi
       if [ -z "$ENTRY" ]; then
         ENTRY=$(ls "$SOURCE_DIR_ABS"/*/*.csproj 2>/dev/null | head -1)
       fi
+
+      # 4) Recursive .csproj fallback
       if [ -z "$ENTRY" ]; then
-        ENTRY=$(ls "$SOURCE_DIR_ABS"/*.sln "$SOURCE_DIR_ABS"/*.slnx 2>/dev/null | head -1)
+        ENTRY=$(find "$SOURCE_DIR_ABS" -maxdepth 5 -name "*.csproj" 2>/dev/null | head -1)
       fi
+
+      # 5) .sln / .slnx fallback (recursive)
       if [ -z "$ENTRY" ]; then
-        echo "❌ Aucun .csproj / .sln / .slnx trouvé dans $SOURCE_DIR_ABS"; exit 1
+        ENTRY=$(find "$SOURCE_DIR_ABS" -maxdepth 5 \( -name "*.sln" -o -name "*.slnx" \) 2>/dev/null | head -1)
       fi
+
+      if [ -z "$ENTRY" ]; then
+        echo "❌ Aucun .csproj / .sln / .slnx trouvé dans $SOURCE_DIR_ABS (recherche récursive)"; exit 1
+      fi
+      echo "📦 .NET project détecté: $ENTRY"
       # Force HTTP-only binding to avoid the ASP.NET Core HTTPS dev cert prompt.
       export ASPNETCORE_URLS="http://+:$APP_PORT"
       export DOTNET_NOLOGO=1
