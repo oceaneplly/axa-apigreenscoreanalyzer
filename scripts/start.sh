@@ -1033,11 +1033,21 @@ PYEOF
         echo "❌ Aucun .csproj / .sln / .slnx trouvé dans $SOURCE_DIR_ABS (recherche récursive)"; exit 1
       fi
       echo "📦 .NET project détecté: $ENTRY"
-      # Force HTTP-only binding to avoid the ASP.NET Core HTTPS dev cert prompt.
-      export ASPNETCORE_URLS="http://+:$APP_PORT"
       export DOTNET_NOLOGO=1
+      # Determine binding scheme from target URL
+      _FIRST_TARGET="${TARGETS_LIST[0]:-http://localhost:$APP_PORT}"
+      if echo "$_FIRST_TARGET" | grep -qi '^https://'; then
+        # HTTPS binding — trust dev cert & skip validation for self-signed
+        export ASPNETCORE_URLS="https://+:$APP_PORT"
+        export DOTNET_ENVIRONMENT="Development"
+        export ASPNETCORE_Kestrel__Certificates__Default__Password=""
+        dotnet dev-certs https --trust 2>/dev/null || true
+      else
+        # HTTP-only binding (default — avoids cert issues)
+        export ASPNETCORE_URLS="http://+:$APP_PORT"
+      fi
       ( cd "$SOURCE_DIR_ABS" && \
-        nohup dotnet run --project "$ENTRY" --no-launch-profile --urls "http://+:$APP_PORT" \
+        nohup dotnet run --project "$ENTRY" --no-launch-profile --urls "$ASPNETCORE_URLS" \
           >>"$APP_LOG" 2>&1 ) &
       APP_PID=$!
       ;;
@@ -1116,7 +1126,7 @@ HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
 probe_url() {
   local base="$1"
   for p in "${HEALTH_PATHS[@]}"; do
-    if curl -sf -o /dev/null --max-time 3 "${base%/}${p}" 2>/dev/null; then
+    if curl -skf -o /dev/null --max-time 3 "${base%/}${p}" 2>/dev/null; then
       return 0
     fi
   done
