@@ -27,8 +27,8 @@ schedules:
 variables:
   ANALYZER_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
   ANALYZER_BRANCH: "develop"
-  TARGETS: "http://localhost:5000"
-  SWAGGERS: "http://localhost:5000/swagger/v1/swagger.yaml"
+  TARGETS: "https://localhost:7235"
+  SWAGGERS: "https://localhost:7235/swagger/v1/swagger.yaml"
   APPNAME: "green-api-dotnet"
   BEARER_TOKEN: ""
   RUN_CREEDENGO: "true"
