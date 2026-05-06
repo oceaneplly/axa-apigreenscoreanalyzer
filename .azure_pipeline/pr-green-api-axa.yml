@@ -8,7 +8,6 @@ trigger:
     include:
       - main
       - master
-      - develop
 
 pr:
   branches:
