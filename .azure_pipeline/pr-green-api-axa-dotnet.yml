@@ -172,6 +172,16 @@ stages:
                 ARGS="$ARGS --cloud-footprint-confirmed"
               fi
 
+              # --send-to-sobriit
+              if [ "$(SEND_TO_SOBRIIT)" = "true" ]; then
+                ARGS="$ARGS --send-to-sobriit"
+              fi
+
+              # --app-code
+              if [ -n "$(SOBRIIT_APP_CODE)" ]; then
+                ARGS="$ARGS --app-code $(SOBRIIT_APP_CODE)"
+              fi
+
               # Extra args (free-form)
               if [ -n "$(EXTRA_ARGS)" ]; then
                 ARGS="$ARGS $(EXTRA_ARGS)"
@@ -184,6 +194,12 @@ stages:
               export APPNAME="$(APPNAME)"
               export PYTHONIOENCODING="utf-8"
               export INTERACTIVE_BRIDGE="1"
+              export SOBRIIT_BASE_URL="$(SOBRIIT_BASE_URL)"
+              export SOBRIIT_API_KEY="$(SOBRIIT_API_KEY)"
+              export SOBRIIT_APP_CODE="$(SOBRIIT_APP_CODE)"
+              export SOBRIIT_APP_DSI="$(SOBRIIT_APP_DSI)"
+              export SOBRIIT_APP_TRIBE="$(SOBRIIT_APP_TRIBE)"
+              export SOBRIIT_APP_TRIBE_ID="$(SOBRIIT_APP_TRIBE_ID)"
 
               bash scripts/start.sh $ARGS
             displayName: "Run Analyzer with parameters"

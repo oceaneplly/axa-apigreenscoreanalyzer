@@ -58,6 +58,7 @@ BUILD_AND_RUN=false   # if true: build + start the API locally before health-che
 APP_PID=""            # PID of the locally-launched app (when --build-and-run)
 APP_LOG=""            # log file of the locally-launched app
 SEND_TO_SOBRIIT=false
+SOBRIIT_APP_CODE="${SOBRIIT_APP_CODE:-}"
 # AR02 Phase 3 / AR04 Phase 2 controls (forwarded to green-api-auto-discover.py)
 CONSUMER_REGION="${CONSUMER_REGION:-}"   # ISO-3166 alpha-2 (e.g. FR, US) — AR02
 ENABLE_GEOIP="${ENABLE_GEOIP:-false}"    # true → ipinfo.io lookup for AR02
@@ -105,6 +106,10 @@ while [ $i -lt ${#args[@]} ]; do
       ;;
     --send-to-sobriit)
       SEND_TO_SOBRIIT=true
+      ;;
+    --app-code)
+      i=$((i + 1))
+      SOBRIIT_APP_CODE="${args[$i]:-}"
       ;;
     --root)
       # Explicit project folder for Creedengo (defaults to CWD otherwise).
@@ -1046,6 +1051,8 @@ PYEOF
         # HTTP-only binding (default — avoids cert issues)
         export ASPNETCORE_URLS="http://+:$APP_PORT"
       fi
+      cd "$SOURCE_DIR_ABS"
+      dotnet run --project "$ENTRY" --environment="$DOTNET_ENVIRONMENT" &
       ( cd "$SOURCE_DIR_ABS" && \
         nohup dotnet run --project "$ENTRY"\
           >>"$APP_LOG" 2>&1 ) &
@@ -1281,6 +1288,7 @@ if [ "$SEND_TO_SOBRIIT" = true ]; then
   echo "━━━ 📤 Sending results to SobriIT ━━━"
   SOBRIIT_CMD=(python3 "$ROOT/scripts/sobriit_sender.py"
                --appname "$APPNAME")
+  [ -n "$SOBRIIT_APP_CODE" ] && SOBRIIT_CMD+=(--app-code "$SOBRIIT_APP_CODE")
   [ -f "$LATEST_REPORT" ]   && SOBRIIT_CMD+=(--green-report "$LATEST_REPORT")
   [ -f "$CREEDENGO_REPORT" ] && SOBRIIT_CMD+=(--creedengo-report "$CREEDENGO_REPORT")
   if "${SOBRIIT_CMD[@]}"; then
