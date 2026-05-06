@@ -305,6 +305,24 @@ case "$STACK" in
     ;;
 esac
 
+###############################################################################
+# .NET: copy nuget.config into project root if available
+# Looks for .creedengo/.dotnet/nuget.config in the analyzer repo ($ROOT)
+# and copies it to the SOURCE_DIR so that dotnet restore uses it.
+###############################################################################
+if [ "$STACK" = "dotnet" ] && [ -n "$SOURCE_DIR" ] && [ -d "$SOURCE_DIR" ]; then
+  NUGET_CONFIG_SRC="$ROOT/.creedengo/.dotnet/nuget.config"
+  NUGET_CONFIG_DST="$SOURCE_DIR/nuget.config"
+  if [ -f "$NUGET_CONFIG_SRC" ]; then
+    if [ ! -f "$NUGET_CONFIG_DST" ]; then
+      cp "$NUGET_CONFIG_SRC" "$NUGET_CONFIG_DST"
+      echo "📋 nuget.config copié dans $SOURCE_DIR (depuis .creedengo/.dotnet/)"
+    else
+      echo "ℹ️  nuget.config déjà présent dans $SOURCE_DIR — pas de remplacement"
+    fi
+  fi
+fi
+
 # When SOURCE_DIR is provided, forward it as --root to the Creedengo analyzer
 # and translate the stack into --lang for the analyzer's auto-detection override.
 if [ -n "$SOURCE_DIR" ]; then
