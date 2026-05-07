@@ -395,27 +395,40 @@ stages:
             condition: and(always(), eq(variables['SEND_TO_SOBRIIT'], 'true'))
             continueOnError: true
 
-          # ── Publish reports ──
+          # ── Publish reports (selective) ──
+          - bash: |
+              STAGING="/tmp/publish-staging"
+              mkdir -p "$STAGING/reports" "$STAGING/dashboard"
+
+              # Reports
+              for f in latest-report.json last-report.json creedengo-report.json \
+                       interactive-config.json interactive-local-config.json \
+                       discovered-openapi.json; do
+                [ -f "$(ANALYZER_DIR)/reports/$f" ] && cp "$(ANALYZER_DIR)/reports/$f" "$STAGING/reports/"
+              done
+
+              # Dashboard
+              for f in index.html index.md README.md; do
+                [ -f "$(ANALYZER_DIR)/dashboard/$f" ] && cp "$(ANALYZER_DIR)/dashboard/$f" "$STAGING/dashboard/"
+              done
+
+              echo "##vso[task.setvariable variable=PUBLISH_STAGING]$STAGING"
+            displayName: "Prepare artifacts"
+            condition: always()
+
           - task: PublishPipelineArtifact@1
             displayName: "Upload reports"
             condition: always()
             inputs:
-              targetPath: $(ANALYZER_DIR)/reports
+              targetPath: $(PUBLISH_STAGING)/reports
               artifact: green-score-reports
-
-          - task: PublishPipelineArtifact@1
-            displayName: "Upload badges"
-            condition: always()
-            inputs:
-              targetPath: $(ANALYZER_DIR)/badges
-              artifact: green-score-badges
             continueOnError: true
 
           - task: PublishPipelineArtifact@1
             displayName: "Upload dashboard"
             condition: always()
             inputs:
-              targetPath: $(ANALYZER_DIR)/dashboard
+              targetPath: $(PUBLISH_STAGING)/dashboard
               artifact: green-score-dashboard
             continueOnError: true
 
