@@ -883,7 +883,7 @@ PYEOF
 
       if [ "$PACKAGE_OK" = true ] && [ -n "$JAR" ]; then
         echo "🚀 Lancement: java -jar $JAR --server.port=$APP_PORT"
-        ( nohup java -jar "$JAR" --server.port="$APP_PORT" >>"$APP_LOG" 2>&1 ) &
+        ( java -jar "$JAR" --server.port="$APP_PORT" 2>&1 | tee -a "$APP_LOG" ) &
         APP_PID=$!
         echo "✓ App démarrée avec java -jar (PID $APP_PID)"
       else
@@ -892,9 +892,9 @@ PYEOF
            || grep -q "spring-boot-maven-plugin" "$RUN_DIR_ABS/pom.xml" 2>/dev/null; then
           echo "⤵ Fallback: spring-boot:run (recompilation à chaud, Maven résident)"
           ( cd "$SOURCE_DIR_ABS" && \
-            nohup "$MVN_BIN" -B -pl ":$(basename "$RUN_DIR_ABS")" -am spring-boot:run \
+            "$MVN_BIN" -B -pl ":$(basename "$RUN_DIR_ABS")" -am spring-boot:run \
               -Dspring-boot.run.jvmArguments="-Dserver.port=$APP_PORT" \
-              >>"$APP_LOG" 2>&1 ) &
+              2>&1 | tee -a "$APP_LOG" ) &
           APP_PID=$!
           echo "✓ App démarrée avec spring-boot:run (PID $APP_PID)"
         else
@@ -1065,10 +1065,7 @@ PYEOF
         export ASPNETCORE_URLS="http://+:$APP_PORT"
       fi
       cd "$SOURCE_DIR_ABS"
-      dotnet run --project "$ENTRY" &
-      echo '( cd "$SOURCE_DIR_ABS" && \
-        nohup dotnet run --project "$ENTRY"\
-          >>"$APP_LOG" 2>&1 ) &'
+      ( dotnet run --project "$ENTRY" 2>&1 | tee -a "$APP_LOG" ) &
       APP_PID=$!
       ;;
   esac

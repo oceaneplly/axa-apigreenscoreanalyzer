@@ -159,7 +159,7 @@ stages:
               # Boot in background
               APP_LOG="/tmp/dotnet-api-boot.log"
               cd "$APP_DIR"
-              nohup dotnet run --project "$ENTRY" > "$APP_LOG" 2>&1 &
+              ( dotnet run --project "$ENTRY" 2>&1 | tee -a "$APP_LOG" ) &
               APP_PID=$!
               echo "##vso[task.setvariable variable=APP_PID]$APP_PID"
               echo "##vso[task.setvariable variable=APP_LOG]$APP_LOG"
