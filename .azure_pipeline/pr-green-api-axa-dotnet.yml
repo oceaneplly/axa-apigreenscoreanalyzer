@@ -74,6 +74,12 @@ stages:
             clean: false
 
           - task: UseDotNet@2
+            displayName: "Setup .NET SDK 8.0.x"
+            inputs:
+              packageType: "sdk"
+              version: "8.0.x"
+
+          - task: UseDotNet@2
             displayName: "Setup .NET SDK $(DOTNET_VERSION)"
             inputs:
               packageType: "sdk"
@@ -91,6 +97,91 @@ stages:
               ls -la "$ANALYZER_DIR/scripts/start.sh"
               echo "##vso[task.setvariable variable=ANALYZER_DIR]$ANALYZER_DIR"
             displayName: "Clone Green API Analyzer"
+
+          # ── Boot the .NET API in background (stays alive until cleanup) ──
+          - bash: |
+              set -e
+              ANALYZER_DIR="$(ANALYZER_DIR)"
+
+              # Clone the app source if GIT_REPO is set
+              if [ -n "$(GIT_REPO)" ]; then
+                APP_DIR="$ANALYZER_DIR/.checkouts/app-boot-$$"
+                mkdir -p "$(dirname "$APP_DIR")"
+                CLONE_ARGS=(--depth 1)
+                [ -n "$(GIT_BRANCH)" ] && CLONE_ARGS+=(--branch "$(GIT_BRANCH)")
+                git clone "${CLONE_ARGS[@]}" "$(GIT_REPO)" "$APP_DIR"
+                if [ -n "$(GIT_SUBDIR)" ]; then
+                  APP_DIR="$APP_DIR/$(GIT_SUBDIR)"
+                fi
+              else
+                APP_DIR="$(Build.SourcesDirectory)"
+                if [ -n "$(SOURCE_DIR)" ] && [ "$(SOURCE_DIR)" != "." ]; then
+                  APP_DIR="$APP_DIR/$(SOURCE_DIR)"
+                fi
+              fi
+
+              echo "##vso[task.setvariable variable=APP_BOOT_DIR]$APP_DIR"
+
+              # Copy nuget.config if available
+              NUGET_SRC="$ANALYZER_DIR/.creedengo/.dotnet/nuget.config"
+              if [ -f "$NUGET_SRC" ] && [ ! -f "$APP_DIR/nuget.config" ]; then
+                cp "$NUGET_SRC" "$APP_DIR/nuget.config"
+                echo "📋 nuget.config copié"
+              fi
+
+              # Detect the .csproj to run (same logic as start.sh)
+              ENTRY=""
+              for dir in $(find "$APP_DIR" -maxdepth 5 -type d -name "*Api*" ! -name "*UnitTest*" ! -name "*Test*" 2>/dev/null); do
+                csproj=$(ls "$dir"/*.csproj 2>/dev/null | head -1)
+                if [ -n "$csproj" ]; then
+                  ENTRY="$csproj"
+                  break
+                fi
+              done
+              if [ -z "$ENTRY" ]; then
+                ENTRY=$(find "$APP_DIR" -maxdepth 4 -name "*.csproj" ! -path "*Test*" 2>/dev/null | head -1)
+              fi
+              if [ -z "$ENTRY" ]; then
+                echo "❌ No .csproj found in $APP_DIR"
+                exit 1
+              fi
+              echo "📦 Booting .NET project: $ENTRY"
+
+              # Determine port from TARGETS
+              PORT=$(echo "$(TARGETS)" | sed -E 's|.*://[^:/]+:?([0-9]+).*|\1|;t;s|.*|5000|' | head -1)
+
+              # Set environment
+              export ASPNETCORE_URLS="https://+:$PORT"
+              export DOTNET_ENVIRONMENT="Development"
+              export DOTNET_NOLOGO=1
+              export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+              # Boot in background
+              APP_LOG="/tmp/dotnet-api-boot.log"
+              cd "$APP_DIR"
+              nohup dotnet run --project "$ENTRY" > "$APP_LOG" 2>&1 &
+              APP_PID=$!
+              echo "##vso[task.setvariable variable=APP_PID]$APP_PID"
+              echo "##vso[task.setvariable variable=APP_LOG]$APP_LOG"
+              echo "🚀 API booting (PID: $APP_PID) on port $PORT"
+
+              # Wait for the API to be ready (max 120s)
+              ELAPSED=0
+              TARGET_URL="$(TARGETS)"
+              while [ "$ELAPSED" -lt 120 ]; do
+                if curl -skf -o /dev/null --max-time 3 "$TARGET_URL" 2>/dev/null \
+                   || curl -skf -o /dev/null --max-time 3 "${TARGET_URL%/}/health" 2>/dev/null \
+                   || curl -skf -o /dev/null --max-time 3 "${TARGET_URL%/}/swagger/v1/swagger.json" 2>/dev/null; then
+                  echo "✅ API ready after ${ELAPSED}s at $TARGET_URL"
+                  exit 0
+                fi
+                sleep 2
+                ELAPSED=$((ELAPSED + 2))
+              done
+              echo "❌ API did not start within 120s"
+              cat "$APP_LOG" | tail -50
+              exit 1
+            displayName: "Boot .NET API"
 
           # ── Run start.sh with dynamic arguments ──
           - bash: |
@@ -286,8 +377,10 @@ stages:
 
           # ── Cleanup: remove cloned analyzer ──
           - bash: |
+              echo "🧹 Stopping API (PID: $(APP_PID))..."
+              kill "$(APP_PID)" 2>/dev/null || true
               echo "🧹 Removing analyzer directory..."
               rm -rf "$(ANALYZER_DIR)" 2>/dev/null || true
               echo "✅ Cleanup done."
-            displayName: "Cleanup analyzer clone"
+            displayName: "Stop API & Cleanup"
             condition: always()

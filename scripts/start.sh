@@ -365,6 +365,19 @@ cleanup_app() {
 }
 
 if [ "$BUILD_AND_RUN" = true ]; then
+  # ── Skip build-and-run if target is already alive ──
+  _SKIP_BUILD=false
+  if [ ${#TARGETS[@]} -gt 0 ]; then
+    _first_target="${TARGETS[0]}"
+    if curl -skf -o /dev/null --max-time 3 "$_first_target" 2>/dev/null \
+       || curl -skf -o /dev/null --max-time 3 "${_first_target%/}/health" 2>/dev/null \
+       || curl -skf -o /dev/null --max-time 3 "${_first_target%/}/actuator/health" 2>/dev/null; then
+      echo "✅ API already running at $_first_target — skipping --build-and-run"
+      _SKIP_BUILD=true
+    fi
+  fi
+
+  if [ "$_SKIP_BUILD" = false ]; then
   if [ -z "$SOURCE_DIR" ]; then
     echo "❌ --build-and-run requiert --source-dir <path>"
     exit 1
@@ -1070,6 +1083,7 @@ PYEOF
   fi
   echo "   PID: $APP_PID"
   echo ""
+  fi  # end if _SKIP_BUILD = false
 fi
 
 # Suppress Podman "Executing external compose provider" warning (ignoré si docker)
