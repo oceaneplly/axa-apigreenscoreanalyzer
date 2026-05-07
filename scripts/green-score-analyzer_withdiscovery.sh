@@ -108,7 +108,7 @@ probe_target() {
   local base="$1"
   local p
   for p in "${HEALTH_PATHS[@]}"; do
-    if curl -s -o /dev/null -w '' --max-time 3 "${base%/}${p}" 2>/dev/null; then
+    if curl -ks -o /dev/null -w '' --max-time 3 "${base%/}${p}" 2>/dev/null; then
       # curl with -w '' returns 0 if the server responded at all; that's enough
       # to consider the target reachable. We don't require 200 since some APIs
       # return 401/403 on / when auth is required.

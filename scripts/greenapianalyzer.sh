@@ -137,7 +137,7 @@ if [ "$SKIP_WAIT" = false ] && [ ${#TARGET_ARR[@]} -gt 0 ]; then
     local base="$1"
     local p
     for p in "${HEALTH_PATHS[@]}"; do
-      if curl -sf -o /dev/null --max-time 3 "${base%/}${p}" 2>/dev/null; then
+      if curl -ksf -o /dev/null --max-time 3 "${base%/}${p}" 2>/dev/null; then
         return 0
       fi
     done
