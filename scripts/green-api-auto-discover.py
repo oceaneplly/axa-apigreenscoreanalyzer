@@ -32,6 +32,12 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import ssl
+
+# Global SSL context that skips certificate verification (for self-signed dev certs)
+_SSL_CTX = ssl.create_default_context()
+_SSL_CTX.check_hostname = False
+_SSL_CTX.verify_mode = ssl.CERT_NONE
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -186,7 +192,7 @@ def http_get(url, headers=None, timeout=10):
     hdrs = headers or {}
     req = urllib.request.Request(url, headers=hdrs)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as resp:
             body = resp.read()
             resp_headers = {k.lower(): v for k, v in resp.getheaders()}
             return resp.status, body, resp_headers
@@ -201,7 +207,7 @@ def http_head(url, headers=None, timeout=10):
     hdrs = headers or {}
     req = urllib.request.Request(url, method="HEAD", headers=hdrs)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as resp:
             resp_headers = {k.lower(): v for k, v in resp.getheaders()}
             return resp.status, resp_headers
     except urllib.error.HTTPError as e:
