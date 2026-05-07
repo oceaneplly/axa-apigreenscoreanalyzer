@@ -1,0 +1,2 @@
+/bin/bash: C:/git/apigsmeasurer/apigreenscoreanalyzer/scripts/greenapianalyzer.sh: No such file or directory
+ --repeat 3 --output-dir C:\git\apigsmeasurer\apigreenscoreanalyzer\reports --swaggers http://localhost:8081/v3/api-docs --appname optremjava

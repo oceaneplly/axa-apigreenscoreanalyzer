@@ -1,0 +1,456 @@
+# ─────────────────────────────────────────────────────────────
+#  🌿 Green API Score CI — Azure DevOps Pipeline (mode AXA .NET)
+#  Dynamique : clone l'analyzer, exécute start.sh avec paramètres
+#  Adapté pour les projets .NET API
+# ─────────────────────────────────────────────────────────────
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+
+schedules:
+  - cron: "0 0 * * 0"
+    displayName: "Weekly Sunday midnight build"
+    branches:
+      include:
+        - main
+    always: false
+
+variables:
+  DOTNET_VERSION: "10.0.x"
+  ANALYZER_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
+  ANALYZER_BRANCH: "develop"
+  TARGETS: "https://localhost:7235"
+  SWAGGERS: "https://localhost:7235/swagger/v1/swagger.yaml"
+  APPNAME: "green-api-dotnet"
+  BEARER_TOKEN: ""
+  RUN_CREEDENGO: "true"
+  GIT_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/AF.WSIARD/_git/fr-editiqueiard-apiclausier"
+  GIT_BRANCH: "develop"
+  GIT_SUBDIR: ""
+  GIT_KEEP: "false"
+  STACK: "dotnet"
+  SOURCE_DIR: "."
+  BUILD_AND_RUN: "true"
+  DEBUG_MODE: "true"
+  CONSUMER_REGION: "FR"
+  ENABLE_GEOIP: "true"
+  CLOUD_FOOTPRINT_CONFIRMED: "true"
+  REPEAT: "3"
+  EXTRA_ARGS: "--analyze --build-and-run"
+  SOBRIIT_BASE_URL: ""
+  SOBRIIT_API_KEY: ""
+  SOBRIIT_APP_CODE: ""
+  SOBRIIT_APP_DSI: ""
+  SOBRIIT_APP_TRIBE: ""
+  SOBRIIT_APP_TRIBE_ID: ""
+  SEND_TO_SOBRIIT: "false"
+
+pool:
+  name: ubuntu-22
+  demands:
+    - python
+    - dotnet
+
+stages:
+  - stage: GreenAnalysis
+    displayName: "🌿 Green API Analysis (.NET)"
+    jobs:
+      
+      - job: RunAnalyzer
+        displayName: "Run Analyzer"
+        timeoutInMinutes: 30
+        steps:
+          - checkout: self
+            persistCredentials: true
+            clean: false
+
+          - task: UseDotNet@2
+            displayName: "Setup .NET SDK 8.0.x"
+            inputs:
+              packageType: "sdk"
+              version: "8.0.x"
+
+          - task: UseDotNet@2
+            displayName: "Setup .NET SDK 9.0.x"
+            inputs:
+              packageType: "sdk"
+              version: "9.0.x"
+
+          - task: UseDotNet@2
+            displayName: "Setup .NET SDK $(DOTNET_VERSION)"
+            inputs:
+              packageType: "sdk"
+              version: $(DOTNET_VERSION)
+              includePreviewVersions: true
+
+          # ── Clone the analyzer repository ──
+          - bash: |
+              dotnet --version || true
+              set -e
+              ANALYZER_DIR="$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
+              echo "📥 Cloning analyzer repo (branch: $(ANALYZER_BRANCH))..."
+              git clone --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$ANALYZER_DIR"
+              echo "✅ Analyzer cloned into $ANALYZER_DIR"
+              ls -la "$ANALYZER_DIR/scripts/start.sh"
+              echo "##vso[task.setvariable variable=ANALYZER_DIR]$ANALYZER_DIR"
+            displayName: "Clone Green API Analyzer"
+
+          # ── Boot the .NET API in background (stays alive until cleanup) ──
+          - bash: |
+              set -e
+              ANALYZER_DIR="$(ANALYZER_DIR)"
+
+              # Clone the app source if GIT_REPO is set
+              if [ -n "$(GIT_REPO)" ]; then
+                APP_DIR="$ANALYZER_DIR/.checkouts/app-boot-$$"
+                mkdir -p "$(dirname "$APP_DIR")"
+                CLONE_ARGS=(--depth 1)
+                [ -n "$(GIT_BRANCH)" ] && CLONE_ARGS+=(--branch "$(GIT_BRANCH)")
+                git clone "${CLONE_ARGS[@]}" "$(GIT_REPO)" "$APP_DIR"
+                if [ -n "$(GIT_SUBDIR)" ]; then
+                  APP_DIR="$APP_DIR/$(GIT_SUBDIR)"
+                fi
+              else
+                APP_DIR="$(Build.SourcesDirectory)"
+                if [ -n "$(SOURCE_DIR)" ] && [ "$(SOURCE_DIR)" != "." ]; then
+                  APP_DIR="$APP_DIR/$(SOURCE_DIR)"
+                fi
+              fi
+
+              echo "##vso[task.setvariable variable=APP_BOOT_DIR]$APP_DIR"
+
+              # Copy nuget.config if available
+              NUGET_SRC="$ANALYZER_DIR/.creedengo/.dotnet/nuget.config"
+              if [ -f "$NUGET_SRC" ] && [ ! -f "$APP_DIR/nuget.config" ]; then
+                cp "$NUGET_SRC" "$APP_DIR/nuget.config"
+                echo "📋 nuget.config copié"
+              fi
+
+              # ── Pre-build: restore + publish in Release (AOT-ready, trimmed) ──
+              # This separates the slow build from the fast startup.
+              cd "$APP_DIR"
+
+              # Detect the .csproj to run (same logic as start.sh)
+              ENTRY=""
+              for dir in $(find "$APP_DIR" -maxdepth 5 -type d -name "*Api*" ! -name "*UnitTest*" ! -name "*Test*" 2>/dev/null); do
+                csproj=$(ls "$dir"/*.csproj 2>/dev/null | head -1)
+                if [ -n "$csproj" ]; then
+                  ENTRY="$csproj"
+                  break
+                fi
+              done
+              if [ -z "$ENTRY" ]; then
+                ENTRY=$(find "$APP_DIR" -maxdepth 4 -name "*.csproj" ! -path "*Test*" 2>/dev/null | head -1)
+              fi
+              if [ -z "$ENTRY" ]; then
+                echo "❌ No .csproj found in $APP_DIR"
+                exit 1
+              fi
+              echo "📦 Booting .NET project: $ENTRY"
+
+              # Determine port from TARGETS
+              PORT=$(echo "$(TARGETS)" | sed -E 's|.*://[^:/]+:?([0-9]+).*|\1|;t;s|.*|5000|' | head -1)
+
+              # ── Accelerated build: publish in Release mode ──
+              PUBLISH_DIR="/tmp/dotnet-publish-output"
+              echo "⚡ Building in Release mode (dotnet publish)..."
+              dotnet restore "$ENTRY" --nologo -v q 2>&1 | tail -5
+              dotnet publish "$ENTRY" \
+                --configuration Release \
+                --output "$PUBLISH_DIR" \
+                --nologo \
+                -v q \
+                /p:DebugType=None \
+                /p:DebugSymbols=false \
+                2>&1 | tail -10
+              echo "✅ Build complete"
+
+              # Find the main DLL in the publish output
+              PROJECT_NAME=$(basename "$ENTRY" .csproj)
+              MAIN_DLL="$PUBLISH_DIR/$PROJECT_NAME.dll"
+              if [ ! -f "$MAIN_DLL" ]; then
+                MAIN_DLL=$(find "$PUBLISH_DIR" -maxdepth 1 -name "*.dll" | grep -i "$PROJECT_NAME" | head -1)
+              fi
+              if [ -z "$MAIN_DLL" ] || [ ! -f "$MAIN_DLL" ]; then
+                echo "⚠ Published DLL not found, falling back to dotnet run"
+                MAIN_DLL=""
+              fi
+
+              # Set environment
+              export ASPNETCORE_URLS="https://+:$PORT"
+              export DOTNET_ENVIRONMENT="Development"
+              export DOTNET_NOLOGO=1
+              export DOTNET_CLI_TELEMETRY_OPTOUT=1
+              export DOTNET_gcServer=1
+              export DOTNET_TieredCompilation=1
+              export DOTNET_ReadyToRun=1
+
+              # Boot in background — use published DLL (faster) or fallback to dotnet run
+              APP_LOG="/tmp/dotnet-api-boot.log"
+              if [ -n "$MAIN_DLL" ]; then
+                echo "🚀 Starting from published output: dotnet $MAIN_DLL"
+                cd "$PUBLISH_DIR"
+                ( dotnet "$MAIN_DLL" --urls "https://+:$PORT" 2>&1 | tee -a "$APP_LOG" ) &
+              else
+                cd "$APP_DIR"
+                ( dotnet run --project "$ENTRY" --no-build -c Release 2>&1 | tee -a "$APP_LOG" ) &
+              fi
+              APP_PID=$!
+              echo "##vso[task.setvariable variable=APP_PID]$APP_PID"
+              echo "##vso[task.setvariable variable=APP_LOG]$APP_LOG"
+              echo "🚀 API booting (PID: $APP_PID) on port $PORT"
+
+              # Wait for the API to be ready (max 240s)
+              ELAPSED=0
+              TARGET_URL="$(TARGETS)"
+              while [ "$ELAPSED" -lt 240 ]; do
+                if curl -skf -o /dev/null --max-time 3 "$TARGET_URL" 2>/dev/null \
+                   || curl -skf -o /dev/null --max-time 3 "${TARGET_URL%/}/health" 2>/dev/null \
+                   || curl -skf -o /dev/null --max-time 3 "${TARGET_URL%/}/swagger/v1/swagger.json" 2>/dev/null; then
+                  echo "✅ API ready after ${ELAPSED}s at $TARGET_URL"
+                  exit 0
+                fi
+                sleep 2
+                ELAPSED=$((ELAPSED + 2))
+              done
+              echo "❌ API did not start within 240s"
+              cat "$APP_LOG" | tail -50
+              exit 1
+            displayName: "Boot .NET API"
+
+          # ── Run start.sh with dynamic arguments ──
+          - bash: |
+              cd "$(ANALYZER_DIR)"
+              chmod +x scripts/start.sh
+
+              # Build the command arguments
+              ARGS=""
+
+              # --targets
+              if [ -n "$(TARGETS)" ]; then
+                ARGS="$ARGS --targets $(TARGETS)"
+              fi
+
+              # --swaggers
+              if [ -n "$(SWAGGERS)" ]; then
+                ARGS="$ARGS --swaggers $(SWAGGERS)"
+              fi
+
+              # --appname
+              if [ -n "$(APPNAME)" ]; then
+                ARGS="$ARGS --appname $(APPNAME)"
+              fi
+
+              # --bearer
+              if [ -n "$(BEARER_TOKEN)" ]; then
+                ARGS="$ARGS --bearer $(BEARER_TOKEN)"
+              fi
+
+              # --creedengo
+              if [ "$(RUN_CREEDENGO)" = "true" ]; then
+                ARGS="$ARGS --creedengo"
+              fi
+
+              # --git-repo
+              if [ -n "$(GIT_REPO)" ]; then
+                ARGS="$ARGS --git-repo $(GIT_REPO)"
+              fi
+
+              # --git-branch
+              if [ -n "$(GIT_BRANCH)" ]; then
+                ARGS="$ARGS --git-branch $(GIT_BRANCH)"
+              fi
+
+              # --git-subdir
+              if [ -n "$(GIT_SUBDIR)" ]; then
+                ARGS="$ARGS --git-subdir $(GIT_SUBDIR)"
+              fi
+
+              # --git-keep
+              if [ "$(GIT_KEEP)" = "true" ]; then
+                ARGS="$ARGS --git-keep"
+              fi
+
+              # --stack
+              if [ "$(STACK)" != "auto" ] && [ -n "$(STACK)" ]; then
+                ARGS="$ARGS --stack $(STACK)"
+              fi
+
+              # --source-dir
+              if [ -n "$(SOURCE_DIR)" ]; then
+                ARGS="$ARGS --source-dir $(SOURCE_DIR)"
+              fi
+
+              # --build-and-run
+              if [ "$(BUILD_AND_RUN)" = "true" ]; then
+                ARGS="$ARGS --build-and-run"
+              fi
+
+              # --debug
+              if [ "$(DEBUG_MODE)" = "true" ]; then
+                ARGS="$ARGS --debug"
+              fi
+
+              # --consumer-region
+              if [ -n "$(CONSUMER_REGION)" ]; then
+                ARGS="$ARGS --consumer-region $(CONSUMER_REGION)"
+              fi
+
+              # --enable-geoip
+              if [ "$(ENABLE_GEOIP)" = "true" ]; then
+                ARGS="$ARGS --enable-geoip"
+              fi
+
+              # --cloud-footprint-confirmed
+              if [ "$(CLOUD_FOOTPRINT_CONFIRMED)" = "true" ]; then
+                ARGS="$ARGS --cloud-footprint-confirmed"
+              fi
+
+              # --send-to-sobriit
+              if [ "$(SEND_TO_SOBRIIT)" = "true" ]; then
+                ARGS="$ARGS --send-to-sobriit"
+              fi
+
+              # --app-code
+              if [ -n "$(SOBRIIT_APP_CODE)" ]; then
+                ARGS="$ARGS --app-code $(SOBRIIT_APP_CODE)"
+              fi
+
+              # Extra args (free-form)
+              if [ -n "$(EXTRA_ARGS)" ]; then
+                ARGS="$ARGS $(EXTRA_ARGS)"
+              fi
+
+              echo "🚀 Running: bash scripts/start.sh $ARGS"
+              echo "────────────────────────────────────────"
+
+              export REPEAT="$(REPEAT)"
+              export APPNAME="$(APPNAME)"
+              export PYTHONIOENCODING="utf-8"
+              export INTERACTIVE_BRIDGE="1"
+              export SOBRIIT_BASE_URL="$(SOBRIIT_BASE_URL)"
+              export SOBRIIT_API_KEY="$(SOBRIIT_API_KEY)"
+              export SOBRIIT_APP_CODE="$(SOBRIIT_APP_CODE)"
+              export SOBRIIT_APP_DSI="$(SOBRIIT_APP_DSI)"
+              export SOBRIIT_APP_TRIBE="$(SOBRIIT_APP_TRIBE)"
+              export SOBRIIT_APP_TRIBE_ID="$(SOBRIIT_APP_TRIBE_ID)"
+
+              bash scripts/start.sh $ARGS
+            displayName: "Run Analyzer with parameters"
+            env:
+              REPEAT: $(REPEAT)
+              APPNAME: $(APPNAME)
+              PYTHONIOENCODING: "utf-8"
+
+          # ── Send results to SobriIT ──
+          - bash: |
+              cd "$(ANALYZER_DIR)"
+
+              SOBRIIT_ARGS="--appname $(APPNAME)"
+
+              if [ -f "reports/latest-report.json" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --green-report reports/latest-report.json"
+              fi
+
+              if [ -f "reports/creedengo-report.json" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --creedengo-report reports/creedengo-report.json"
+              fi
+
+              if [ -n "$(SOBRIIT_BASE_URL)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --base-url $(SOBRIIT_BASE_URL)"
+              fi
+
+              if [ -n "$(SOBRIIT_API_KEY)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --api-key $(SOBRIIT_API_KEY)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_CODE)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-code $(SOBRIIT_APP_CODE)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_DSI)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-dsi $(SOBRIIT_APP_DSI)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_TRIBE)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-tribe $(SOBRIIT_APP_TRIBE)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_TRIBE_ID)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-tribe-id $(SOBRIIT_APP_TRIBE_ID)"
+              fi
+
+              echo "📤 Sending to SobriIT: python3 scripts/sobriit_sender.py $SOBRIIT_ARGS"
+              python3 scripts/sobriit_sender.py $SOBRIIT_ARGS || echo "⚠️ SobriIT send failed (non-blocking)"
+            displayName: "Send results to SobriIT"
+            condition: and(always(), eq(variables['SEND_TO_SOBRIIT'], 'true'))
+            continueOnError: true
+
+          # ── Publish reports (selective) ──
+          - bash: |
+              STAGING="/tmp/publish-staging"
+              mkdir -p "$STAGING/reports" "$STAGING/dashboard" "$STAGING/badges"
+
+              # Reports
+              for f in latest-report.json last-report.json creedengo-report.json \
+                       interactive-config.json interactive-local-config.json \
+                       discovered-openapi.json; do
+                [ -f "$(ANALYZER_DIR)/reports/$f" ] && cp "$(ANALYZER_DIR)/reports/$f" "$STAGING/reports/"
+              done
+
+              # Dashboard
+              for f in index.html index.md README.md; do
+                [ -f "$(ANALYZER_DIR)/dashboard/$f" ] && cp "$(ANALYZER_DIR)/dashboard/$f" "$STAGING/dashboard/"
+              done
+
+              # Badges
+              for f in $(ls "$(ANALYZER_DIR)/badges/" 2>/dev/null); do
+                cp "$(ANALYZER_DIR)/badges/$f" "$STAGING/badges/"
+              done
+
+              echo "##vso[task.setvariable variable=PUBLISH_STAGING]$STAGING"
+            displayName: "Prepare artifacts"
+            condition: always()
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload reports"
+            condition: always()
+            inputs:
+              targetPath: $(PUBLISH_STAGING)/reports
+              artifact: green-score-reports
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload dashboard"
+            condition: always()
+            inputs:
+              targetPath: $(PUBLISH_STAGING)/dashboard
+              artifact: green-score-dashboard
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload badges"
+            condition: always()
+            inputs:
+              targetPath: $(PUBLISH_STAGING)/badges
+              artifact: green-score-badges
+            continueOnError: true
+
+          # ── Cleanup: remove cloned analyzer ──
+          - bash: |
+              echo "🧹 Stopping API (PID: $(APP_PID))..."
+              kill "$(APP_PID)" 2>/dev/null || true
+              echo "🧹 Removing analyzer directory..."
+              rm -rf "$(ANALYZER_DIR)" 2>/dev/null || true
+              echo "✅ Cleanup done."
+            displayName: "Stop API & Cleanup"
+            condition: always()

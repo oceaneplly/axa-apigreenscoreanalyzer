@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌿 Green API — Interactive Analyzer</title>
+<style>
+:root{
+  --bg-1:#0b1220; --bg-2:#0f1f2e; --bg-3:#142b1f;
+  --panel:rgba(17,24,39,0.85); --panel-2:rgba(31,41,55,0.85);
+  --line:#2a3344; --line-2:#374151;
+  --txt:#e5e7eb; --txt-2:#9ca3af; --txt-3:#6b7280;
+  --green:#22c55e; --green-d:#16a34a; --green-l:#86efac; --green-bg:#14532d;
+  --blue:#60a5fa; --yellow:#facc15; --red:#ef4444; --orange:#f97316;
+  --radius:14px;
+  --shadow:0 8px 30px -10px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh}
+body{
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:radial-gradient(ellipse at top left,#163826 0%,transparent 60%),
+             radial-gradient(ellipse at bottom right,#0b2540 0%,transparent 55%),
+             linear-gradient(160deg,#0b1220 0%,#0e1a2c 100%);
+  color:var(--txt); padding:28px 24px 60px;
+}
+.container{max-width:1200px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+header h1{
+  font-size:1.7rem;letter-spacing:-0.02em;
+  background:linear-gradient(135deg,#86efac,#22c55e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+header .sub{color:var(--txt-2);font-size:.92rem;margin-top:4px}
+.brand-link{color:var(--green-l);text-decoration:none;font-size:.85rem}
+.brand-link:hover{color:#fff}
+
+/* ── Main tabs (Remote vs Local) ──────────────── */
+.main-tabs{display:flex;gap:6px;margin:0 0 16px;padding:6px;background:rgba(31,41,55,.45);border:1px solid var(--line);border-radius:12px}
+.main-tab{flex:1;padding:11px 16px;border-radius:9px;font-weight:700;font-size:.92rem;cursor:pointer;color:var(--txt-2);text-align:center;border:1px solid transparent;transition:all .18s;background:transparent;font-family:inherit}
+.main-tab:hover{color:var(--txt)}
+.main-tab.active{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-color:#22c55e;box-shadow:0 4px 14px -6px rgba(34,197,94,.55)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.creedengo-card{
+  background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(15,23,42,.6));
+  border:1px solid var(--line);border-radius:12px;padding:18px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+
+/* ── Stepper ─────────────────────────────────── */
+.stepper{display:flex;align-items:stretch;gap:0;margin:8px 0 24px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+.step{flex:1;padding:14px 18px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--line);position:relative;transition:background .25s}
+.step:last-child{border-right:none}
+.step .num{width:28px;height:28px;border-radius:50%;background:var(--line-2);color:var(--txt-2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0}
+.step .label{font-size:.92rem;font-weight:600;color:var(--txt-2)}
+.step .desc{font-size:.7rem;color:var(--txt-3)}
+.step.active{background:linear-gradient(135deg,rgba(22,101,52,.25),rgba(22,101,52,.05))}
+.step.active .num{background:var(--green-d);color:#fff}
+.step.active .label{color:var(--green-l)}
+.step.done .num{background:var(--green);color:#0b1220}
+.step.done .label{color:var(--green-l)}
+.step .col{display:flex;flex-direction:column}
+
+/* ── Panels ─────────────────────────────────── */
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px 24px;margin-bottom:20px;box-shadow:var(--shadow);
+  backdrop-filter:blur(8px);
+}
+.panel h2{font-size:1.15rem;color:var(--green-l);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.panel.collapsed{padding:14px 22px}
+.panel.collapsed > *:not(h2):not(.panel-head){display:none}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.panel-head .meta{font-size:.78rem;color:var(--txt-2)}
+
+label{display:block;font-size:.82rem;color:var(--txt-2);margin:14px 0 6px;font-weight:600}
+input[type=text],input[type=password],textarea,select{
+  width:100%;background:#0f1726;border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;padding:10px 12px;font-size:.9rem;font-family:inherit;
+  transition:border-color .2s,box-shadow .2s;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+textarea{min-height:80px;resize:vertical;font-family:'Fira Code','JetBrains Mono',monospace;font-size:.82rem}
+.hint{font-size:.72rem;color:var(--txt-3);margin-top:4px}
+
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:780px){.row{grid-template-columns:1fr}}
+
+/* ── Buttons ────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--txt);
+  font-weight:700;font-size:.9rem;font-family:inherit;cursor:pointer;
+  transition:all .18s ease;
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--green-d)}
+.btn.primary{
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  border-color:#22c55e;color:#fff;
+  box-shadow:0 6px 22px -8px rgba(34,197,94,.6);
+}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:grayscale(.5)}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+
+/* ── Targets discovery summary ───────────────── */
+.targets-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:6px 0 10px}
+.target-pill{
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  background:var(--panel-2);font-size:.82rem;display:flex;flex-direction:column;gap:4px;
+}
+.target-pill .head{display:flex;align-items:center;gap:6px;font-weight:700}
+.target-pill .url{font-family:'Fira Code',monospace;font-size:.75rem;color:var(--txt-2);word-break:break-all}
+.target-pill.ok .head{color:var(--green-l)}
+.target-pill.err{border-color:rgba(239,68,68,.4)}
+.target-pill.err .head{color:#fca5a5}
+
+/* ── Resources table ────────────────────────── */
+.tbl-wrap{border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:560px}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+thead th{
+  position:sticky;top:0;background:#0f1726;z-index:1;
+  text-align:left;padding:10px 12px;color:var(--green-l);font-size:.78rem;font-weight:700;
+  border-bottom:1px solid var(--line);
+}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:hover{background:rgba(34,197,94,.04)}
+.method{
+  display:inline-block;font-family:'Fira Code',monospace;font-size:.72rem;font-weight:800;
+  padding:3px 8px;border-radius:6px;letter-spacing:.04em;
+}
+.method.GET{background:rgba(96,165,250,.18);color:#93c5fd}
+.method.POST{background:rgba(34,197,94,.18);color:#86efac}
+.method.PUT{background:rgba(251,146,60,.18);color:#fdba74}
+.method.PATCH{background:rgba(168,85,247,.18);color:#d8b4fe}
+.method.DELETE{background:rgba(239,68,68,.18);color:#fca5a5}
+.method.HEAD{background:rgba(107,114,128,.18);color:#d1d5db}
+td .path{font-family:'Fira Code',monospace;font-size:.82rem;color:#e5e7eb;word-break:break-all}
+td .summary{color:var(--txt-2);font-size:.74rem;margin-top:2px}
+td .target{color:var(--txt-3);font-size:.7rem;font-family:'Fira Code',monospace}
+.input-calls{width:64px;text-align:center;padding:6px 6px}
+.input-payload{width:100%;min-width:200px;min-height:42px;font-size:.74rem}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 8px}
+.toolbar input[type=search]{flex:1;min-width:220px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+  border-radius:999px;background:var(--panel-2);border:1px solid var(--line);
+  font-size:.74rem;color:var(--txt-2);cursor:pointer;user-select:none;
+}
+.chip.on{background:var(--green-bg);color:var(--green-l);border-color:var(--green-d)}
+
+/* ── Results ────────────────────────────────── */
+.results-grid{display:grid;grid-template-columns:1fr 2fr;gap:18px}
+@media(max-width:900px){.results-grid{grid-template-columns:1fr}}
+.score-card{
+  background:linear-gradient(135deg,rgba(22,101,52,.25),rgba(31,41,55,.6));
+  border:1px solid var(--green-bg);border-radius:14px;padding:22px;text-align:center;
+}
+.score-circle{
+  width:160px;height:160px;border-radius:50%;
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  margin:6px auto 14px;position:relative;
+  border:5px solid var(--green-d);box-shadow:0 0 30px rgba(34,197,94,.25);
+}
+.score-circle .number{font-size:2.8rem;font-weight:800;color:var(--green-l)}
+.score-circle .max{font-size:.85rem;color:var(--txt-2)}
+.score-circle .grade{
+  position:absolute;top:-10px;right:-10px;width:42px;height:42px;border-radius:50%;
+  background:var(--green);color:#0b1220;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:1.1rem;box-shadow:0 6px 16px -4px rgba(0,0,0,.4);
+}
+
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 14px;margin-top:10px;font-size:.84rem}
+.kv .k{color:var(--txt-2)}
+.kv .v{font-weight:700;color:var(--txt)}
+
+.breakdown-card{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:18px}
+.rule-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.rule-row:last-child{border-bottom:none}
+.rule-name{font-weight:600;font-size:.86rem}
+.rule-pts{
+  font-family:'Fira Code',monospace;font-size:.78rem;font-weight:700;
+  padding:3px 10px;border-radius:6px;
+}
+.rule-pts.good{background:var(--green-bg);color:var(--green-l)}
+.rule-pts.bad{background:rgba(239,68,68,.18);color:#fca5a5}
+.rule-pts.med{background:rgba(234,179,8,.18);color:#facc15}
+
+.endpoints-card{margin-top:18px}
+.ep-table{width:100%;font-size:.78rem;border-collapse:collapse}
+.ep-table th{padding:8px 10px;color:var(--green-l);text-align:left;border-bottom:1px solid var(--line);font-weight:700;font-size:.74rem}
+.ep-table td{padding:7px 10px;border-bottom:1px solid var(--line)}
+.ep-table tr:hover{background:rgba(34,197,94,.04)}
+.code-tag{font-family:'Fira Code',monospace;padding:1px 7px;border-radius:5px;font-weight:700;font-size:.74rem}
+.code-tag.s2{background:rgba(34,197,94,.15);color:#86efac}
+.code-tag.s3{background:rgba(96,165,250,.15);color:#93c5fd}
+.code-tag.s4{background:rgba(251,146,60,.15);color:#fdba74}
+.code-tag.s5{background:rgba(239,68,68,.15);color:#fca5a5}
+
+/* ── Status + spinner ───────────────────────── */
+.status{
+  margin-top:14px;padding:12px 14px;border-radius:10px;font-size:.85rem;
+  display:flex;align-items:flex-start;gap:10px;
+  background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);color:#bfdbfe;
+}
+.status.error{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);color:#fecaca}
+.status.success{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.3);color:#bbf7d0}
+.status.hidden{display:none}
+.spinner{
+  width:16px;height:16px;border-radius:50%;
+  border:2.5px solid rgba(134,239,172,.25);border-top-color:#86efac;
+  animation:spin .9s linear infinite;flex-shrink:0;margin-top:1px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty{padding:36px;text-align:center;color:var(--txt-3)}
+.empty .icon{font-size:2.4rem;margin-bottom:8px;opacity:.7}
+
+details.log{margin-top:14px;background:#0a0f1a;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.78rem}
+details.log pre{white-space:pre-wrap;word-break:break-word;color:#9ca3af;max-height:280px;overflow:auto;padding:6px 0;font-family:'Fira Code',monospace;font-size:.72rem}
+details.log summary{cursor:pointer;color:var(--txt-2);font-weight:600}
+
+/* ── Suggestions ─────────────────────────────── */
+.suggestions-wrap{display:flex;flex-direction:column;gap:10px}
+.suggestion{
+  background:rgba(15,23,42,.6);border:1px solid var(--line);border-left:3px solid var(--green-d);
+  border-radius:10px;
+}
+.suggestion>summary{
+  list-style:none;cursor:pointer;padding:12px 14px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  border-radius:10px;
+}
+.suggestion>summary::-webkit-details-marker{display:none}
+.suggestion>summary::before{
+  content:"▶";color:var(--green-l);font-size:.7rem;
+  transition:transform .2s ease;display:inline-block;flex-shrink:0;
+}
+.suggestion[open]>summary::before{transform:rotate(90deg)}
+.suggestion[open]>summary{border-bottom:1px solid var(--line);border-radius:10px 10px 0 0}
+.suggestion>.sg-body{padding:10px 14px 12px}
+.suggestion .sg-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1}
+.sg-prio{
+  font-family:'Fira Code',monospace;font-size:.7rem;font-weight:800;
+  padding:2px 8px;border-radius:5px;letter-spacing:.04em;
+}
+.sg-prio.prio-high{background:rgba(239,68,68,.18);color:#fca5a5}
+.sg-prio.prio-medium{background:rgba(234,179,8,.18);color:#facc15}
+.sg-prio.prio-low{background:rgba(96,165,250,.15);color:#93c5fd}
+.sg-rule{font-size:.78rem;color:var(--green-l);font-weight:700}
+.sg-target{
+  margin-left:auto;font-family:'Fira Code',monospace;font-size:.74rem;
+  background:#0f1726;color:#e5e7eb;padding:2px 8px;border-radius:6px;border:1px solid var(--line);
+}
+.sg-action{font-size:.88rem;color:var(--txt);font-weight:600;margin-bottom:4px}
+.sg-impact{font-size:.78rem;color:var(--txt-2);margin-bottom:4px}
+.sg-how{margin-top:6px;font-size:.78rem}
+.sg-how summary{cursor:pointer;color:var(--green-l);font-weight:600;padding:4px 0}
+.sg-how pre{
+  white-space:pre-wrap;word-break:break-word;color:#cbd5e1;
+  background:#0a0f1a;border:1px solid var(--line);border-radius:8px;
+  padding:10px;margin-top:6px;max-height:320px;overflow:auto;
+  font-family:'Fira Code',monospace;font-size:.74rem;
+}
+
+/* ── Suggestions panel (mirror of full dashboard index.html) ── */
+.sg-summary{
+  display:flex;align-items:center;gap:16px;padding:14px 18px;
+  background:linear-gradient(135deg,rgba(22,101,52,.30),rgba(15,23,42,.85));
+  border:1px solid rgba(22,101,52,.55);border-radius:12px;margin-bottom:14px;
+}
+.sg-summary .sg-pot-score{font-size:1.55rem;font-weight:800;color:#86efac;line-height:1.1}
+.sg-summary .sg-pot-label{font-size:.78rem;color:var(--txt-2);margin-top:2px}
+.sg-summary .sg-bar{
+  position:relative;flex:1;height:22px;background:#1f2937;border-radius:11px;overflow:hidden;
+}
+.sg-summary .sg-bar .sg-cur{
+  position:absolute;left:0;top:0;height:100%;background:#ef4444;
+  border-radius:11px 0 0 11px;transition:width .8s ease;
+}
+.sg-summary .sg-bar .sg-tgt{
+  position:absolute;left:0;top:0;height:100%;background:#22c55e;opacity:.35;
+  border-radius:11px;transition:width .8s ease;
+}
+.sg-summary .sg-bar .sg-bar-lbl{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:700;color:#fff;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.6);
+}
+.sg-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.sg-filters .sg-fbtn{
+  padding:5px 14px;border-radius:20px;border:1px solid #374151;background:#1f2937;
+  color:var(--txt-2);font-size:.78rem;font-weight:600;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.sg-filters .sg-fbtn:hover{border-color:#22c55e;color:#86efac}
+.sg-filters .sg-fbtn.active{background:rgba(22,101,52,.35);border-color:#22c55e;color:#86efac}
+.sg-rule-group{margin-bottom:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sg-rule-head{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;
+  background:rgba(15,23,42,.85);cursor:pointer;transition:background .2s;
+}
+.sg-rule-head:hover{background:rgba(22,101,52,.18)}
+.sg-rule-head .sg-rule-icon{font-size:1.15rem}
+.sg-rule-head .sg-rule-title{font-weight:700;font-size:.9rem;color:var(--txt);flex:1}
+.sg-rule-head .sg-rule-pts{
+  padding:3px 10px;border-radius:12px;font-size:.74rem;font-weight:700;
+  background:rgba(22,101,52,.45);color:#86efac;
+}
+.sg-rule-head .sg-rule-st{padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.sg-rule-head .sg-rule-st.failed{background:rgba(239,68,68,.20);color:#fca5a5}
+.sg-rule-head .sg-rule-st.passed{background:rgba(22,101,52,.45);color:#86efac}
+.sg-rule-head .sg-rule-st.partial{background:rgba(234,179,8,.20);color:#facc15}
+.sg-rule-head .sg-cnt{
+  padding:2px 9px;border-radius:10px;font-size:.7rem;font-weight:700;
+  background:#0f1726;color:var(--txt-2);border:1px solid var(--line);
+}
+.sg-rule-head .sg-chev{color:var(--txt-3);font-size:.75rem;transition:transform .25s}
+.sg-rule-head[aria-expanded="false"] .sg-chev{transform:rotate(-90deg)}
+.sg-rule-body{padding:0 14px;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .25s ease}
+.sg-rule-body.open{max-height:5000px;padding:10px 14px 14px}
+.sg-rule-desc{font-size:.76rem;color:var(--txt-3);margin-bottom:10px}
+.sg-item{
+  background:#0f1726;border:1px solid var(--line);border-radius:8px;
+  padding:12px 14px;margin-bottom:8px;transition:border-color .2s;
+}
+.sg-item:hover{border-color:#22c55e}
+.sg-item:last-child{margin-bottom:0}
+.sg-item-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.sg-item .sg-act{font-size:.84rem;color:var(--txt);margin-bottom:4px}
+.sg-item .sg-imp{font-size:.76rem;color:#86efac;font-weight:600;margin-bottom:6px}
+.sg-item .sg-how-btn{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;
+  border:1px solid var(--line);background:#0a0f1a;color:var(--green-l);
+  font-size:.74rem;font-weight:600;cursor:pointer;font-family:inherit;
+}
+.sg-item .sg-how-btn:hover{border-color:#22c55e}
+.sg-item .sg-how-content{
+  max-height:0;overflow:hidden;transition:max-height .35s ease,margin-top .25s ease;
+}
+.sg-item .sg-how-content.open{max-height:1200px;margin-top:8px}
+.sg-item .sg-how-content pre{
+  white-space:pre-wrap;word-break:break-word;color:#cbd5e1;
+  background:#070b13;border:1px solid var(--line);border-radius:6px;
+  padding:10px;margin:0;font-family:'Fira Code',monospace;font-size:.74rem;
+}
+
+footer{text-align:center;color:var(--txt-3);font-size:.78rem;margin-top:30px}
+footer a{color:var(--green-l);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <h1>🌿 Green API — Interactive Analyzer</h1>
+      <div class="sub">Découverte Swagger → ajustement par ressource → analyse Green Score</div>
+    </div>
+    <a class="brand-link" href="https://github.com/API-Green-Score/apigreenscoreanalyzer" target="_blank">↗ GitHub</a>
+  </header>
+
+  <!-- Bridge URL config (persisted in localStorage) -->
+  <div id="bridge-bar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 16px;padding:10px 14px;background:rgba(31,41,55,.6);border:1px solid var(--line);border-radius:10px;font-size:.82rem">
+    <span style="color:var(--txt-2)">🔌 Bridge :</span>
+    <input id="bridge-url" type="text" style="flex:1;min-width:240px;max-width:380px;padding:6px 10px;font-size:.82rem" placeholder="http://127.0.0.1:8765">
+    <span id="bridge-status" style="font-size:.78rem;color:var(--txt-3)">…</span>
+    <button class="btn ghost" id="btn-test-bridge" type="button" style="padding:6px 14px;font-size:.78rem">Tester</button>
+  </div>
+
+  <!-- ── Main tabs ──────────────────────────────────────────── -->
+  <div class="main-tabs" id="main-tabs">
+    <button class="main-tab active" data-tab="remote" type="button">🌐 Green Score Remote analyse</button>
+    <button class="main-tab" data-tab="local" type="button">💻 Local Green Score / Creedengo Source analyse</button>
+  </div>
+
+  <!-- ══════════ TAB: REMOTE (existing 3-step workflow) ══════════ -->
+  <div class="tab-pane active" id="tab-remote">
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="1">
+      <div class="num">1</div>
+      <div class="col"><div class="label">Cibles & sécurité</div><div class="desc">Endpoints + token</div></div>
+    </div>
+    <div class="step" data-step="2">
+      <div class="num">2</div>
+      <div class="col"><div class="label">Ressources</div><div class="desc">Verbes, calls, payloads</div></div>
+    </div>
+    <div class="step" data-step="3">
+      <div class="num">3</div>
+      <div class="col"><div class="label">Résultats</div><div class="desc">Green Score & mesures</div></div>
+    </div>
+  </div>
+
+  <!-- ── Step 1: inputs ───────────────────────────────────── -->
+  <section class="panel" id="panel-1">
+    <div class="panel-head">
+      <h2>① Cibles à analyser & authentification</h2>
+    </div>
+
+    <label for="targets">Endpoints API exposant la spec Swagger / OpenAPI</label>
+    <textarea id="targets" placeholder="http://localhost:8080
+http://localhost:8081
+https://api.example.com"></textarea>
+    <div class="hint">Une URL par ligne — ou séparées par des virgules. Le serveur découvrira automatiquement <code>/v3/api-docs</code>, <code>/openapi.json</code>, etc.</div>
+
+    <div class="row">
+      <div>
+        <label for="bearer">Bearer token (optionnel)</label>
+        <input type="password" id="bearer" placeholder="eyJhbGciOi…" autocomplete="off">
+        <div class="hint">Stocké uniquement dans cet onglet (mémoire RAM). Envoyé au backend pour signer les appels.</div>
+      </div>
+      <div>
+        <label for="appname">Nom de l'application (optionnel)</label>
+        <input type="text" id="appname" placeholder="my-api">
+        <div class="hint">Apparaît dans le rapport et l'historique du dashboard principal.</div>
+      </div>
+    </div>
+
+    <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+      <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📤 Envoi vers SobriIT (optionnel)</legend>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="send-to-sobriit" style="width:auto"> Envoyer les résultats à <strong>SobriIT</strong>
+      </label>
+      <div class="hint">Si activé, le Green Score sera publié sur la plateforme SobriIT après l'analyse.</div>
+      <div class="row" id="sobriit-fields" style="margin-top:8px;display:none">
+        <div>
+          <label for="sobriit-base-url">URL de l'API SobriIT</label>
+          <input type="text" id="sobriit-base-url" placeholder="https://sobriit.example.com">
+          <div class="hint">Ou définir <code>SOBRIIT_BASE_URL</code> côté serveur.</div>
+        </div>
+        <div>
+          <label for="sobriit-api-key">Clé API SobriIT</label>
+          <input type="password" id="sobriit-api-key" placeholder="votre-clé-api" autocomplete="off">
+          <div class="hint">Ou définir <code>SOBRIIT_API_KEY</code> côté serveur.</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button class="btn primary" id="btn-discover">🔍 Démarrer l'analyse</button>
+      <button class="btn ghost" id="btn-load-sample" type="button">↺ Charger un exemple</button>
+    </div>
+
+    <div class="status hidden" id="status-1"></div>
+  </section>
+
+  <!-- ── Step 2: resources table ──────────────────────────── -->
+  <section class="panel" id="panel-2" style="display:none">
+    <div class="panel-head">
+      <h2>② Ressources découvertes</h2>
+      <span class="meta" id="resources-meta">—</span>
+    </div>
+
+    <div class="targets-summary" id="targets-summary"></div>
+
+    <div class="toolbar">
+      <input type="search" id="filter-q" placeholder="🔎 Filtrer par chemin, tag, méthode…">
+      <span class="chip on" data-method="ALL">Tous</span>
+      <span class="chip" data-method="GET">GET</span>
+      <span class="chip" data-method="POST">POST</span>
+      <span class="chip" data-method="PUT">PUT</span>
+      <span class="chip" data-method="PATCH">PATCH</span>
+      <span class="chip" data-method="DELETE">DELETE</span>
+      <button class="btn ghost" id="btn-select-all" type="button">✓ Tout cocher</button>
+      <button class="btn ghost" id="btn-select-none" type="button">✗ Tout décocher</button>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:34px"><input type="checkbox" id="check-all" checked title="Tout (dé)sélectionner"></th>
+            <th>Méthode</th>
+            <th>Ressource</th>
+            <th title="Nombre d'appels exécutés par endpoint (par défaut 3)">Calls</th>
+            <th>Payload de test (POST / PUT / PATCH)</th>
+          </tr>
+        </thead>
+        <tbody id="resources-body"></tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btn-analyze">⚡ Lancer l'analyse Green Score</button>
+      <button class="btn ghost" id="btn-back-1" type="button">← Modifier les cibles</button>
+      <span class="meta" id="selection-meta"></span>
+    </div>
+
+    <div class="status hidden" id="status-2"></div>
+  </section>
+
+  <!-- ── Step 3: results ──────────────────────────────────── -->
+  <section class="panel" id="panel-3" style="display:none">
+    <div class="panel-head">
+      <h2>③ Résultats Green Score</h2>
+      <span class="meta" id="results-meta">—</span>
+    </div>
+
+    <div id="results-body">
+      <div class="empty"><div class="icon">📊</div><p>En attente du rapport…</p></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="btn-back-2" type="button">← Réajuster les ressources</button>
+      <button class="btn ghost" id="btn-restart" type="button">🔄 Nouvelle analyse</button>
+      <a class="btn ghost" href="/dashboard/index.html" target="_blank">📈 Dashboard complet</a>
+      <a class="btn ghost" href="/reports/latest-report.json" target="_blank" download="green-score-report.json">⬇ Télécharger le JSON</a>
+    </div>
+  </section>
+
+  </div><!-- /tab-remote -->
+
+  <!-- ══════════ TAB: LOCAL (start.sh — Green Score + Creedengo) ══════════ -->
+  <div class="tab-pane" id="tab-local">
+    <!-- Local stepper (config → results) -->
+    <div class="stepper" id="loc-stepper">
+      <div class="step active" data-loc-step="1">
+        <div class="num">1</div>
+        <div class="col"><div class="label">Configuration</div><div class="desc">Cibles, Creedengo, dépôt Git</div></div>
+      </div>
+      <div class="step" data-loc-step="2">
+        <div class="num">2</div>
+        <div class="col"><div class="label">Résultats</div><div class="desc">Green Score + Creedengo</div></div>
+      </div>
+    </div>
+
+    <section class="panel" id="loc-panel-1">
+      <div class="panel-head">
+        <h2>① Analyse locale (Green Score + Creedengo source)</h2>
+        <span class="meta">via <code>scripts/start.sh</code></span>
+      </div>
+      <p style="color:var(--txt-2);font-size:.86rem;margin-bottom:6px">
+        Pilote la chaîne canonique <code>start.sh</code> : attente des cibles → analyse Green Score + (option) analyse Creedengo
+        sur le code source local ou un dépôt Git cloné.
+      </p>
+
+      <label for="loc-targets">Endpoints API (analyse Green Score)</label>
+      <textarea id="loc-targets" placeholder="http://localhost:8080
+http://localhost:8081"></textarea>
+      <div class="hint">Une URL par ligne — ou séparées par des virgules. Optionnel si vous lancez seulement Creedengo sur un dépôt Git.</div>
+
+      <div class="row">
+        <div>
+          <label for="loc-bearer">Bearer token (optionnel)</label>
+          <input type="password" id="loc-bearer" placeholder="eyJhbGciOi…" autocomplete="off">
+        </div>
+        <div>
+          <label for="loc-appname">Nom de l'application</label>
+          <input type="text" id="loc-appname" placeholder="my-api">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <div>
+          <label for="loc-stack">Stack</label>
+          <select id="loc-stack" style="width:100%;padding:9px 10px;border-radius:8px;background:rgba(15,23,42,.6);color:var(--txt-1);border:1px solid var(--line)">
+            <option value="auto" selected>Auto-détection (depuis source-dir)</option>
+            <option value="java">Java (Maven / Gradle)</option>
+            <option value="dotnet">.NET 8+ (C#)</option>
+          </select>
+          <div class="hint">Auto = détecte <code>pom.xml</code> / <code>*.csproj</code> dans <code>--source-dir</code>.</div>
+        </div>
+        <div>
+          <label for="loc-source-dir">Dossier source local (optionnel)</label>
+          <input type="text" id="loc-source-dir" placeholder="/Users/me/projects/my-api">
+          <div class="hint">Utilisé pour <code>--build-and-run</code> et l'analyse Creedengo. Alternatif au dépôt Git.</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="loc-creedengo" style="width:auto"> Lancer aussi <strong>Creedengo</strong> (analyse code source)
+          </label>
+          <div class="hint">Implique <code>--creedengo</code>. Activé automatiquement si un dépôt Git est fourni.</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+            <input type="checkbox" id="loc-build-and-run" style="width:auto"> <strong>Build &amp; run</strong> l'API depuis <code>--source-dir</code>
+          </label>
+          <div class="hint">Compile et démarre l'app (Spring Boot ou ASP.NET) avant l'analyse Green Score. Requiert <em>source-dir</em>.</div>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:0">
+            <input type="checkbox" id="loc-debug" style="width:auto"> Mode debug (verbose)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+            <input type="checkbox" id="loc-git-keep" style="width:auto"> Conserver le clone Git après analyse
+          </label>
+        </div>
+      </div>
+
+      <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+        <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">🌍 Règles d'architecture (AR02 / AR05)</legend>
+        <div class="row">
+          <div>
+            <label for="loc-consumer-region">Région du consommateur (code ISO ou Azure)</label>
+            <input type="text" id="loc-consumer-region" placeholder="eu-west-1 / francecentral / FR">
+            <div class="hint">Utilisée par AR02 pour comparer la distance avec la région d'hébergement de l'API.</div>
+          </div>
+          <div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:24px">
+              <input type="checkbox" id="loc-enable-geoip" style="width:auto"> Activer la résolution <strong>GeoIP</strong>
+            </label>
+            <div class="hint">Tente de localiser l'API via DNS / GeoIP (peut nécessiter un accès réseau sortant).</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+              <input type="checkbox" id="loc-cloud-footprint-confirmed" style="width:auto"> J'ai vérifié l'<strong>empreinte cloud</strong> (AR05)
+            </label>
+            <div class="hint">Confirme que le fournisseur cloud / la région sont validés (désactive le warning AR05).</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+        <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📦 Dépôt Git (optionnel — pour Creedengo)</legend>
+        <label for="loc-git-repo">URL du dépôt</label>
+        <input type="text" id="loc-git-repo" placeholder="https://github.com/owner/repo.git">
+        <div class="row">
+          <div>
+            <label for="loc-git-branch">Branche / tag</label>
+            <input type="text" id="loc-git-branch" placeholder="main">
+          </div>
+          <div>
+            <label for="loc-git-subdir">Sous-dossier à analyser</label>
+            <input type="text" id="loc-git-subdir" placeholder="services/api">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+        <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📤 Envoi vers SobriIT (optionnel)</legend>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="loc-send-to-sobriit" style="width:auto"> Envoyer les résultats à <strong>SobriIT</strong>
+        </label>
+        <div class="hint">Si activé, Green Score + Creedengo seront publiés sur SobriIT après l'analyse.</div>
+        <div class="row" id="loc-sobriit-fields" style="margin-top:8px;display:none">
+          <div>
+            <label for="loc-sobriit-base-url">URL de l'API SobriIT</label>
+            <input type="text" id="loc-sobriit-base-url" placeholder="https://sobriit.example.com">
+            <div class="hint">Ou définir <code>SOBRIIT_BASE_URL</code> côté serveur.</div>
+          </div>
+          <div>
+            <label for="loc-sobriit-api-key">Clé API SobriIT</label>
+            <input type="password" id="loc-sobriit-api-key" placeholder="votre-clé-api" autocomplete="off">
+            <div class="hint">Ou définir <code>SOBRIIT_API_KEY</code> côté serveur.</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button class="btn primary" id="loc-btn-analyze" type="button">⚡ Lancer start.sh</button>
+        <button class="btn ghost" id="loc-btn-load-sample" type="button">↺ Charger un exemple</button>
+        <span class="meta" id="loc-meta" style="margin-left:auto;font-size:.74rem;color:var(--txt-3)"></span>
+      </div>
+
+      <div class="status hidden" id="loc-status"></div>
+
+      <!-- Live console for start.sh stdout/stderr (polled every ~1.2s while running) -->
+      <div id="loc-console-wrap" style="margin-top:14px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="color:var(--green-l);font-weight:700;font-size:.86rem;display:flex;align-items:center;gap:8px">
+            <span id="loc-console-led" style="width:9px;height:9px;border-radius:50%;background:#86efac;box-shadow:0 0 8px #86efac;animation:spin 1.5s linear infinite;display:inline-block"></span>
+            🖥️ Console <code>start.sh</code>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:.74rem;color:var(--txt-3)">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="checkbox" id="loc-console-autoscroll" checked style="width:auto"> auto-scroll
+            </label>
+            <button class="btn ghost" id="loc-console-clear" type="button" style="padding:4px 10px;font-size:.72rem">Vider</button>
+          </div>
+        </div>
+        <pre id="loc-console" style="background:#070b13;color:#cbd5e1;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:320px;overflow:auto;font-family:'Fira Code','JetBrains Mono',monospace;font-size:.74rem;line-height:1.45;white-space:pre-wrap;word-break:break-word;margin:0">(en attente du premier log…)</pre>
+      </div>
+    </section>
+
+    <section class="panel" id="loc-results-panel" style="display:none">
+      <div class="panel-head">
+        <h2>② Résultats — Green Score + Creedengo</h2>
+        <span class="meta" id="loc-results-meta">—</span>
+      </div>
+      <div id="loc-results-body">
+        <div class="empty"><div class="icon">📊</div><p>En attente du rapport…</p></div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="loc-btn-back" type="button">← Modifier la configuration</button>
+        <button class="btn ghost" id="loc-btn-restart" type="button">🔄 Nouvelle analyse</button>
+        <a class="btn ghost" href="/dashboard/index.html" target="_blank">📈 Dashboard complet</a>
+        <a class="btn ghost" href="/reports/latest-report.json" target="_blank" download="green-score-report.json">⬇ Green Score JSON</a>
+        <a class="btn ghost" href="/reports/creedengo-report.json" target="_blank" download="creedengo-report.json">⬇ Creedengo JSON</a>
+      </div>
+    </section>
+  </div><!-- /tab-local -->
+
+  <!-- ─── Global live console (bottom of page) ──────────────────────
+       Tails whichever run is active:
+         • /api/analyze-log   → Remote tab (POST /api/analyze)
+         • /api/local-log     → Local tab  (POST /api/local-analyze)
+       Auto-shows when either analysis starts; persists the last log between
+       runs so the user can scroll back up after the run completes.
+  -->
+  <section class="panel" id="global-console-panel" style="margin-top:18px">
+    <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between">
+      <h2 style="display:flex;align-items:center;gap:10px;margin:0">
+        <span id="gconsole-led" style="width:9px;height:9px;border-radius:50%;background:var(--txt-3);display:inline-block"></span>
+        🖥️ Console d'analyse — logs en direct
+      </h2>
+      <div style="display:flex;align-items:center;gap:12px;font-size:.74rem;color:var(--txt-3)">
+        <span id="gconsole-source" class="meta">— en attente —</span>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="gconsole-autoscroll" checked style="width:auto"> auto-scroll
+        </label>
+        <button class="btn ghost" id="gconsole-clear" type="button" style="padding:4px 10px;font-size:.72rem">Vider</button>
+      </div>
+    </div>
+    <pre id="gconsole" style="background:#070b13;color:#cbd5e1;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:360px;overflow:auto;font-family:'Fira Code','JetBrains Mono',monospace;font-size:.74rem;line-height:1.45;white-space:pre-wrap;word-break:break-word;margin:0">(en attente du premier log…)</pre>
+  </section>
+
+  <footer>
+    🌿 Green API Score — Devoxx France 2026 ·
+    <a href="https://github.com/API-Green-Score/apigreenscoreanalyzer" target="_blank">apigreenscoreanalyzer</a>
+  </footer>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────
+const DEFAULT_BRIDGE = "http://127.0.0.1:8765";
+const BRIDGE_LS_KEY  = "greenapi.bridge.url";
+const state = {
+  bridgeBase: "",     // absolute URL of the bridge ("" = same-origin)
+  targets: [],        // resolved target URLs (rstripped)
+  bearer: "",
+  appname: "",
+  swaggers: [],       // discovered swagger URLs
+  resources: [],      // [{target,method,path,summary,operationId,tags,hasBody}]
+  perResource: {},    // key=target|method|path → {selected,calls,payload}
+  filterMethod: "ALL",
+  filterText: "",
+  report: null,
+  localReport: null,
+};
+
+// ── Helpers ─────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const resKey = (r) => `${r.target}|${r.method}|${r.path}`;
+
+function setStatus(panelId, kind, html) {
+  const el = $(panelId);
+  if (!el) return;
+  el.className = `status ${kind || ""}`.trim();
+  el.classList.remove("hidden");
+  el.innerHTML = (kind === "info" ? '<span class="spinner"></span>' : "") + `<div>${html}</div>`;
+}
+function clearStatus(panelId){const el=$(panelId);if(el){el.classList.add("hidden");el.innerHTML="";}}
+
+function setStep(n){
+  document.querySelectorAll(".step").forEach(s=>{
+    const st = +s.dataset.step;
+    s.classList.toggle("active", st === n);
+    s.classList.toggle("done",   st <  n);
+  });
+  // Show ONLY the current step's panel — hide the others so the user
+  // focuses on one task at a time. Back/forward buttons still allow
+  // navigation between panels.
+  $("panel-1").style.display = n === 1 ? "" : "none";
+  $("panel-2").style.display = n === 2 ? "" : "none";
+  $("panel-3").style.display = n === 3 ? "" : "none";
+  // Smooth-scroll to top of the active panel
+  const panel = $("panel-" + n);
+  if (panel) panel.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function parseTargets(raw){
+  return raw.split(/[\n,]+/).map(s=>s.trim().replace(/\/+$/,"")).filter(Boolean);
+}
+
+// Robust fetch+parse: gives a clear error when the bridge server isn't running
+// (e.g. when the page is opened via file:// or a plain static server).
+async function postJSON(url, body, opts){
+  const fullUrl = absUrl(url);
+  const timeoutMs = (opts && opts.timeoutMs) || 0;
+  const ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  let timer = null;
+  if (timeoutMs > 0 && ctrl) {
+    timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  }
+  let resp;
+  try {
+    resp = await fetch(fullUrl, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body),
+      signal: ctrl ? ctrl.signal : undefined,
+    });
+  } catch (netErr) {
+    if (timer) clearTimeout(timer);
+    if (netErr && netErr.name === "AbortError") {
+      throw new Error(
+        "⏱️ Le bridge n'a pas répondu dans le délai imparti (" +
+        Math.round(timeoutMs/60000) + " min) sur " + fullUrl + ".<br>" +
+        "L'analyse est peut-être encore en cours côté serveur — consultez la console du bridge."
+      );
+    }
+    throw new Error(bridgeHelp("Impossible de joindre le bridge à " + fullUrl + "."));
+  }
+  if (timer) clearTimeout(timer);
+  const text = await resp.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : {}; } catch (_) { data = null; }
+  if (data === null) {
+    throw new Error(bridgeHelp(
+      "Réponse non-JSON depuis " + fullUrl + " (HTTP " + resp.status + "). " +
+      "Cette origine ne sert pas le bridge — il s'agit probablement d'un serveur statique (IDE preview, GitHub Pages, file://…)."
+    ));
+  }
+  return { ok: resp.ok, status: resp.status, data };
+}
+
+// Build absolute URL using the configured bridge base
+function absUrl(p){
+  const base = (state.bridgeBase || "").replace(/\/+$/,"");
+  if (!base) return p;            // same-origin (already on the bridge)
+  return base + (p.startsWith("/") ? p : "/" + p);
+}
+
+function bridgeHelp(prefix){
+  return prefix +
+    "<br>👉 Démarrez le bridge : <code>bash scripts/start-interactive.sh</code>" +
+    "<br>👉 Puis ouvrez <code>" + DEFAULT_BRIDGE + "</code>, ou collez son URL dans le champ <strong>🔌 Bridge</strong> en haut.";
+}
+
+// ── Step 1 → discover ───────────────────────────────────────────
+$("btn-discover").addEventListener("click", async () => {
+  const targets = parseTargets($("targets").value);
+  if (targets.length === 0) {
+    return setStatus("status-1","error","Veuillez saisir au moins une URL d'API.");
+  }
+  state.targets = targets;
+  state.bearer  = $("bearer").value.trim();
+  state.appname = $("appname").value.trim();
+
+  setStatus("status-1","info",`Découverte des spécifications OpenAPI sur ${targets.length} cible(s)…`);
+  $("btn-discover").disabled = true;
+  try {
+    const { ok, status, data } = await postJSON("/api/discover", {targets, bearer: state.bearer});
+    if (!ok) throw new Error(data.error || `HTTP ${status}`);
+    state.swaggers = (data.targets || []).filter(t=>t.ok).map(t=>t.swagger);
+    state.resources = data.resources || [];
+    state.perResource = {};
+    for (const r of state.resources) {
+      // Pre-fill the payload textarea with the example shipped in the
+      // OpenAPI spec (requestBody.content[*].example / examples[].value /
+      // schema.example). Falls back to an empty string when the spec
+      // doesn't ship any example for this operation.
+      let defaultPayload = "";
+      if (r.hasBody && r.exampleBody !== null && r.exampleBody !== undefined) {
+        try {
+          defaultPayload = (typeof r.exampleBody === "string")
+            ? r.exampleBody
+            : JSON.stringify(r.exampleBody, null, 2);
+        } catch { defaultPayload = ""; }
+      }
+      state.perResource[resKey(r)] = {selected:true, calls:3, payload: defaultPayload};
+    }
+    renderTargetsSummary(data.targets || []);
+    if (state.resources.length === 0) {
+      setStatus("status-1","error","Aucune ressource trouvée. Vérifiez l'URL ou le token.");
+      return;
+    }
+    clearStatus("status-1");
+    setStep(2);
+    renderResources();
+  } catch (err) {
+    setStatus("status-1","error", "❌ " + (err.message || err));
+  } finally {
+    $("btn-discover").disabled = false;
+  }
+});
+
+$("btn-load-sample").addEventListener("click", () => {
+  $("targets").value = "http://localhost:8080\nhttp://localhost:8081";
+  $("appname").value = "demo-app";
+});
+
+// ── Bridge detection & override ─────────────────────────────────
+async function probeBridge(base){
+  // Returns {ok, message}. base may be "" (same-origin).
+  // Uses GET /api/ping (cheap & semantically clear) instead of polluting
+  // /api/discover with empty probes.
+  const url = (base || "").replace(/\/+$/,"") + "/api/ping";
+  try {
+    const r = await fetch(url, { method: "GET" });
+    const txt = await r.text();
+    try {
+      const j = JSON.parse(txt);
+      if (j && j.ok) {
+        return { ok: true, message: "OK · " + (base || "même origine") };
+      }
+      return { ok: false, message: "Réponse JSON inattendue" };
+    } catch {
+      return { ok: false, message: "HTTP " + r.status + " — pas du JSON (page statique ?)" };
+    }
+  } catch (e) {
+    return { ok: false, message: "Injoignable — bridge non démarré ?" };
+  }
+}
+
+function setBridgeStatus(ok, msg){
+  const el = $("bridge-status");
+  if (!el) return;
+  el.textContent = (ok ? "✅ " : "⚠️ ") + msg;
+  el.style.color = ok ? "var(--green-l)" : "#fca5a5";
+  $("btn-discover").disabled = !ok;
+}
+
+async function initBridge(){
+  // 1) Load saved override or default
+  let saved = "";
+  try { saved = localStorage.getItem(BRIDGE_LS_KEY) || ""; } catch {}
+  // 2) Decide the initial candidate:
+  //    • saved override wins
+  //    • else: same-origin if running on http(s), else DEFAULT_BRIDGE
+  let candidate = saved
+    || (location.protocol.startsWith("http") ? "" : DEFAULT_BRIDGE);
+  $("bridge-url").value = saved || (candidate || location.origin);
+
+  // 3) Probe same-origin first; if it fails AND we have no saved override,
+  //    fall back to DEFAULT_BRIDGE automatically (covers IDE preview case).
+  state.bridgeBase = candidate;
+  let res = await probeBridge(state.bridgeBase);
+  if (!res.ok && !saved && state.bridgeBase !== DEFAULT_BRIDGE) {
+    state.bridgeBase = DEFAULT_BRIDGE;
+    $("bridge-url").value = DEFAULT_BRIDGE;
+    res = await probeBridge(state.bridgeBase);
+    if (res.ok) {
+      try { localStorage.setItem(BRIDGE_LS_KEY, DEFAULT_BRIDGE); } catch {}
+    }
+  }
+  setBridgeStatus(res.ok, res.message);
+  if (!res.ok) {
+    setStatus("status-1","error", bridgeHelp("Le bridge n'est pas joignable."));
+  } else {
+    clearStatus("status-1");
+  }
+}
+
+$("btn-test-bridge").addEventListener("click", async () => {
+  let v = $("bridge-url").value.trim();
+  if (v && !/^https?:\/\//.test(v)) v = "http://" + v;
+  v = v.replace(/\/+$/,"");
+  // Empty input means "same-origin"
+  state.bridgeBase = v;
+  try { localStorage.setItem(BRIDGE_LS_KEY, v); } catch {}
+  setBridgeStatus(false, "test en cours…");
+  const res = await probeBridge(v);
+  setBridgeStatus(res.ok, res.message);
+  if (res.ok) clearStatus("status-1");
+  else setStatus("status-1","error", bridgeHelp("Le bridge n'est pas joignable."));
+});
+
+initBridge();
+
+// ── SobriIT toggle (show/hide URL+key fields) + localStorage persistence ──
+function setupSobriitToggle(checkboxId, fieldsId, urlId, keyId, lsPrefix) {
+  const cb = $(checkboxId), fields = $(fieldsId), urlEl = $(urlId), keyEl = $(keyId);
+  if (!cb || !fields) return;
+  // Restore from localStorage
+  try {
+    if (localStorage.getItem(lsPrefix + ".enabled") === "true") cb.checked = true;
+    if (urlEl) urlEl.value = localStorage.getItem(lsPrefix + ".url") || "";
+    if (keyEl) keyEl.value = localStorage.getItem(lsPrefix + ".key") || "";
+  } catch {}
+  const sync = () => {
+    fields.style.display = cb.checked ? "" : "none";
+    try { localStorage.setItem(lsPrefix + ".enabled", cb.checked); } catch {}
+  };
+  cb.addEventListener("change", sync);
+  sync();
+  if (urlEl) urlEl.addEventListener("input", () => { try { localStorage.setItem(lsPrefix + ".url", urlEl.value); } catch {} });
+  if (keyEl) keyEl.addEventListener("input", () => { try { localStorage.setItem(lsPrefix + ".key", keyEl.value); } catch {} });
+}
+setupSobriitToggle("send-to-sobriit", "sobriit-fields", "sobriit-base-url", "sobriit-api-key", "greenapi.sobriit.remote");
+setupSobriitToggle("loc-send-to-sobriit", "loc-sobriit-fields", "loc-sobriit-base-url", "loc-sobriit-api-key", "greenapi.sobriit.local");
+
+// ── Step 2 rendering ────────────────────────────────────────────
+function renderTargetsSummary(targets){
+  $("targets-summary").innerHTML = targets.map(t => {
+    const cls = t.ok ? "ok" : "err";
+    const icon = t.ok ? "✓" : "✗";
+    const info = t.ok
+      ? `<div class="url">${escHtml(t.swagger)}</div><div style="color:var(--txt-3);font-size:.7rem">${escHtml((t.info&&t.info.title)||"")} ${t.info?.version?"v"+escHtml(t.info.version):""} — ${t.count} resources</div>`
+      : `<div class="url">${escHtml(t.target)}</div><div style="color:#fca5a5;font-size:.72rem">${escHtml(t.error||"unreachable")}</div>`;
+    return `<div class="target-pill ${cls}"><div class="head">${icon} ${escHtml(t.target)}</div>${info}</div>`;
+  }).join("");
+  $("resources-meta").textContent = `${targets.filter(t=>t.ok).length}/${targets.length} cibles · ${state.resources.length} ressources`;
+}
+
+function renderResources(){
+  const tbody = $("resources-body");
+  const q = state.filterText.toLowerCase();
+  const filtered = state.resources.filter(r => {
+    if (state.filterMethod !== "ALL" && r.method !== state.filterMethod) return false;
+    if (!q) return true;
+    return (r.path + " " + (r.summary||"") + " " + (r.tags||[]).join(" ") + " " + r.method).toLowerCase().includes(q);
+  });
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="icon">🫥</div>Aucune ressource ne correspond au filtre.</div></td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map(r => {
+      const k = resKey(r);
+      const cfg = state.perResource[k] || {selected:true, calls:3, payload:""};
+      const tagStr = (r.tags||[]).slice(0,3).join(", ");
+      const showPayload = r.hasBody;
+      return `<tr data-key="${escHtml(k)}">
+        <td><input type="checkbox" class="cb-row" ${cfg.selected ? "checked":""}></td>
+        <td><span class="method ${r.method}">${r.method}</span></td>
+        <td>
+          <div class="path">${escHtml(r.path)}</div>
+          ${r.summary ? `<div class="summary">${escHtml(r.summary)}</div>`:""}
+          <div class="target">${escHtml(r.target)}${tagStr?` · ${escHtml(tagStr)}`:""}</div>
+        </td>
+        <td><input type="number" min="1" max="20" value="${cfg.calls}" class="input-calls in-calls"></td>
+        <td>${showPayload
+          ? `<textarea class="input-payload in-payload" placeholder='{"key":"value"}'>${escHtml(cfg.payload||"")}</textarea>${
+              (r.exampleBody !== null && r.exampleBody !== undefined)
+                ? `<div style="color:var(--txt-3);font-size:.68rem;margin-top:.2rem">✨ Pré-rempli depuis l'exemple OpenAPI</div>`
+                : ``
+            }`
+          : `<span style="color:var(--txt-3);font-size:.74rem">—</span>`}
+        </td>
+      </tr>`;
+    }).join("");
+  }
+  // Wire input changes back to state
+  tbody.querySelectorAll("tr[data-key]").forEach(tr => {
+    const k = tr.dataset.key;
+    tr.querySelector(".cb-row").addEventListener("change", e => { state.perResource[k].selected = e.target.checked; updateSelectionMeta(); });
+    tr.querySelector(".in-calls")?.addEventListener("input", e => {
+      const v = Math.max(1, Math.min(20, parseInt(e.target.value || "3", 10) || 3));
+      state.perResource[k].calls = v;
+    });
+    tr.querySelector(".in-payload")?.addEventListener("input", e => { state.perResource[k].payload = e.target.value; });
+  });
+  updateSelectionMeta();
+}
+
+function updateSelectionMeta(){
+  const total = state.resources.length;
+  const selected = state.resources.filter(r => state.perResource[resKey(r)]?.selected).length;
+  $("selection-meta").textContent = `${selected}/${total} ressources sélectionnées`;
+}
+
+$("filter-q").addEventListener("input", e => { state.filterText = e.target.value; renderResources(); });
+document.querySelectorAll(".chip[data-method]").forEach(c => {
+  c.addEventListener("click", () => {
+    document.querySelectorAll(".chip[data-method]").forEach(x=>x.classList.remove("on"));
+    c.classList.add("on");
+    state.filterMethod = c.dataset.method;
+    renderResources();
+  });
+});
+$("check-all").addEventListener("change", e => {
+  for (const r of state.resources) state.perResource[resKey(r)].selected = e.target.checked;
+  renderResources();
+});
+$("btn-select-all").addEventListener("click",  ()=>{ for(const r of state.resources) state.perResource[resKey(r)].selected=true;  renderResources(); });
+$("btn-select-none").addEventListener("click", ()=>{ for(const r of state.resources) state.perResource[resKey(r)].selected=false; renderResources(); });
+$("btn-back-1").addEventListener("click", () => setStep(1));
+
+// ── Step 2 → analyze ────────────────────────────────────────────
+$("btn-analyze").addEventListener("click", async () => {
+  const selected = state.resources
+    .map(r => ({...r, ...state.perResource[resKey(r)]}))
+    .filter(r => r.selected);
+  if (selected.length === 0) {
+    return setStatus("status-2","error","Veuillez sélectionner au moins une ressource.");
+  }
+  setStatus("status-2","info",`Analyse en cours sur ${selected.length} ressource(s)… cela peut prendre quelques dizaines de secondes.`);
+  $("btn-analyze").disabled = true;
+  setStep(3);
+  $("results-body").innerHTML = `<div class="empty"><div class="icon">⏳</div><p>Lancement de l'analyse Green Score…</p></div>`;
+  // Start tailing /api/analyze-log into the global console at the bottom
+  gconsoleStart("remote");
+
+  try {
+    const body = {
+      targets: state.targets,
+      swaggers: state.swaggers,
+      bearer:  state.bearer,
+      appname: state.appname || undefined,
+      sendToSobriit: $("send-to-sobriit")?.checked || false,
+      sobriitBaseUrl: $("sobriit-base-url")?.value?.trim() || undefined,
+      sobriitApiKey: $("sobriit-api-key")?.value?.trim() || undefined,
+      endpoints: selected.map(r => ({
+        target: r.target, method: r.method, path: r.path,
+        calls: r.calls || 3,
+        payload: r.payload || "",
+      })),
+    };
+    const { ok, status, data } = await postJSON("/api/analyze", body);
+    if (!ok || !data.ok) {
+      const detail = data.log ? `<details class="log"><summary>📜 Logs analyzer</summary><pre>${escHtml(data.log)}</pre></details>` : "";
+      throw new Error((data.error || `HTTP ${status}`) + (detail ? "<br>"+detail : ""));
+    }
+    state.report = data.report;
+    clearStatus("status-2");
+    renderResults(data.report, data.config, data.log_tail, data.sobriit);
+  } catch (err) {
+    setStatus("status-2","error","❌ " + (err.message || err));
+    $("results-body").innerHTML = `<div class="empty"><div class="icon">💥</div><p>Échec de l'analyse — voir le message ci-dessus.</p></div>`;
+  } finally {
+    $("btn-analyze").disabled = false;
+    gconsoleStop();
+  }
+});
+$("btn-back-2").addEventListener("click", () => setStep(2));
+$("btn-restart").addEventListener("click", () => { state.report = null; setStep(1); });
+
+// Allow clicking on stepper pills to navigate (back always; forward only
+// when the corresponding step has data).
+document.querySelectorAll(".step").forEach(s => {
+  s.style.cursor = "pointer";
+  s.addEventListener("click", () => {
+    const n = +s.dataset.step;
+    if (n === 1) return setStep(1);
+    if (n === 2 && state.resources.length > 0) return setStep(2);
+    if (n === 3 && state.report) return setStep(3);
+  });
+});
+
+// ── Step 3 rendering — score + breakdown + endpoints ────────────
+
+// ════════════════════════════════════════════════════════════════
+// Suggestions panel (filter by priority + progression bar)
+//   Mirrors the look & behavior of the full dashboard (index.html).
+//   Reused by both Remote and Local Green Score result tabs.
+// ════════════════════════════════════════════════════════════════
+
+// ── Shared rule registry ────────────────────────────────────────
+// Single source of truth for the 14 Green API rules currently scored
+// by the backend (scripts/green-api-auto-discover.py → GREEN_RULES).
+//
+// Keys MUST match the keys emitted in `green_score.breakdown` /
+// `green_score.rule_resource_mapping` by the analyzer. If the backend
+// adds a new rule, append it here and both the Remote and Local
+// renderers will pick it up automatically.
+//
+// Note: the rule key `AR02_format_cbor` is kept for backward-compat
+// with historical reports, but its DISPLAY id was renamed `BIN01` in
+// GREEN_RULES so it doesn't collide with the new official AR02
+// ("API runtime close to consumer"). The label below reflects that.
+const RULE_REGISTRY = {
+  // Data efficiency
+  DE11_pagination:    { label: "DE11 · Pagination",          max: 15, icon: "📄", category: "data-efficiency" },
+  DE08_fields:        { label: "DE08 · Filtrage de champs",  max: 15, icon: "🔍", category: "data-efficiency" },
+  DE01_compression:   { label: "DE01 · Compression",         max: 15, icon: "🗜️", category: "data-efficiency" },
+  DE02_DE03_cache:    { label: "DE02/03 · Cache ETag/304",   max: 15, icon: "💾", category: "data-efficiency" },
+  DE06_delta:         { label: "DE06 · Delta / changes",     max: 10, icon: "🔄", category: "data-efficiency" },
+  range_206:          { label: "206 · Range / Partial",      max: 10, icon: "✂️", category: "data-efficiency" },
+  AR02_format_cbor:   { label: "BIN01 · Format binaire",     max: 10, icon: "📦", category: "data-efficiency" },
+  // Logs & observability
+  LO01_observability: { label: "LO01 · Observabilité",       max:  5, icon: "👁️", category: "logs-observability" },
+  // Usage
+  US07_rate_limit:    { label: "US07 · Rate limit",          max:  5, icon: "🚦", category: "usage" },
+  // Architecture (APIGreenScore official AR rules — +23 pts on top of legacy 100 pts)
+  AR01_event_driven:  { label: "AR01 · Event-driven",        max:  6, icon: "📡", category: "architecture" },
+  AR02_runtime_close: { label: "AR02 · Runtime proche",      max:  7, icon: "🌍", category: "architecture" },
+  AR03_unique_api:    { label: "AR03 · Une API par besoin",  max:  3, icon: "🎯", category: "architecture" },
+  // Infrastructure
+  AR04_scalable_infra:{ label: "AR04 · Infra scalable",      max:  5, icon: "📈", category: "infrastructure" },
+  AR05_cloud_footprint:{label: "AR05 · Empreinte cloud",     max:  2, icon: "☁️", category: "infrastructure" },
+};
+
+// Convenience views (kept as separate consts so the rest of the
+// renderers stays readable; recomputed once at load time).
+const RULE_LABELS = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.label])
+);
+const RULE_MAX = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.max])
+);
+const RULE_ICONS = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.icon])
+);
+// Total budget (for sanity checks / progress bar fallback). The backend
+// is authoritative — if a project ships a custom green-score-threshold.json
+// the `gs.max` field overrides this value.
+const RULE_TOTAL_MAX = Object.values(RULE_REGISTRY).reduce((s, v) => s + v.max, 0);
+
+// Backward-compat alias for any code that still references the old name.
+const _SG_RULE_ICONS = RULE_ICONS;
+// Per-panel state (key = panelId, value = { rrm, ruleLabels, ruleMax, gs, filter })
+const _sgPanels = {};
+
+function _sgPrioLabel(p){
+  return p === "high" ? "🔴 Haute" : p === "medium" ? "🟡 Moyenne" : "⚪ Basse";
+}
+
+// Public: build initial HTML for a suggestions panel.
+// Returns the markup; caller injects it into a container that has data-sg-id.
+function buildSuggestionsPanel(panelId, rrm, ruleLabels, ruleMax, gs){
+  _sgPanels[panelId] = { rrm: rrm||{}, ruleLabels: ruleLabels||{}, ruleMax: ruleMax||{}, gs: gs||{}, filter: "high" };
+  return `<div class="sg-panel" id="sg-panel-${escHtml(panelId)}" data-sg-id="${escHtml(panelId)}">
+    ${_sgRender(panelId)}
+  </div>`;
+}
+
+// Internal: render summary + filters + grouped list for a panel.
+function _sgRender(panelId){
+  const st = _sgPanels[panelId];
+  if (!st) return "";
+  const { rrm, ruleLabels, ruleMax, gs, filter } = st;
+
+  // Collect rules with suggestions
+  const rules = [];
+  const all = [];
+  for (const k of Object.keys(rrm || {})) {
+    const rd = rrm[k] || {};
+    const sgs = rd.suggestions || [];
+    if (!sgs.length) continue;
+    const max_pts = (rd.max_pts != null) ? rd.max_pts : (ruleMax[k] || 0);
+    const score   = rd.score || 0;
+    rules.push({
+      key: k,
+      icon: _SG_RULE_ICONS[k] || "📌",
+      name: ruleLabels[k] || k,
+      description: rd.description || rd.label || "",
+      max_pts, score,
+      validated: !!rd.validated,
+      matched_count: rd.matched_count || 0,
+      candidate_count: rd.candidate_count || 0,
+      suggestions: sgs,
+    });
+    for (const s of sgs) all.push({...s, ruleKey: k});
+  }
+
+  // Total possible — sum of *every* rule's max_pts in the report (not just
+  // the ones with suggestions, which excludes already-validated rules and
+  // would shrink the denominator). This must match the hero score and the
+  // index.html / index.save.html dashboards.
+  const allRulesMaxSum = Object.values(rrm || {})
+    .reduce((s, r) => s + ((r && r.max_pts) || 0), 0);
+
+  // Empty state
+  if (all.length === 0) {
+    const total = gs.total || 0;
+    const max = allRulesMaxSum > 0 ? allRulesMaxSum : (gs.max || 100);
+    const pct = max > 0 ? Math.round(total/max*100) : 0;
+    const isMax = total >= max;
+    return `<div class="sg-summary" style="justify-content:center;text-align:center;padding:24px 16px">
+      <div>
+        <div style="font-size:2rem;margin-bottom:6px">${isMax?"🏆":"✅"}</div>
+        <div style="font-size:1rem;font-weight:700;color:#86efac;margin-bottom:4px">
+          ${isMax?"Score parfait !":"Aucune suggestion"}
+        </div>
+        <div style="font-size:.82rem;color:var(--txt-2)">
+          ${isMax
+            ? "Toutes les règles Green API sont validées — bravo !"
+            : `Score actuel : <strong style="color:#86efac">${total}/${max}</strong> (${pct}%)`}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Summary bar — scaled on the full barème, "potentiel = total possible − actuel"
+  const total = gs.total || 0;
+  const max = allRulesMaxSum > 0 ? allRulesMaxSum : (gs.max || 100);
+  const gain = Math.max(0, max - total);
+  const potential = total + gain;          // == max by construction
+  const curPct = max > 0 ? (total/max*100) : 0;
+  const potPct = max > 0 ? (potential/max*100) : 0;
+
+  const cntH = all.filter(s => s.priority === "high").length;
+  const cntM = all.filter(s => s.priority === "medium").length;
+  const cntL = all.filter(s => s.priority === "low").length;
+
+  const summaryHtml = `<div class="sg-summary">
+    <div style="text-align:center;min-width:100px">
+      <div class="sg-pot-score">${total} → ${potential}</div>
+      <div class="sg-pot-label">sur ${max} pts</div>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;font-size:.74rem;color:var(--txt-2);margin-bottom:4px;flex-wrap:wrap;gap:8px">
+        <span>Score actuel : <strong style="color:#fca5a5">${total}</strong></span>
+        <span>Potentiel : <strong style="color:#86efac">+${gain} pts</strong></span>
+        <span>Score cible : <strong style="color:#86efac">${potential}</strong></span>
+      </div>
+      <div class="sg-bar">
+        <div class="sg-tgt" style="width:${potPct.toFixed(1)}%"></div>
+        <div class="sg-cur" style="width:${curPct.toFixed(1)}%"></div>
+        <div class="sg-bar-lbl">${total} → ${potential} / ${max}  (+${gain} pts possibles)</div>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:6px;font-size:.72rem;color:var(--txt-3);flex-wrap:wrap">
+        <span>🔴 Haute : ${cntH}</span>
+        <span>🟡 Moyenne : ${cntM}</span>
+        <span>⚪ Basse : ${cntL}</span>
+      </div>
+    </div>
+  </div>`;
+
+  // Filters
+  const prios = ["all","high","medium","low"];
+  const lbls  = { all:"🎯 Toutes", high:"🔴 Haute", medium:"🟡 Moyenne", low:"⚪ Basse" };
+  const counts = { all: all.length, high: cntH, medium: cntM, low: cntL };
+  const filtersHtml = `<div class="sg-filters">${prios.map(p =>
+    `<button type="button" class="sg-fbtn ${filter===p?"active":""}"
+       onclick="sgFilter('${escHtml(panelId)}','${p}')">${lbls[p]} (${counts[p]})</button>`
+  ).join("")}</div>`;
+
+  // Sort by highest severity present in the rule's suggestions
+  // (high → medium → low). Tiebreak: gap (max_pts - score) descending.
+  const _sevRank = { high: 0, medium: 1, low: 2 };
+  const _ruleSev = (r) => {
+    let best = 9;
+    for (const s of r.suggestions) {
+      const v = _sevRank[s.priority] ?? 9;
+      if (v < best) best = v;
+    }
+    return best;
+  };
+  rules.sort((a,b) => {
+    const sa = _ruleSev(a), sb = _ruleSev(b);
+    if (sa !== sb) return sa - sb;
+    return (b.max_pts - b.score) - (a.max_pts - a.score);
+  });
+
+  let listHtml = "";
+  for (const rule of rules) {
+    const filtered = (filter === "all" ? rule.suggestions : rule.suggestions.filter(s => s.priority === filter))
+      .slice()
+      .sort((a,b) => (_sevRank[a.priority]??9) - (_sevRank[b.priority]??9));
+    if (!filtered.length) continue;
+    const isPartial = rule.validated && rule.matched_count < rule.candidate_count;
+    const stCls = !rule.validated ? "failed" : isPartial ? "partial" : "passed";
+    const stLbl = !rule.validated ? "❌ Non validé"
+              : isPartial ? `⚠️ Partiel (${rule.matched_count}/${rule.candidate_count})`
+              : "✅ Validé";
+    const gap = Math.max(0, rule.max_pts - rule.score);
+    const bodyId = `sg-body-${panelId}-${rule.key}`;
+
+    let items = "";
+    filtered.forEach((s, i) => {
+      const prio = s.priority || "medium";
+      const howId = `sg-how-${panelId}-${rule.key}-${i}`;
+      items += `<div class="sg-item" data-priority="${escHtml(prio)}">
+        <div class="sg-item-head">
+          <span class="sg-prio prio-${escHtml(prio)}">${_sgPrioLabel(prio)}</span>
+          ${s.target ? `<code class="sg-target">${escHtml(s.target)}</code>` : ""}
+        </div>
+        <div class="sg-act">${escHtml(s.action || "")}</div>
+        ${s.impact ? `<div class="sg-imp">📈 ${escHtml(s.impact)}</div>` : ""}
+        ${s.how ? `
+          <button type="button" class="sg-how-btn" onclick="sgToggleHow('${howId}', this)">
+            🔧 Comment l'implémenter <span style="font-size:.7rem">▼</span>
+          </button>
+          <div class="sg-how-content" id="${howId}"><pre>${escHtml(s.how)}</pre></div>` : ""}
+      </div>`;
+    });
+
+    listHtml += `<div class="sg-rule-group">
+      <div class="sg-rule-head" aria-expanded="true" onclick="sgToggleRule(this,'${bodyId}')">
+        <span class="sg-rule-icon">${rule.icon}</span>
+        <span class="sg-rule-title">${escHtml(rule.name)}</span>
+        <span class="sg-rule-st ${stCls}">${stLbl}</span>
+        ${gap > 0 ? `<span class="sg-rule-pts">+${gap} pts</span>` : ""}
+        <span class="sg-cnt">${filtered.length}</span>
+        <span class="sg-chev">▼</span>
+      </div>
+      <div class="sg-rule-body open" id="${bodyId}">
+        ${rule.description ? `<div class="sg-rule-desc">${escHtml(rule.description)}
+           <span style="margin-left:6px;color:var(--txt-3)">(${rule.matched_count}/${rule.candidate_count} endpoints validés)</span>
+        </div>` : ""}
+        ${items}
+      </div>
+    </div>`;
+  }
+
+  if (!listHtml) {
+    listHtml = `<div class="empty" style="padding:18px"><div class="icon">🔎</div>Aucune suggestion ne correspond à ce filtre.</div>`;
+  }
+
+  return summaryHtml + filtersHtml + listHtml;
+}
+
+// Public click handlers (called from inline onclick=)
+function sgFilter(panelId, prio){
+  const st = _sgPanels[panelId];
+  if (!st) return;
+  st.filter = prio;
+  const c = document.getElementById("sg-panel-" + panelId);
+  if (c) c.innerHTML = _sgRender(panelId);
+}
+function sgToggleRule(head, bodyId){
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  const open = head.getAttribute("aria-expanded") === "true";
+  head.setAttribute("aria-expanded", String(!open));
+  body.classList.toggle("open", !open);
+}
+function sgToggleHow(howId, btn){
+  const el = document.getElementById(howId);
+  if (!el) return;
+  const open = el.classList.toggle("open");
+  const arrow = btn.querySelector("span");
+  if (arrow) arrow.textContent = open ? "▲" : "▼";
+}
+
+function renderResults(envelope, cfg, log, sobriit){
+  const report = (envelope && envelope.report) ? envelope.report : envelope;
+  const gs = report.green_score || {};
+  const total = gs.total ?? "?";
+  const max = gs.max ?? 100;
+  const grade = gs.grade ?? "?";
+  const breakdown = gs.breakdown || {};
+  const details = gs.details || {};
+  const disc = report.auto_discovery || {};
+  const endpoints = disc.discovered_endpoints || [];
+  const ts = report.timestamp || "";
+
+  // Color grade
+  const pct = max > 0 ? Math.round((+total / max) * 100) : 0;
+  const color = pct >= 80 ? "#22c55e" : pct >= 60 ? "#86efac" : pct >= 40 ? "#facc15" : pct >= 20 ? "#f97316" : "#ef4444";
+
+  const ruleLabels = RULE_LABELS;
+  const ruleMax    = RULE_MAX;
+
+  const breakdownHtml = Object.keys(ruleLabels).map(k => {
+    const score = breakdown[k] ?? 0;
+    const m = ruleMax[k] || 0;
+    const cls = score >= m ? "good" : score > 0 ? "med" : "bad";
+    const note = (details[k]?.note) ? `<div style="color:var(--txt-3);font-size:.72rem;margin-top:2px">${escHtml(details[k].note)}</div>` : "";
+    return `<div class="rule-row">
+      <div><div class="rule-name">${escHtml(ruleLabels[k])}</div>${note}</div>
+      <span class="rule-pts ${cls}">${score} / ${m}</span>
+    </div>`;
+  }).join("");
+
+  // ── Build suggestions panel (severity filter + progression bar) ──
+  const mapping = gs.rule_resource_mapping || {};
+  let allSugCount = 0;
+  for (const k of Object.keys(mapping)) {
+    allSugCount += ((mapping[k] && mapping[k].suggestions) || []).length;
+  }
+  const suggestionsPanelHtml = buildSuggestionsPanel("remote", mapping, ruleLabels, ruleMax, gs);
+
+  const epRows = endpoints.slice(0, 200).map(e => {
+    const code = +e.http_code || 0;
+    const cls = code>=500?"s5":code>=400?"s4":code>=300?"s3":code>=200?"s2":"";
+    const sz = (e.size_download||0).toLocaleString("fr-FR");
+    const t = (+e.time_total||0).toFixed(3);
+    return `<tr>
+      <td><span class="method ${escHtml(e.method)}">${escHtml(e.method)}</span></td>
+      <td style="font-family:'Fira Code',monospace">${escHtml(e.path)}</td>
+      <td><span class="code-tag ${cls}">${code||"—"}</span></td>
+      <td style="text-align:right">${sz} B</td>
+      <td style="text-align:right">${t} s</td>
+    </tr>`;
+  }).join("");
+
+  $("results-meta").textContent = `📅 ${ts} · ${disc.endpoints_measured||0}/${disc.endpoints_discovered||0} endpoints · repeat=${cfg?.repeat ?? "?"}`;
+
+  // SobriIT status banner
+  let sobriitHtml = "";
+  if (sobriit) {
+    if (sobriit.ok) {
+      sobriitHtml = `<div class="status success" style="margin-top:14px">📤 <strong>SobriIT</strong> : résultats envoyés avec succès (app: ${escHtml(sobriit.applicationId||"—")}, build: ${escHtml(sobriit.buildId||"—")})</div>`;
+    } else {
+      sobriitHtml = `<div class="status error" style="margin-top:14px">📤 <strong>SobriIT</strong> : échec de l'envoi — ${escHtml(sobriit.error||"erreur inconnue")}</div>`;
+    }
+  }
+
+  $("results-body").innerHTML = `
+    <div class="results-grid">
+      <div class="score-card">
+        <div style="color:var(--txt-2);font-size:.85rem">${escHtml(state.appname || cfg?.appname || "API")}</div>
+        <div class="score-circle" style="border-color:${color};box-shadow:0 0 30px ${color}40">
+          <span class="number" style="color:${color}">${total}</span>
+          <span class="max">/ ${max}</span>
+          <span class="grade" style="background:${color};color:#0b1220">${escHtml(grade)}</span>
+        </div>
+        <div style="margin-top:6px;color:var(--txt-2);font-size:.84rem">Note Green Score · ${pct}%</div>
+        <div class="kv">
+          <div class="k">Endpoints découverts</div><div class="v">${disc.endpoints_discovered ?? 0}</div>
+          <div class="k">Endpoints mesurés</div>  <div class="v">${disc.endpoints_measured ?? 0}</div>
+          <div class="k">Cibles</div>             <div class="v">${(cfg?.targets||state.targets).length}</div>
+          <div class="k">Sélectionnés</div>      <div class="v">${cfg?.endpoints_selected ?? 0}</div>
+        </div>
+      </div>
+      <div class="breakdown-card">
+        <div style="font-size:.95rem;color:var(--green-l);font-weight:700;margin-bottom:10px">📋 Détail par règle</div>
+        ${breakdownHtml || `<div class="empty">Aucun détail.</div>`}
+      </div>
+    </div>
+
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>💡 Suggestions d'amélioration <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${allSugCount} suggestion(s)</span></span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:12px">
+        ${suggestionsPanelHtml}
+      </div>
+    </details>
+
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>📐 Endpoints mesurés${endpoints.length>200?` (200 premiers / ${endpoints.length})`:` (${endpoints.length})`}</span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px">
+      ${endpoints.length === 0
+        ? `<div class="empty">Aucune mesure.</div>`
+        : `<div style="overflow:auto;max-height:480px"><table class="ep-table">
+            <thead><tr><th>Méthode</th><th>Chemin</th><th>HTTP</th><th style="text-align:right">Taille</th><th style="text-align:right">Temps</th></tr></thead>
+            <tbody>${epRows}</tbody>
+          </table></div>`}
+      ${log ? `<details class="log" style="margin-top:14px"><summary>📜 Logs analyzer</summary><pre>${escHtml(log)}</pre></details>` : ""}
+      </div>
+    </details>
+    ${sobriitHtml}
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════
+// ── Main tabs (Remote vs Local) ─────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+function setMainTab(name){
+  document.querySelectorAll(".main-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.id === "tab-"+name));
+  // Global live console is only useful for the Remote tab — the Local tab
+  // already embeds its own inline console (start.sh logs).
+  const gcp = document.getElementById("global-console-panel");
+  if (gcp) gcp.style.display = (name === "remote") ? "" : "none";
+  // Persist last tab
+  try { localStorage.setItem("greenapi.activeTab", name); } catch {}
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+document.querySelectorAll(".main-tab").forEach(b => {
+  b.addEventListener("click", () => setMainTab(b.dataset.tab));
+});
+try {
+  const saved = localStorage.getItem("greenapi.activeTab");
+  if (saved === "local") setMainTab("local");
+  else setMainTab("remote");   // ensure global console visibility matches initial tab
+} catch { setMainTab("remote"); }
+
+// ════════════════════════════════════════════════════════════════
+// ── Local analysis (delegates to scripts/start.sh via the bridge)
+// ════════════════════════════════════════════════════════════════
+
+// Mini stepper for the local tab (mirrors the remote 3-step workflow
+// but with only 2 steps: Configuration → Results).
+function setLocalStep(n){
+  document.querySelectorAll("#loc-stepper .step").forEach(s => {
+    const st = +s.dataset.locStep;
+    s.classList.toggle("active", st === n);
+    s.classList.toggle("done",   st <  n);
+  });
+  $("loc-panel-1").style.display       = n === 1 ? "" : "none";
+  $("loc-results-panel").style.display = n === 2 ? "" : "none";
+  const panel = n === 1 ? $("loc-panel-1") : $("loc-results-panel");
+  if (panel) panel.scrollIntoView({behavior:"smooth", block:"start"});
+}
+// Allow clicking on the local stepper pills (back always; forward only
+// if results exist).
+document.querySelectorAll("#loc-stepper .step").forEach(s => {
+  s.style.cursor = "pointer";
+  s.addEventListener("click", () => {
+    const n = +s.dataset.locStep;
+    if (n === 1) return setLocalStep(1);
+    if (n === 2 && state.localReport) return setLocalStep(2);
+  });
+});
+$("loc-btn-back")?.addEventListener("click", () => setLocalStep(1));
+$("loc-btn-restart")?.addEventListener("click", () => {
+  state.localReport = null;
+  clearStatus("loc-status");
+  setLocalStep(1);
+});
+
+// ── Live console: polls /api/local-log while start.sh is running ──
+let _locLogTimer = null;
+function locConsoleAppend(text){
+  const pre = $("loc-console");
+  if (!pre) return;
+  // First write replaces the placeholder
+  if (pre.textContent === "(en attente du premier log…)") pre.textContent = "";
+  pre.textContent = text;
+  if ($("loc-console-autoscroll")?.checked) pre.scrollTop = pre.scrollHeight;
+}
+async function locPollLog(){
+  try {
+    const r = await fetch(absUrl("/api/local-log"), { method: "GET" });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && typeof j.content === "string") locConsoleAppend(j.content);
+    }
+  } catch (_) { /* ignore — keep polling */ }
+}
+function locStartLogPolling(){
+  $("loc-console-wrap").style.display = "";
+  $("loc-console-led").style.animation = "spin 1.5s linear infinite";
+  $("loc-console-led").style.background = "#86efac";
+  $("loc-console").textContent = "(en attente du premier log…)";
+  if (_locLogTimer) clearInterval(_locLogTimer);
+  locPollLog();
+  _locLogTimer = setInterval(locPollLog, 1200);
+}
+function locStopLogPolling(){
+  if (_locLogTimer) { clearInterval(_locLogTimer); _locLogTimer = null; }
+  // Final pull to make sure we got the very last bytes
+  locPollLog();
+  $("loc-console-led").style.animation = "none";
+  $("loc-console-led").style.background = "var(--txt-3)";
+}
+$("loc-console-clear")?.addEventListener("click", () => {
+  $("loc-console").textContent = "(vidé)";
+});
+
+// ── Global live console (bottom of page) ────────────────────────
+// Generic poller usable by both the Remote tab (/api/analyze-log) and the
+// Local tab (/api/local-log). The local tab also keeps its inline console;
+// the global one mirrors whichever run is active so the user can keep an
+// eye on the logs without scrolling back up.
+let _gconsoleTimer = null;
+let _gconsoleSource = "";   // "remote" | "local" | ""
+function gconsoleAppend(text){
+  const pre = $("gconsole");
+  if (!pre) return;
+  if (pre.textContent === "(en attente du premier log…)" || pre.textContent === "(vidé)") {
+    pre.textContent = "";
+  }
+  pre.textContent = text;
+  if ($("gconsole-autoscroll")?.checked) pre.scrollTop = pre.scrollHeight;
+}
+function gconsoleSetState(running, source){
+  const led = $("gconsole-led");
+  const lbl = $("gconsole-source");
+  if (running) {
+    led.style.animation = "spin 1.5s linear infinite";
+    led.style.background = "#86efac";
+    led.style.boxShadow  = "0 0 8px #86efac";
+    lbl.textContent = source === "remote"
+      ? "🌐 Remote analyze · /api/analyze-log"
+      : "💻 Local start.sh · /api/local-log";
+  } else {
+    led.style.animation = "none";
+    led.style.background = "var(--txt-3)";
+    led.style.boxShadow  = "none";
+    lbl.textContent = source ? `terminé · ${source}` : "— en attente —";
+  }
+}
+async function gconsolePoll(endpoint){
+  try {
+    const r = await fetch(absUrl(endpoint), { method: "GET" });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && typeof j.content === "string") gconsoleAppend(j.content);
+    }
+  } catch (_) { /* keep polling */ }
+}
+function gconsoleStart(source){
+  // source: "remote" | "local"
+  _gconsoleSource = source;
+  const endpoint = source === "remote" ? "/api/analyze-log" : "/api/local-log";
+  gconsoleSetState(true, source);
+  $("gconsole").textContent = "(en attente du premier log…)";
+  if (_gconsoleTimer) clearInterval(_gconsoleTimer);
+  gconsolePoll(endpoint);
+  _gconsoleTimer = setInterval(() => gconsolePoll(endpoint), 1200);
+}
+function gconsoleStop(){
+  const endpoint = _gconsoleSource === "remote" ? "/api/analyze-log" : "/api/local-log";
+  if (_gconsoleTimer) { clearInterval(_gconsoleTimer); _gconsoleTimer = null; }
+  gconsolePoll(endpoint);   // final pull
+  gconsoleSetState(false, _gconsoleSource);
+}
+$("gconsole-clear")?.addEventListener("click", () => {
+  $("gconsole").textContent = "(vidé)";
+});
+
+$("loc-btn-load-sample").addEventListener("click", () => {
+  // Toggle Java ↔ .NET sample on each click for quick demos.
+  const isDotnet = $("loc-stack")?.value === "dotnet";
+  if (isDotnet) {
+    // Switch back to Java sample
+    $("loc-stack").value = "java";
+    $("loc-targets").value = "http://localhost:8080\nhttp://localhost:8081";
+    $("loc-appname").value = "demo-app";
+  } else {
+    // Switch to .NET sample
+    $("loc-stack").value = "dotnet";
+    $("loc-targets").value = "http://localhost:5050";
+    $("loc-appname").value = "demo-aspnet";
+  }
+  $("loc-creedengo").checked = true;
+});
+
+$("loc-btn-analyze").addEventListener("click", async () => {
+  const targets   = parseTargets($("loc-targets").value);
+  const bearer    = $("loc-bearer").value.trim();
+  const appname   = $("loc-appname").value.trim();
+  const creedengo = $("loc-creedengo").checked;
+  const debug     = $("loc-debug").checked;
+  const gitKeep   = $("loc-git-keep").checked;
+  const gitRepo   = $("loc-git-repo").value.trim();
+  const gitBranch = $("loc-git-branch").value.trim();
+  const gitSubdir = $("loc-git-subdir").value.trim();
+  const stack       = ($("loc-stack")?.value || "auto").trim();
+  const sourceDir   = ($("loc-source-dir")?.value || "").trim();
+  const buildAndRun = $("loc-build-and-run")?.checked || false;
+  const consumerRegion          = ($("loc-consumer-region")?.value || "").trim();
+  const enableGeoip             = $("loc-enable-geoip")?.checked || false;
+  const cloudFootprintConfirmed = $("loc-cloud-footprint-confirmed")?.checked || false;
+
+  if (targets.length === 0 && !gitRepo && !buildAndRun) {
+    return setStatus("loc-status","error","Veuillez fournir au moins une URL d'API, un dépôt Git, <em>ou</em> activer Build &amp; run.");
+  }
+  if (buildAndRun && !sourceDir) {
+    return setStatus("loc-status","error","Build &amp; run requiert un <em>dossier source local</em>.");
+  }
+
+  const launchedAt = Date.now();
+  setStatus("loc-status","info",
+    `Lancement de <code>start.sh</code> sur ${targets.length} cible(s)` +
+    (gitRepo ? ` + dépôt <code>${escHtml(gitRepo)}</code>` : "") +
+    (creedengo ? " · Creedengo activé" : "") +
+    "… (peut prendre quelques minutes — pas de Ctrl+C dans cet onglet, le bridge gère le timeout).");
+  $("loc-btn-analyze").disabled = true;
+  // Stay on step 1 while running (status is shown in-place); switch to
+  // step 2 only when results arrive.
+  locStartLogPolling();
+
+  try {
+    const { ok, status, data } = await postJSON("/api/local-analyze", {
+      targets, bearer, appname,
+      creedengo, debug, gitKeep,
+      gitRepo, gitBranch, gitSubdir,
+      stack, sourceDir, buildAndRun,
+      consumerRegion, enableGeoip, cloudFootprintConfirmed,
+      sendToSobriit: $("loc-send-to-sobriit")?.checked || false,
+      sobriitBaseUrl: $("loc-sobriit-base-url")?.value?.trim() || undefined,
+      sobriitApiKey: $("loc-sobriit-api-key")?.value?.trim() || undefined,
+    }, { timeoutMs: 10 * 60 * 1000 });   // 10 min — match server timeout
+    if (!ok || !data.ok) {
+      const detail = data.log ? `<details class="log"><summary>📜 Logs start.sh</summary><pre>${escHtml(data.log)}</pre></details>` : "";
+      throw new Error((data.error || `HTTP ${status}`) + (detail ? "<br>"+detail : ""));
+    }
+    const elapsed = Math.round((Date.now() - launchedAt)/1000);
+    // Only warn about a category the user actually requested. Creedengo is
+    // optional → never warn if it wasn't requested for this run.
+    const cdRequested = data.creedengo_requested === true;
+    const gsTag = data.report
+      ? (data.report_fresh === false ? "♻️ ancien" : "✓")
+      : "❌ non généré";
+    const cdTag = cdRequested
+      ? (data.creedengo ? (data.creedengo_fresh === false ? "♻️ ancien" : "✓") : "❌ non généré")
+      : "—";
+    setStatus("loc-status","success",
+      `✅ start.sh terminé en ${elapsed}s — Green Score: ${gsTag} · Creedengo: ${cdTag}`);
+    state.localReport = data.report || null;
+    renderLocalResults(data.report, data.creedengo, data.config, data.log_tail, {
+      appname,
+      freshGS: !data.report ? false : data.report_fresh !== false,
+      freshCD: !cdRequested ? null : (!data.creedengo ? false : data.creedengo_fresh !== false),
+      cdRequested,
+      sobriit: data.sobriit,
+    });
+    setLocalStep(2);
+  } catch (err) {
+    setStatus("loc-status","error","❌ " + (err.message || err));
+  } finally {
+    $("loc-btn-analyze").disabled = false;
+    locStopLogPolling();
+    gconsoleStop();
+  }
+});
+
+// ── Local results renderer ──────────────────────────────────────
+// Re-uses the same Green Score look as the remote tab and adds:
+//   • a Creedengo grade card next to the Green Score card
+//   • a Creedengo suggestions accordion below the Green Score one
+function renderLocalResults(report, creedengo, cfg, log, opts){
+  // The latest-report.json produced by start.sh is wrapped in an envelope:
+  //   { appname, report: { green_score, timestamp, auto_discovery, … } }
+  // Unwrap it so the rest of this function can address fields uniformly —
+  // exactly the same trick renderResults() uses for the remote tab.
+  // Preserve `appname` from the envelope (it lives outside .report) so the
+  // score card can show the right project name.
+  let envelopeAppname = "";
+  if (report && report.report && report.report.green_score) {
+    envelopeAppname = report.appname || "";
+    report = report.report;
+  }
+  // Same for Creedengo (defensive — some pipelines wrap it too).
+  if (creedengo && creedengo.report && creedengo.report.creedengo_score) {
+    creedengo = creedengo.report;
+  }
+  const ruleLabels = RULE_LABELS;
+  const ruleMax    = RULE_MAX;
+
+  // ── Green Score card ─────────────────────────────────────────
+  let gsCardHtml = "";
+  let gsBreakdownHtml = "";
+  let gsSuggestionsHtml = "";
+  let gsSuggestionsCount = 0;
+  let endpointsHtml = "";
+  let metaText = "—";
+  if (report && report.green_score) {
+    const gs = report.green_score;
+    const total = gs.total ?? "?", max = gs.max ?? 100, grade = gs.grade ?? "?";
+    const pct = max > 0 ? Math.round((+total/max)*100) : 0;
+    const color = pct>=80?"#22c55e":pct>=60?"#86efac":pct>=40?"#facc15":pct>=20?"#f97316":"#ef4444";
+    const disc = report.auto_discovery || {};
+    const endpoints = disc.discovered_endpoints || [];
+    metaText = `📅 ${report.timestamp||""} · ${disc.endpoints_measured||0}/${disc.endpoints_discovered||0} endpoints`;
+
+    gsCardHtml = `
+      <div class="score-card">
+        <div style="color:var(--txt-2);font-size:.85rem">${escHtml(opts?.appname || cfg?.appname || envelopeAppname || report.appname || "API")}</div>
+        <div class="score-circle" style="border-color:${color};box-shadow:0 0 30px ${color}40">
+          <span class="number" style="color:${color}">${total}</span>
+          <span class="max">/ ${max}</span>
+          <span class="grade" style="background:${color};color:#0b1220">${escHtml(grade)}</span>
+        </div>
+        <div style="margin-top:6px;color:var(--txt-2);font-size:.84rem">🌿 Green Score · ${pct}%</div>
+        <div class="kv">
+          <div class="k">Endpoints découverts</div><div class="v">${disc.endpoints_discovered ?? 0}</div>
+          <div class="k">Endpoints mesurés</div>  <div class="v">${disc.endpoints_measured ?? 0}</div>
+          <div class="k">Cibles</div>             <div class="v">${(cfg?.targets||[]).length}</div>
+        </div>
+      </div>`;
+
+    const breakdown = gs.breakdown || {};
+    const details = gs.details || {};
+    gsBreakdownHtml = Object.keys(ruleLabels).map(k => {
+      const score = breakdown[k] ?? 0;
+      const m = ruleMax[k] || 0;
+      const cls = score >= m ? "good" : score > 0 ? "med" : "bad";
+      const note = details[k]?.note ? `<div style="color:var(--txt-3);font-size:.72rem;margin-top:2px">${escHtml(details[k].note)}</div>` : "";
+      return `<div class="rule-row"><div><div class="rule-name">${escHtml(ruleLabels[k])}</div>${note}</div><span class="rule-pts ${cls}">${score} / ${m}</span></div>`;
+    }).join("");
+
+    const mapping = gs.rule_resource_mapping || {};
+    let _gsCount = 0;
+    for (const k of Object.keys(mapping)) {
+      _gsCount += ((mapping[k] && mapping[k].suggestions) || []).length;
+    }
+    gsSuggestionsCount = _gsCount;
+    gsSuggestionsHtml = buildSuggestionsPanel("local", mapping, ruleLabels, ruleMax, gs);
+
+    endpointsHtml = endpoints.slice(0,200).map(e => {
+      const code = +e.http_code || 0;
+      const cls = code>=500?"s5":code>=400?"s4":code>=300?"s3":code>=200?"s2":"";
+      const sz = (e.size_download||0).toLocaleString("fr-FR");
+      const t  = (+e.time_total||0).toFixed(3);
+      return `<tr><td><span class="method ${escHtml(e.method)}">${escHtml(e.method)}</span></td>
+        <td style="font-family:'Fira Code',monospace">${escHtml(e.path)}</td>
+        <td><span class="code-tag ${cls}">${code||"—"}</span></td>
+        <td style="text-align:right">${sz} B</td>
+        <td style="text-align:right">${t} s</td></tr>`;
+    }).join("");
+  } else {
+    gsCardHtml = `<div class="score-card" style="border-color:rgba(239,68,68,.4)"><div class="empty" style="padding:30px">
+      <div class="icon">⚠️</div>
+      <strong style="color:#fca5a5">Green Score non produit</strong>
+      <div style="font-size:.78rem;color:var(--txt-2);margin-top:6px;line-height:1.5">
+        start.sh n'a pas généré <code>reports/latest-report.json</code>.<br>
+        Causes fréquentes : aucune cible n'a répondu sur le health-check, le bearer token est invalide,<br>
+        ou l'analyzer a été interrompu.<br>
+        <span style="color:var(--green-l)">👉 Consultez les logs <code>start.sh</code> en bas de page.</span>
+      </div>
+    </div></div>`;
+  }
+
+  // ── Creedengo card + suggestions ──────────────────────────────
+  let cdCardHtml = "";
+  let cdSuggestionsHtml = "";
+  let cdSuggestionsCount = 0;
+  if (creedengo && creedengo.creedengo_score) {
+    const cs = creedengo.creedengo_score;
+    const total = cs.total ?? "?", max = cs.max ?? 100, grade = cs.grade ?? "?";
+    const pct = max > 0 ? Math.round((+total/max)*100) : 0;
+    const color = pct>=80?"#22c55e":pct>=60?"#86efac":pct>=40?"#facc15":pct>=20?"#f97316":"#ef4444";
+    const sb = cs.severity_breakdown || {};
+
+    cdCardHtml = `
+      <div class="creedengo-card">
+        <div style="color:var(--txt-2);font-size:.85rem">${escHtml(creedengo.project || creedengo.appname || "source code")}</div>
+        <div class="score-circle" style="border-color:${color};box-shadow:0 0 30px ${color}40">
+          <span class="number" style="color:${color}">${total}</span>
+          <span class="max">/ ${max}</span>
+          <span class="grade" style="background:${color};color:#0b1220">${escHtml(grade)}</span>
+        </div>
+        <div style="margin-top:6px;color:var(--txt-2);font-size:.84rem">🐝 Creedengo · ${pct}%</div>
+        <div class="kv" style="width:100%">
+          <div class="k">Issues</div>     <div class="v">${cs.issues_count ?? 0}</div>
+          <div class="k">Effort total</div><div class="v">${escHtml(cs.total_effort || "—")}</div>
+          <div class="k">Blocker</div>    <div class="v">${sb.BLOCKER ?? 0}</div>
+          <div class="k">Critical</div>   <div class="v">${sb.CRITICAL ?? 0}</div>
+          <div class="k">Major</div>      <div class="v">${sb.MAJOR ?? 0}</div>
+          <div class="k">Minor</div>      <div class="v">${sb.MINOR ?? 0}</div>
+        </div>
+      </div>`;
+
+    // Build Creedengo "suggestions" from rules_summary (one per violated rule)
+    const sevPrio = {BLOCKER:"high", CRITICAL:"high", MAJOR:"medium", MINOR:"low", INFO:"low"};
+    const sevOrder = {BLOCKER:0, CRITICAL:1, MAJOR:2, MINOR:3, INFO:4};
+    const rules = (creedengo.rules_summary || []).slice().sort((a,b) =>
+      (sevOrder[a.severity]??9) - (sevOrder[b.severity]??9));
+    cdSuggestionsCount = rules.length;
+    const prioIcon = {high:"🔴", medium:"🟡", low:"🔵"};
+    cdSuggestionsHtml = rules.length === 0
+      ? `<div class="empty" style="padding:18px"><div class="icon">🎉</div>Aucune règle Creedengo violée.</div>`
+      : rules.map(r => {
+          const prio = sevPrio[r.severity] || "low";
+          const sample = (r.files || []).slice(0,5);
+          return `<details class="suggestion">
+            <summary><div class="sg-head">
+              <span class="sg-prio prio-${escHtml(prio)}">${prioIcon[prio]} ${escHtml(r.severity)}</span>
+              <span class="sg-rule">${escHtml(r.key)} · ${escHtml(r.name)}</span>
+              <code class="sg-target">${r.count} occurrence${r.count>1?"s":""}</code>
+            </div></summary>
+            <div class="sg-body">
+              <div class="sg-action">${escHtml(r.description || r.name || "")}</div>
+              <div class="sg-impact">📂 Catégorie: <code>${escHtml(r.category||"general")}</code> · Type: <code>${escHtml(r.type||"")}</code></div>
+              ${sample.length ? `<details class="sg-how"><summary>Fichiers concernés (${sample.length}${r.files?.length>sample.length?"+":""})</summary><pre>${escHtml(sample.join("\n"))}</pre></details>` : ""}
+            </div>
+          </details>`;
+        }).join("");
+  } else {
+    // Distinguish "not requested" (informational) from "requested but failed"
+    // (actionable) so the user understands what happened.
+    if (opts && opts.cdRequested === true) {
+      cdCardHtml = `<div class="creedengo-card" style="border-color:rgba(239,68,68,.4)"><div class="empty" style="padding:30px">
+        <div class="icon">⚠️</div>
+        <strong style="color:#fca5a5">Creedengo demandé mais non produit</strong>
+        <div style="font-size:.78rem;color:var(--txt-2);margin-top:6px;line-height:1.5">
+          start.sh a échoué à générer <code>creedengo-report.json</code>.<br>
+          Causes fréquentes : <em>SonarQube container failed to start</em> (Elasticsearch shard recovery),<br>
+          mémoire Docker insuffisante (&lt;4 Go), ou volume ES corrompu.<br>
+          <span style="color:var(--green-l)">👉 Consultez les logs <code>start.sh</code> en bas de page.</span>
+        </div>
+      </div></div>`;
+    } else {
+      cdCardHtml = `<div class="creedengo-card"><div class="empty" style="padding:36px">
+        <div class="icon">🐝</div>Pas de rapport Creedengo<br>
+        <span style="font-size:.78rem">(cochez « Lancer aussi Creedengo » ou fournissez un dépôt Git)</span>
+      </div></div>`;
+    }
+  }
+
+  // ── Compose final HTML ────────────────────────────────────────
+  $("loc-results-meta").textContent = metaText;
+  // Only warn about reports the user actually requested for this run:
+  //  • Green Score: always requested (always check freshness).
+  //  • Creedengo:   only if opts.cdRequested === true.
+  // freshCD === null means "not requested" → no warning.
+  const warnGS = (opts && opts.freshGS === false);
+  const warnCD = (opts && opts.cdRequested === true && opts.freshCD === false);
+  const warnHtml = (warnGS || warnCD)
+    ? `<div class="status" style="margin-bottom:14px;background:rgba(234,179,8,.10);border-color:rgba(234,179,8,.4);color:#facc15">
+         ⚠️ Certains rapports demandés n'ont pas été régénérés par cette exécution de <code>start.sh</code> :
+         ${warnGS ? "<br>• Green Score (rapport non produit)" : ""}
+         ${warnCD ? "<br>• Creedengo (rapport non produit)" : ""}
+         <br><small>Vérifiez les logs <code>start.sh</code> ci-dessous pour comprendre pourquoi.</small>
+       </div>`
+    : "";
+  // SobriIT status banner (local tab)
+  let sobriitHtml = "";
+  if (opts?.sobriit) {
+    const s = opts.sobriit;
+    if (s.ok) {
+      sobriitHtml = `<div class="status success" style="margin-top:14px">📤 <strong>SobriIT</strong> : résultats envoyés avec succès (app: ${escHtml(s.applicationId||"—")}, build: ${escHtml(s.buildId||"—")})</div>`;
+    } else {
+      sobriitHtml = `<div class="status error" style="margin-top:14px">📤 <strong>SobriIT</strong> : échec de l'envoi — ${escHtml(s.error||"erreur inconnue")}</div>`;
+    }
+  }
+
+  $("loc-results-body").innerHTML = warnHtml + `
+    <div class="results-grid" style="grid-template-columns:1fr 1fr">
+      ${gsCardHtml}
+      ${cdCardHtml}
+    </div>
+
+    ${gsBreakdownHtml ? `
+    <details class="breakdown-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>📋 Détail Green Score par règle</span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px">${gsBreakdownHtml}</div>
+    </details>` : ""}
+
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>💡 Suggestions Green Score <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${gsSuggestionsCount} suggestion(s)</span></span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:12px">${gsSuggestionsHtml}</div>
+    </details>
+
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:#93c5fd;font-weight:700">
+        <span>🐝 Suggestions Creedengo <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${cdSuggestionsCount} règle(s) violée(s)</span></span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px"><div class="suggestions-wrap">${cdSuggestionsHtml}</div></div>
+    </details>
+
+    ${endpointsHtml ? `
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>📐 Endpoints mesurés</span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px;overflow:auto;max-height:480px"><table class="ep-table">
+        <thead><tr><th>Méthode</th><th>Chemin</th><th>HTTP</th><th style="text-align:right">Taille</th><th style="text-align:right">Temps</th></tr></thead>
+        <tbody>${endpointsHtml}</tbody>
+      </table></div>
+    </details>` : ""}
+
+    ${log ? `<details class="log" style="margin-top:14px"><summary>📜 Logs start.sh</summary><pre>${escHtml(log)}</pre></details>` : ""}
+    ${sobriitHtml}
+  `;
+}
+</script>
+</body>
+</html>
+

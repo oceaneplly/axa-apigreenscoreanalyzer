@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-30T15:24:52Z",
+  "service_base_url": "http://localhost:8081",
+  "endpoint": {
+    "method": "get",
+    "path": "/books/cbor",
+    "url": "http://localhost:8081/books/cbor",
+    "http_code": 429,
+    "size_download": 20,
+    "time_total": 0.004573,
+    "speed_download": 4373,
+    "energy_network_wh": 1.1175870895385742e-06,
+    "energy_server_wh": 3.175694444444444e-05,
+    "energy_total_wh": 3.287453153398302e-05
+  }
+}

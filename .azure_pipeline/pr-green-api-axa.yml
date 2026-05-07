@@ -1,0 +1,322 @@
+# ─────────────────────────────────────────────────────────────
+#  🌿 Green API Score CI — Azure DevOps Pipeline (mode AXA)
+#  Dynamique : clone l'analyzer, exécute start.sh avec paramètres
+# ─────────────────────────────────────────────────────────────
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+
+schedules:
+  - cron: "0 0 * * 0"
+    displayName: "Weekly Sunday midnight build"
+    branches:
+      include:
+        - main
+    always: false
+
+variables:
+  JAVA_VERSION: "17"
+  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  MAVEN_OPTS: "-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)"
+  ANALYZER_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
+  ANALYZER_BRANCH: "develop"
+  TARGETS: "http://localhost:8080"
+  SWAGGERS: "http://localhost:8080/v3/api-docs"
+  APPNAME: "green-api"
+  BEARER_TOKEN: ""
+  RUN_CREEDENGO: "true"
+  GIT_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/GreenIT/_git/green-api-workshop"
+  GIT_BRANCH: "feat/devoxx-creedengo"
+  GIT_SUBDIR: ""
+  GIT_KEEP: "false"
+  STACK: "auto"
+  SOURCE_DIR: "."
+  BUILD_AND_RUN: "true"
+  DEBUG_MODE: "true"
+  CONSUMER_REGION: "FR"
+  ENABLE_GEOIP: "true"
+  CLOUD_FOOTPRINT_CONFIRMED: "true"
+  REPEAT: "3"
+  EXTRA_ARGS: "--analyze --build-and-run"
+  SOBRIIT_BASE_URL: ""
+  SOBRIIT_API_KEY: ""
+  SOBRIIT_APP_CODE: ""
+  SOBRIIT_APP_DSI: ""
+  SOBRIIT_APP_TRIBE: ""
+  SOBRIIT_APP_TRIBE_ID: ""
+  SEND_TO_SOBRIIT: "false"
+
+pool:
+  name: ubuntu-22
+  demands:
+    - maven
+    - python
+    - java
+    - AGENT_JDK_VERSION -equals 17
+
+stages:
+  - stage: GreenAnalysis
+    displayName: "🌿 Green API Analysis"
+    jobs:
+      
+      - job: RunAnalyzer
+        displayName: "Run Analyzer"
+        timeoutInMinutes: 30
+        steps:
+          - checkout: self
+            persistCredentials: true
+            clean: false
+          - task: JavaToolInstaller@0
+            displayName: "Setup JDK $(JAVA_VERSION)"
+            inputs:
+              versionSpec: $(JAVA_VERSION)
+              jdkArchitectureOption: x64
+              jdkSourceOption: PreInstalled
+          
+          # ── Clone the analyzer repository ──
+          - bash: |
+              java -version
+              set -e
+              ANALYZER_DIR="$(Agent.TempDirectory)/axa-apigreenscoreanalyzer"
+              echo "📥 Cloning analyzer repo (branch: $(ANALYZER_BRANCH))..."
+              git clone --branch "$(ANALYZER_BRANCH)" "$(ANALYZER_REPO)" "$ANALYZER_DIR"
+              echo "✅ Analyzer cloned into $ANALYZER_DIR"
+              ls -la "$ANALYZER_DIR/scripts/start.sh"
+              echo "##vso[task.setvariable variable=ANALYZER_DIR]$ANALYZER_DIR"
+            displayName: "Clone Green API Analyzer"
+
+          # ── Run start.sh with dynamic arguments ──
+          - bash: |
+              cd "$(ANALYZER_DIR)"
+              chmod +x scripts/start.sh
+
+              # Build the command arguments
+              ARGS=""
+
+              # --targets
+              if [ -n "$(TARGETS)" ]; then
+                ARGS="$ARGS --targets $(TARGETS)"
+              fi
+
+              # --swaggers
+              if [ -n "$(SWAGGERS)" ]; then
+                ARGS="$ARGS --swaggers $(SWAGGERS)"
+              fi
+
+              # --appname
+              if [ -n "$(APPNAME)" ]; then
+                ARGS="$ARGS --appname $(APPNAME)"
+              fi
+
+              # --bearer
+              if [ -n "$(BEARER_TOKEN)" ]; then
+                ARGS="$ARGS --bearer $(BEARER_TOKEN)"
+              fi
+
+              # --creedengo
+              if [ "$(RUN_CREEDENGO)" = "true" ]; then
+                ARGS="$ARGS --creedengo"
+              fi
+
+              # --git-repo
+              if [ -n "$(GIT_REPO)" ]; then
+                ARGS="$ARGS --git-repo $(GIT_REPO)"
+              fi
+
+              # --git-branch
+              if [ -n "$(GIT_BRANCH)" ]; then
+                ARGS="$ARGS --git-branch $(GIT_BRANCH)"
+              fi
+
+              # --git-subdir
+              if [ -n "$(GIT_SUBDIR)" ]; then
+                ARGS="$ARGS --git-subdir $(GIT_SUBDIR)"
+              fi
+
+              # --git-keep
+              if [ "$(GIT_KEEP)" = "true" ]; then
+                ARGS="$ARGS --git-keep"
+              fi
+
+              # --stack
+              if [ "$(STACK)" != "auto" ] && [ -n "$(STACK)" ]; then
+                ARGS="$ARGS --stack $(STACK)"
+              fi
+
+              # --source-dir
+              if [ -n "$(SOURCE_DIR)" ]; then
+                ARGS="$ARGS --source-dir $(SOURCE_DIR)"
+              fi
+
+              # --build-and-run
+              if [ "$(BUILD_AND_RUN)" = "true" ]; then
+                ARGS="$ARGS --build-and-run"
+              fi
+
+              # --debug
+              if [ "$(DEBUG_MODE)" = "true" ]; then
+                ARGS="$ARGS --debug"
+              fi
+
+              # --consumer-region
+              if [ -n "$(CONSUMER_REGION)" ]; then
+                ARGS="$ARGS --consumer-region $(CONSUMER_REGION)"
+              fi
+
+              # --enable-geoip
+              if [ "$(ENABLE_GEOIP)" = "true" ]; then
+                ARGS="$ARGS --enable-geoip"
+              fi
+
+              # --cloud-footprint-confirmed
+              if [ "$(CLOUD_FOOTPRINT_CONFIRMED)" = "true" ]; then
+                ARGS="$ARGS --cloud-footprint-confirmed"
+              fi
+
+              # --send-to-sobriit
+              if [ "$(SEND_TO_SOBRIIT)" = "true" ]; then
+                ARGS="$ARGS --send-to-sobriit"
+              fi
+
+              # --app-code
+              if [ -n "$(SOBRIIT_APP_CODE)" ]; then
+                ARGS="$ARGS --app-code $(SOBRIIT_APP_CODE)"
+              fi
+
+              # Extra args (free-form)
+              if [ -n "$(EXTRA_ARGS)" ]; then
+                ARGS="$ARGS $(EXTRA_ARGS)"
+              fi
+
+              echo "🚀 Running: bash scripts/start.sh $ARGS"
+              echo "─────────────────────────────────��──────"
+
+              export REPEAT="$(REPEAT)"
+              export APPNAME="$(APPNAME)"
+              export PYTHONIOENCODING="utf-8"
+              export INTERACTIVE_BRIDGE="1"
+              export SONAR_JAVA_BINARIES="$(SONAR_JAVA_BINARIES)"
+              export SOBRIIT_BASE_URL="$(SOBRIIT_BASE_URL)"
+              export SOBRIIT_API_KEY="$(SOBRIIT_API_KEY)"
+              export SOBRIIT_APP_CODE="$(SOBRIIT_APP_CODE)"
+              export SOBRIIT_APP_DSI="$(SOBRIIT_APP_DSI)"
+              export SOBRIIT_APP_TRIBE="$(SOBRIIT_APP_TRIBE)"
+              export SOBRIIT_APP_TRIBE_ID="$(SOBRIIT_APP_TRIBE_ID)"
+
+              bash scripts/start.sh $ARGS
+            displayName: "Run Analyzer with parameters"
+            env:
+              REPEAT: $(REPEAT)
+              APPNAME: $(APPNAME)
+              PYTHONIOENCODING: "utf-8"
+
+          # ── Send results to SobriIT ──
+          - bash: |
+              cd "$(ANALYZER_DIR)"
+
+              SOBRIIT_ARGS="--appname $(APPNAME)"
+
+              if [ -f "reports/latest-report.json" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --green-report reports/latest-report.json"
+              fi
+
+              if [ -f "reports/creedengo-report.json" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --creedengo-report reports/creedengo-report.json"
+              fi
+
+              if [ -n "$(SOBRIIT_BASE_URL)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --base-url $(SOBRIIT_BASE_URL)"
+              fi
+
+              if [ -n "$(SOBRIIT_API_KEY)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --api-key $(SOBRIIT_API_KEY)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_CODE)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-code $(SOBRIIT_APP_CODE)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_DSI)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-dsi $(SOBRIIT_APP_DSI)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_TRIBE)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-tribe $(SOBRIIT_APP_TRIBE)"
+              fi
+
+              if [ -n "$(SOBRIIT_APP_TRIBE_ID)" ]; then
+                SOBRIIT_ARGS="$SOBRIIT_ARGS --app-tribe-id $(SOBRIIT_APP_TRIBE_ID)"
+              fi
+
+              echo "📤 Sending to SobriIT: python3 scripts/sobriit_sender.py $SOBRIIT_ARGS"
+              python3 scripts/sobriit_sender.py $SOBRIIT_ARGS || echo "⚠️ SobriIT send failed (non-blocking)"
+            displayName: "Send results to SobriIT"
+            condition: and(always(), eq(variables['SEND_TO_SOBRIIT'], 'true'))
+            continueOnError: true
+
+          # ── Publish reports (selective) ──
+          - bash: |
+              STAGING="/tmp/publish-staging"
+              mkdir -p "$STAGING/reports" "$STAGING/dashboard" "$STAGING/badges"
+
+              # Reports
+              for f in latest-report.json last-report.json creedengo-report.json \
+                       interactive-config.json interactive-local-config.json \
+                       discovered-openapi.json; do
+                [ -f "$(ANALYZER_DIR)/reports/$f" ] && cp "$(ANALYZER_DIR)/reports/$f" "$STAGING/reports/"
+              done
+
+              # Dashboard
+              for f in index.html index.md README.md; do
+                [ -f "$(ANALYZER_DIR)/dashboard/$f" ] && cp "$(ANALYZER_DIR)/dashboard/$f" "$STAGING/dashboard/"
+              done
+
+              # Badges
+              for f in $(ls "$(ANALYZER_DIR)/badges/" 2>/dev/null); do
+                cp "$(ANALYZER_DIR)/badges/$f" "$STAGING/badges/"
+              done
+
+              echo "##vso[task.setvariable variable=PUBLISH_STAGING]$STAGING"
+            displayName: "Prepare artifacts"
+            condition: always()
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload reports"
+            condition: always()
+            inputs:
+              targetPath: $(PUBLISH_STAGING)/reports
+              artifact: green-score-reports
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload dashboard"
+            condition: always()
+            inputs:
+              targetPath: $(PUBLISH_STAGING)/dashboard
+              artifact: green-score-dashboard
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload badges"
+            condition: always()
+            inputs:
+              targetPath: $(PUBLISH_STAGING)/badges
+              artifact: green-score-badges
+            continueOnError: true
+
+          # ── Cleanup: remove cloned analyzer ──
+          - bash: |
+              echo "🧹 Removing analyzer directory..."
+              rm -rf "$(ANALYZER_DIR)" 2>/dev/null || true
+              echo "✅ Cleanup done."
+            displayName: "Cleanup analyzer clone"
+            condition: always()
