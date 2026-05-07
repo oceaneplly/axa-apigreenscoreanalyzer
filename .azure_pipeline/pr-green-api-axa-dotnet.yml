@@ -25,6 +25,7 @@ schedules:
     always: false
 
 variables:
+  DOTNET_VERSION: "10.0.x"
   ANALYZER_REPO: "https://$(USERNAME):$(SECRET)@axafrance.visualstudio.com/DefaultCollection/GreenIT/_git/axa-apigreenscoreanalyzer"
   ANALYZER_BRANCH: "develop"
   TARGETS: "https://localhost:7235"
@@ -71,6 +72,13 @@ stages:
           - checkout: self
             persistCredentials: true
             clean: false
+
+          - task: UseDotNet@2
+            displayName: "Setup .NET SDK $(DOTNET_VERSION)"
+            inputs:
+              packageType: "sdk"
+              version: $(DOTNET_VERSION)
+              includePreviewVersions: true
 
           # ── Clone the analyzer repository ──
           - bash: |
