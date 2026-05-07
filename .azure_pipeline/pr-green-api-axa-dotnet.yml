@@ -135,6 +135,10 @@ stages:
                 echo "📋 nuget.config copié"
               fi
 
+              # ── Pre-build: restore + publish in Release (AOT-ready, trimmed) ──
+              # This separates the slow build from the fast startup.
+              cd "$APP_DIR"
+
               # Detect the .csproj to run (same logic as start.sh)
               ENTRY=""
               for dir in $(find "$APP_DIR" -maxdepth 5 -type d -name "*Api*" ! -name "*UnitTest*" ! -name "*Test*" 2>/dev/null); do
@@ -156,16 +160,49 @@ stages:
               # Determine port from TARGETS
               PORT=$(echo "$(TARGETS)" | sed -E 's|.*://[^:/]+:?([0-9]+).*|\1|;t;s|.*|5000|' | head -1)
 
+              # ── Accelerated build: publish in Release mode ──
+              PUBLISH_DIR="/tmp/dotnet-publish-output"
+              echo "⚡ Building in Release mode (dotnet publish)..."
+              dotnet restore "$ENTRY" --nologo -v q 2>&1 | tail -5
+              dotnet publish "$ENTRY" \
+                --configuration Release \
+                --output "$PUBLISH_DIR" \
+                --nologo \
+                -v q \
+                /p:DebugType=None \
+                /p:DebugSymbols=false \
+                2>&1 | tail -10
+              echo "✅ Build complete"
+
+              # Find the main DLL in the publish output
+              PROJECT_NAME=$(basename "$ENTRY" .csproj)
+              MAIN_DLL="$PUBLISH_DIR/$PROJECT_NAME.dll"
+              if [ ! -f "$MAIN_DLL" ]; then
+                MAIN_DLL=$(find "$PUBLISH_DIR" -maxdepth 1 -name "*.dll" | grep -i "$PROJECT_NAME" | head -1)
+              fi
+              if [ -z "$MAIN_DLL" ] || [ ! -f "$MAIN_DLL" ]; then
+                echo "⚠ Published DLL not found, falling back to dotnet run"
+                MAIN_DLL=""
+              fi
+
               # Set environment
               export ASPNETCORE_URLS="https://+:$PORT"
               export DOTNET_ENVIRONMENT="Development"
               export DOTNET_NOLOGO=1
               export DOTNET_CLI_TELEMETRY_OPTOUT=1
+              export DOTNET_gcServer=1
+              export DOTNET_TieredCompilation=1
+              export DOTNET_ReadyToRun=1
 
-              # Boot in background
+              # Boot in background — use published DLL (faster) or fallback to dotnet run
               APP_LOG="/tmp/dotnet-api-boot.log"
-              cd "$APP_DIR"
-              ( dotnet run --project "$ENTRY" 2>&1 | tee -a "$APP_LOG" ) &
+              if [ -n "$MAIN_DLL" ]; then
+                echo "🚀 Starting from published output: dotnet $MAIN_DLL"
+                ( dotnet "$MAIN_DLL" --urls "https://+:$PORT" 2>&1 | tee -a "$APP_LOG" ) &
+              else
+                cd "$APP_DIR"
+                ( dotnet run --project "$ENTRY" --no-build -c Release 2>&1 | tee -a "$APP_LOG" ) &
+              fi
               APP_PID=$!
               echo "##vso[task.setvariable variable=APP_PID]$APP_PID"
               echo "##vso[task.setvariable variable=APP_LOG]$APP_LOG"
