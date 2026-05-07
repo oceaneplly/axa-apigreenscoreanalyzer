@@ -198,6 +198,7 @@ stages:
               APP_LOG="/tmp/dotnet-api-boot.log"
               if [ -n "$MAIN_DLL" ]; then
                 echo "🚀 Starting from published output: dotnet $MAIN_DLL"
+                cd "$PUBLISH_DIR"
                 ( dotnet "$MAIN_DLL" --urls "https://+:$PORT" 2>&1 | tee -a "$APP_LOG" ) &
               else
                 cd "$APP_DIR"
