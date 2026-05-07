@@ -1052,10 +1052,10 @@ PYEOF
         export ASPNETCORE_URLS="http://+:$APP_PORT"
       fi
       cd "$SOURCE_DIR_ABS"
-      dotnet run --project "$ENTRY" --environment="Development" &
-      ( cd "$SOURCE_DIR_ABS" && \
+      dotnet run --project "$ENTRY" &
+      echo '( cd "$SOURCE_DIR_ABS" && \
         nohup dotnet run --project "$ENTRY"\
-          >>"$APP_LOG" 2>&1 ) &
+          >>"$APP_LOG" 2>&1 ) &'
       APP_PID=$!
       ;;
   esac
