@@ -398,7 +398,7 @@ stages:
           # ── Publish reports (selective) ──
           - bash: |
               STAGING="/tmp/publish-staging"
-              mkdir -p "$STAGING/reports" "$STAGING/dashboard"
+              mkdir -p "$STAGING/reports" "$STAGING/dashboard" "$STAGING/badges"
 
               # Reports
               for f in latest-report.json last-report.json creedengo-report.json \
@@ -410,6 +410,11 @@ stages:
               # Dashboard
               for f in index.html index.md README.md; do
                 [ -f "$(ANALYZER_DIR)/dashboard/$f" ] && cp "$(ANALYZER_DIR)/dashboard/$f" "$STAGING/dashboard/"
+              done
+
+              # Badges
+              for f in $(ls "$(ANALYZER_DIR)/badges/" 2>/dev/null); do
+                cp "$(ANALYZER_DIR)/badges/$f" "$STAGING/badges/"
               done
 
               echo "##vso[task.setvariable variable=PUBLISH_STAGING]$STAGING"
@@ -430,6 +435,14 @@ stages:
             inputs:
               targetPath: $(PUBLISH_STAGING)/dashboard
               artifact: green-score-dashboard
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Upload badges"
+            condition: always()
+            inputs:
+              targetPath: $(PUBLISH_STAGING)/badges
+              artifact: green-score-badges
             continueOnError: true
 
           # ── Cleanup: remove cloned analyzer ──
