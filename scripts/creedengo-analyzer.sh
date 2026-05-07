@@ -1081,67 +1081,60 @@ if [ "$CSHARP_DIRECT_PLANNED" = true ] || [ -n "$DOTNET_MODULE_DIR" ] \
 
   # If already installed (e.g. by a previous run or by the user), skip install.
   if ! CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
-    echo -e "  ${CYAN}📥 Installing Creedengo.Tool global tool (online from nuget.org)...${NC}"
     INSTALL_LOG="/tmp/creedengo-cli-install-$$.log"
     : >"$INSTALL_LOG"
 
-    # Note: ``dotnet tool install --global`` returns a non-zero exit code with
-    # message "is already installed" if the package was previously registered
-    # (even partially). We treat that as success and continue to the binary
-    # check below — that's why we don't ``|| exit`` here.
-    dotnet tool install --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
-      || dotnet tool update  --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
-      || true
-
-    # ── Try offline backup if the binary still isn't reachable ──
-    if ! CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
-      echo -e "  ${YELLOW}⚠ Online install did not yield a usable CLI — searching local backup...${NC}"
-      BACKUP_NUPKG=""
-      BACKUP_BIN=""
-      BACKUP_DIR_USED=""
-      for d in "${CREEDENGO_TOOL_BACKUP_DIRS[@]}"; do
-        [ -d "$d" ] || continue
-        # .nupkg names are case-insensitive on disk; match both spellings
-        cand=$(ls -1 "$d"/Creedengo.Tool*.nupkg "$d"/creedengo.tool*.nupkg 2>/dev/null | sort -V | tail -1)
-        if [ -n "$cand" ] && [ -f "$cand" ]; then BACKUP_NUPKG="$cand"; BACKUP_DIR_USED="$d"; break; fi
-        for b in "$d/creedengo-cli" "$d/creedengo-cli.exe" "$d/creedengo" "$d/creedengo.tool"; do
-          if [ -x "$b" ] || [ -f "$b" ]; then BACKUP_BIN="$b"; BACKUP_DIR_USED="$d"; break; fi
-        done
-        [ -n "$BACKUP_BIN" ] && break
+    # ── 1) Try offline backup FIRST (local .nupkg or pre-built binary) ──
+    echo -e "  ${CYAN}📥 Attempting Creedengo.Tool install from local backup...${NC}"
+    BACKUP_NUPKG=""
+    BACKUP_BIN=""
+    BACKUP_DIR_USED=""
+    for d in "${CREEDENGO_TOOL_BACKUP_DIRS[@]}"; do
+      [ -d "$d" ] || continue
+      # .nupkg names are case-insensitive on disk; match both spellings
+      cand=$(ls -1 "$d"/Creedengo.Tool*.nupkg "$d"/creedengo.tool*.nupkg 2>/dev/null | sort -V | tail -1)
+      if [ -n "$cand" ] && [ -f "$cand" ]; then BACKUP_NUPKG="$cand"; BACKUP_DIR_USED="$d"; break; fi
+      for b in "$d/creedengo-cli" "$d/creedengo-cli.exe" "$d/creedengo" "$d/creedengo.tool"; do
+        if [ -x "$b" ] || [ -f "$b" ]; then BACKUP_BIN="$b"; BACKUP_DIR_USED="$d"; break; fi
       done
+      [ -n "$BACKUP_BIN" ] && break
+    done
 
-      if [ -n "$BACKUP_NUPKG" ]; then
-        echo -e "  ${CYAN}📦 Found offline package: ${BACKUP_NUPKG}${NC}"
+    if [ -n "$BACKUP_NUPKG" ]; then
+      echo -e "  ${CYAN}📦 Found offline package: ${BACKUP_NUPKG}${NC}"
 
-        # Critical: the dotnet CLI's ``--add-source`` resolves to the version
-        # *being installed* — but if "creedengo.tool" is already registered as
-        # a global tool (from a failed run, system-wide install, or prior
-        # offline attempt) we MUST uninstall first or ``install`` will exit
-        # with "is already installed" and never copy the new binary.
-        if _creedengo_tool_installed; then
-          echo -e "  ${CYAN}↻ Uninstalling stale 'creedengo.tool' global tool entry...${NC}"
-          dotnet tool uninstall --global creedengo.tool >>"$INSTALL_LOG" 2>&1 \
-            || dotnet tool uninstall --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
-            || true
-        fi
-
-        echo -e "  ${CYAN}⚙  dotnet tool install --global --add-source \"$BACKUP_DIR_USED\" Creedengo.Tool${NC}"
-        dotnet tool install --global --add-source "$BACKUP_DIR_USED" Creedengo.Tool \
-          >>"$INSTALL_LOG" 2>&1 \
-          || dotnet tool install --global --add-source "$BACKUP_DIR_USED" creedengo.tool \
-          >>"$INSTALL_LOG" 2>&1 \
+      # Uninstall stale entry if present
+      if _creedengo_tool_installed; then
+        echo -e "  ${CYAN}↻ Uninstalling stale 'creedengo.tool' global tool entry...${NC}"
+        dotnet tool uninstall --global creedengo.tool >>"$INSTALL_LOG" 2>&1 \
+          || dotnet tool uninstall --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
           || true
-
-        if CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
-          echo -e "  ${GREEN}✓ Creedengo.Tool installed from local backup → $CREEDENGO_CLI_BIN${NC}"
-        fi
-      elif [ -n "$BACKUP_BIN" ]; then
-        echo -e "  ${CYAN}📦 Found pre-built binary: ${BACKUP_BIN}${NC}"
-        chmod +x "$BACKUP_BIN" 2>/dev/null || true
-        export PATH="$BACKUP_DIR_USED:$PATH"
-        CREEDENGO_CLI_BIN="$BACKUP_BIN"
-        echo -e "  ${GREEN}✓ Using local Creedengo.Tool binary${NC}"
       fi
+
+      echo -e "  ${CYAN}⚙  dotnet tool install --global --add-source \"$BACKUP_DIR_USED\" Creedengo.Tool${NC}"
+      dotnet tool install --global --add-source "$BACKUP_DIR_USED" Creedengo.Tool \
+        >>"$INSTALL_LOG" 2>&1 \
+        || dotnet tool install --global --add-source "$BACKUP_DIR_USED" creedengo.tool \
+        >>"$INSTALL_LOG" 2>&1 \
+        || true
+
+      if CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
+        echo -e "  ${GREEN}✓ Creedengo.Tool installed from local backup → $CREEDENGO_CLI_BIN${NC}"
+      fi
+    elif [ -n "$BACKUP_BIN" ]; then
+      echo -e "  ${CYAN}📦 Found pre-built binary: ${BACKUP_BIN}${NC}"
+      chmod +x "$BACKUP_BIN" 2>/dev/null || true
+      export PATH="$BACKUP_DIR_USED:$PATH"
+      CREEDENGO_CLI_BIN="$BACKUP_BIN"
+      echo -e "  ${GREEN}✓ Using local Creedengo.Tool binary${NC}"
+    fi
+
+    # ── 2) Online install as fallback if local backup did not work ──
+    if ! CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
+      echo -e "  ${CYAN}📥 Local backup not found or failed — installing from nuget.org...${NC}"
+      dotnet tool install --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
+        || dotnet tool update  --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
+        || true
     fi
 
     # ── If the package is registered but binary still not found, surface this ──
