@@ -1123,7 +1123,7 @@ echo ""
 READY_FLAGS=()
 for _u in "${WAIT_URLS[@]}"; do READY_FLAGS+=("false"); done
 
-TIMEOUT=120
+TIMEOUT=150
 ELAPSED=0
 ALL_READY=false
 
@@ -1134,8 +1134,7 @@ probe_url() {
   local base="$1"
   for p in "${HEALTH_PATHS[@]}"; do
     echo "  🔍 Probing ${base%/}${p}..."
-    curl -k "${base%/}${p}"
-    if curl -skf -o /dev/null --max-time 3 "${base%/}${p}" 2>/dev/null; then
+    if curl -skf -o /dev/null --max-time 4 "${base%/}${p}" 2>/dev/null; then
       return 0
     fi
   done
