@@ -13,6 +13,7 @@ from datetime import datetime
 
 PLACEHOLDER = "__REPORT_JSON__"
 CREEDENGO_PLACEHOLDER = "__CREEDENGO_JSON__"
+ADR_PLACEHOLDER = "__ADR_JSON__"
 
 # ── Labels & max scores for the breakdown table ──
 LABELS = {
@@ -216,8 +217,183 @@ def generate_creedengo_markdown(creedengo: dict) -> str:
     return "\n".join(lines)
 
 
+def _radar_svg(arch_scores: list[tuple[str, int, int]], size: int = 260) -> str:
+    """Return an inline SVG radar chart for architecture rules.
+
+    ``arch_scores`` is a list of (rule_id, score, max_pts). Any GitHub /
+    GitLab Markdown renderer displays the SVG since it's embedded inline.
+    """
+    import math
+    n = len(arch_scores)
+    if n < 3:
+        return ""
+    cx = cy = size / 2
+    r_max = size / 2 - 30
+    # Axis points (max) and score points
+    def _pt(i: int, ratio: float) -> tuple[float, float]:
+        angle = -math.pi / 2 + 2 * math.pi * i / n
+        return (cx + r_max * ratio * math.cos(angle),
+                cy + r_max * ratio * math.sin(angle))
+    axis_pts   = [_pt(i, 1.0) for i in range(n)]
+    score_pts  = [_pt(i, (s / m) if m else 0) for i, (_id, s, m) in enumerate(arch_scores)]
+    axis_poly  = " ".join(f"{x:.1f},{y:.1f}" for (x, y) in axis_pts)
+    score_poly = " ".join(f"{x:.1f},{y:.1f}" for (x, y) in score_pts)
+    # Concentric grid at 25/50/75/100 %
+    grid = []
+    for ratio in (0.25, 0.5, 0.75, 1.0):
+        pts = " ".join(f"{cx + r_max*ratio*math.cos(-math.pi/2 + 2*math.pi*i/n):.1f},"
+                       f"{cy + r_max*ratio*math.sin(-math.pi/2 + 2*math.pi*i/n):.1f}"
+                       for i in range(n))
+        grid.append(f'<polygon points="{pts}" fill="none" stroke="#e5e7eb" stroke-width="1"/>')
+    # Axis lines + labels
+    lines_svg = []
+    labels_svg = []
+    for i, (rid, s, m) in enumerate(arch_scores):
+        x_end, y_end = axis_pts[i]
+        lines_svg.append(f'<line x1="{cx:.1f}" y1="{cy:.1f}" x2="{x_end:.1f}" y2="{y_end:.1f}" '
+                         f'stroke="#d1d5db" stroke-width="1"/>')
+        # Label positioned slightly beyond the axis end
+        ratio_lbl = 1.15
+        lx = cx + r_max * ratio_lbl * math.cos(-math.pi/2 + 2*math.pi*i/n)
+        ly = cy + r_max * ratio_lbl * math.sin(-math.pi/2 + 2*math.pi*i/n)
+        anchor = "middle"
+        if lx < cx - 5:
+            anchor = "end"
+        elif lx > cx + 5:
+            anchor = "start"
+        labels_svg.append(
+            f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="{anchor}" '
+            f'font-size="11" font-family="sans-serif" fill="#374151">'
+            f'{rid} ({s}/{m})</text>'
+        )
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" '
+        f'viewBox="0 0 {size} {size}">'
+        f'{"".join(grid)}'
+        f'{"".join(lines_svg)}'
+        f'<polygon points="{score_poly}" fill="rgba(34,197,94,0.35)" '
+        f'stroke="#16a34a" stroke-width="2"/>'
+        f'{"".join(labels_svg)}'
+        f'</svg>'
+    )
+
+
+def _architecture_markdown_section(report: dict) -> list[str]:
+    """Render the Architecture 23/23 section with a radar SVG + a rule table."""
+    arch_keys = ["AR01_event_driven", "AR02_runtime_close", "AR03_unique_api",
+                 "AR04_scalable_infra", "AR05_cloud_footprint"]
+    rrm = (report.get("green_score", {}) or {}).get("rule_resource_mapping", {}) or {}
+    breakdown = (report.get("green_score", {}) or {}).get("breakdown", {}) or {}
+    arch_meta = {
+        "AR01_event_driven":   ("AR01", "Event-Driven Architecture", 6),
+        "AR02_runtime_close":  ("AR02", "Runtime proche du consommateur", 7),
+        "AR03_unique_api":     ("AR03", "Une seule API par besoin", 3),
+        "AR04_scalable_infra": ("AR04", "Infrastructure scalable", 5),
+        "AR05_cloud_footprint":("AR05", "Cloud footprint dashboard", 2),
+    }
+    scored: list[tuple[str, int, int]] = []
+    for k in arch_keys:
+        rid, _label, max_pts = arch_meta[k]
+        s = int(breakdown.get(k, 0) or rrm.get(k, {}).get("score", 0) or 0)
+        scored.append((rid, s, max_pts))
+    total = sum(s for _r, s, _m in scored)
+    max_total = sum(m for _r, _s, m in scored)
+    if max_total == 0:
+        return []
+    emoji = "🟢" if total == max_total else "🟡" if total >= max_total * 0.5 else "🔴"
+
+    out: list[str] = []
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append(f"## 🏛️ Architecture : **{total}/{max_total}** {emoji}")
+    out.append("")
+    out.append("> **Ces règles pèsent 23 points** — au même titre que les règles code — "
+               "mais sont souvent oubliées. Elles portent sur la topologie de l'API "
+               "(événements, edge/CDN, dédup, autoscaling, empreinte cloud).")
+    out.append("")
+    svg = _radar_svg(scored)
+    if svg:
+        out.append(svg)
+        out.append("")
+    out.append("| Statut | Règle | Score | Max | Signaux détectés |")
+    out.append("|:------:|-------|------:|----:|------------------|")
+    for k in arch_keys:
+        rid, label, max_pts = arch_meta[k]
+        s = int(breakdown.get(k, 0) or rrm.get(k, {}).get("score", 0) or 0)
+        icon = "✅" if s >= max_pts else ("⚠️" if s > 0 else "❌")
+        # Try to surface signal_kinds from the rule mapping if present
+        signals = []
+        entry = rrm.get(k, {}) or {}
+        for ev in (entry.get("evidence") or [])[:3]:
+            if isinstance(ev, dict):
+                signals.append(ev.get("kind", ""))
+        sig_str = ", ".join(sorted(set(s for s in signals if s))) or "—"
+        out.append(f"| {icon} | **{rid}** {label} | {s} | {max_pts} | {sig_str} |")
+    out.append("")
+    return out
+
+
+def _adr_markdown_section(adr_report: dict | None) -> list[str]:
+    """Render the ADR compliance section."""
+    if not adr_report or not isinstance(adr_report, dict):
+        return []
+    summ = adr_report.get("summary", {}) or {}
+    results = adr_report.get("results", []) or []
+    if not results:
+        return []
+    total = int(summ.get("total", 0))
+    accepted = int(summ.get("accepted", 0))
+    passed = int(summ.get("passed", 0))
+    failed = int(summ.get("failed", 0))
+    pct = float(summ.get("score_pct", 0.0))
+    icon = "🟢" if failed == 0 else ("🟡" if pct >= 60 else "🔴")
+
+    out: list[str] = []
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append(f"## 📜 ADR compliance : **{passed}/{accepted}** ({pct}%) {icon}")
+    out.append("")
+    out.append(f"> Total ADR : **{total}** — Acceptés : **{accepted}** — "
+               f"Passés : **{passed}** — Échecs : **{failed}** — "
+               f"Ignorés (deprecated/proposed) : **{total - accepted}**")
+    out.append("")
+    out.append("| Statut | ADR | Titre | Règles | Checks passés |")
+    out.append("|:------:|:---:|-------|--------|:--------------|")
+    for r in results:
+        if r.get("skipped"):
+            mark = "⏭️"
+            checks_str = f"skipped ({r.get('status','')})"
+        else:
+            mark = "✅" if r.get("ok") else "❌"
+            checks = r.get("checks") or []
+            ok_n = sum(1 for c in checks if c.get("ok"))
+            checks_str = f"{ok_n}/{len(checks)}"
+        rules_str = ", ".join(r.get("green_rules") or []) or "—"
+        out.append(f"| {mark} | `{r.get('adr','?')}` | {r.get('title','')[:80]} | {rules_str} | {checks_str} |")
+    # Detailed failures
+    fail_details = [r for r in results
+                    if not r.get("skipped") and not r.get("ok")]
+    if fail_details:
+        out.append("")
+        out.append("### ❌ ADR en échec — détail")
+        out.append("")
+        for r in fail_details:
+            out.append(f"#### `{r.get('adr','?')}` — {r.get('title','')}")
+            out.append("")
+            for c in (r.get("checks") or []):
+                if c.get("ok"):
+                    continue
+                out.append(f"- ❌ **{c.get('kind','?')}** — {c.get('reason','')}")
+            out.append("")
+    out.append("")
+    return out
+
+
 def generate_markdown(report: dict, *, appname: str = "",
-                      creedengo: dict | None = None) -> str:
+                      creedengo: dict | None = None,
+                      adr_report: dict | None = None) -> str:
     """Return a Markdown string representing the Green Score report."""
     gs = report.get("green_score", {})
     total = gs.get("total", 0)
@@ -273,6 +449,15 @@ def generate_markdown(report: dict, *, appname: str = "",
         detail_str = f"-{pct}%" if pct is not None else note
         a(f"| {icon} | {label} | {score} | {mx} | {ep_str} | {detail_str} |")
     a("")
+
+    # ── Architecture (23 pts) ── rendered at the same visibility level
+    # as the "code" breakdown above (radar SVG + table).
+    for line in _architecture_markdown_section(report):
+        a(line)
+
+    # ── ADR compliance (if adr-report.json provided) ──
+    for line in _adr_markdown_section(adr_report):
+        a(line)
 
     # ── Measurements comparison ──
     # ── Measurements table — uses discovered endpoints or legacy fallback ──
@@ -534,12 +719,14 @@ def main() -> int:
     parser.add_argument("--template", required=True, help="Path to HTML template")
     parser.add_argument("--output", required=True, help="Path to output HTML")
     parser.add_argument("--creedengo-report", default="", help="Path to Creedengo report JSON (optional)")
+    parser.add_argument("--adr-report", default="", help="Path to ADR report JSON (optional)")
     args = parser.parse_args()
 
     report_path = Path(args.report)
     template_path = Path(args.template)
     output_path = Path(args.output)
     creedengo_path = Path(args.creedengo_report) if args.creedengo_report else None
+    adr_path = Path(args.adr_report) if args.adr_report else None
 
     if not report_path.is_file():
         print(f"Report not found: {report_path}", file=sys.stderr)
@@ -584,6 +771,21 @@ def main() -> int:
     else:
         output = output.replace(CREEDENGO_PLACEHOLDER, "null")
 
+    # ── Embed ADR report if available (optional; template may not have placeholder) ──
+    adr_data = None
+    if adr_path and adr_path.is_file():
+        adr_text = adr_path.read_text(encoding="utf-8").strip()
+        if adr_text:
+            try:
+                adr_data = json.loads(adr_text)
+            except Exception:
+                adr_data = None
+    if ADR_PLACEHOLDER in output:
+        output = output.replace(
+            ADR_PLACEHOLDER,
+            json.dumps(adr_data, ensure_ascii=True) if adr_data else "null",
+        )
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(output, encoding="utf-8")
     print(f"Dashboard written to {output_path}")
@@ -596,7 +798,9 @@ def main() -> int:
             creedengo_data_md = json.loads(creedengo_path.read_text(encoding="utf-8").strip())
         except Exception:
             pass
-    md_content = generate_markdown(report, appname=appname, creedengo=creedengo_data_md)
+    md_content = generate_markdown(report, appname=appname,
+                                   creedengo=creedengo_data_md,
+                                   adr_report=adr_data)
     md_path.write_text(md_content, encoding="utf-8")
     print(f"Markdown dashboard written to {md_path}")
 

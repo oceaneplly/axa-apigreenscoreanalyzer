@@ -53,6 +53,14 @@ except Exception as _arch_imp_err:  # pragma: no cover
     _ARCH_RULES_AVAILABLE = False
     _ARCH_RULES_IMPORT_ERROR = str(_arch_imp_err)
 
+# Local module: ADR verification (docs/adr/*.md front-matter checkers)
+try:
+    from adr_rules import evaluate_adrs as _evaluate_adrs
+    _ADR_RULES_AVAILABLE = True
+except Exception as _adr_imp_err:  # pragma: no cover
+    _ADR_RULES_AVAILABLE = False
+    _ADR_RULES_IMPORT_ERROR = str(_adr_imp_err)
+
 # ── Fix Windows console encoding (CP1252 → UTF-8) ──────────────────────────
 # On Windows, the default stdout/stderr encoding is often CP1252 which cannot
 # handle emojis (✅, ❌, 🟢, …).  Force UTF-8 with replace fallback so that
@@ -905,15 +913,21 @@ def analyze_green_rules(spec, endpoints, base_url, measurements, auth_headers):
                 if gzip_ok:
                     break
 
-    # 1) Check existing measurement headers for passive gzip
+    # 1) Check existing measurement headers for passive gzip/brotli
+    detected_algo = None  # "gzip" | "br" | None
     for e in endpoints:
         key = f"{e['method']}:{e['path']}"
         m = measurements.get(key, {})
-        ce = m.get("response_headers", {}).get("content-encoding", "")
-        if "gzip" in ce.lower():
+        ce = m.get("response_headers", {}).get("content-encoding", "").lower()
+        if "gzip" in ce:
             gzip_ok = True
+            detected_algo = detected_algo or "gzip"
+        elif "br" in ce.split(",") or ce.strip() == "br":
+            gzip_ok = True
+            detected_algo = detected_algo or "br"
 
-    # 2) Explicit gzip probe on first collection endpoint per unique base_url
+    # 2) Explicit compression probe on first collection endpoint per unique base_url
+    #    Advertises both gzip AND brotli so we credit whichever the server picks.
     gzip_probe_ep = None
     gzip_probe_compressed = 0
     if not gzip_ok and collection_eps:
@@ -925,44 +939,54 @@ def analyze_green_rules(spec, endpoints, base_url, measurements, auth_headers):
         for b, ep in per_base.items():
             url = build_url(b, ep["path"], {})
             m_gz = measure_endpoint(
-                url, headers={**auth_headers, "Accept-Encoding": "gzip"},
+                url, headers={**auth_headers, "Accept-Encoding": "br, gzip"},
                 repeat=1, timeout=15,
             )
-            ce = m_gz.get("response_headers", {}).get("content-encoding", "")
+            ce = m_gz.get("response_headers", {}).get("content-encoding", "").lower()
             raw_key = f"get:{ep['path']}"
             raw_size = measurements.get(raw_key, {}).get("size_download", 0)
             gzip_probe_compressed = m_gz["size_download"]
-            if "gzip" in ce.lower():
+            if "gzip" in ce:
                 gzip_ok = True
+                detected_algo = "gzip"
+                gzip_probe_ep = ep
+                break
+            if "br" in ce.split(",") or ce.strip() == "br":
+                gzip_ok = True
+                detected_algo = "br"
                 gzip_probe_ep = ep
                 break
             if (gzip_probe_compressed > 0 and raw_size > 0
                     and gzip_probe_compressed < raw_size * 0.9):
                 gzip_ok = True
+                detected_algo = detected_algo or "unknown"
                 gzip_probe_ep = ep
                 break
 
-    # Register every measured endpoint (gzip is typically server-wide)
+    # Register every measured endpoint (gzip/brotli is typically server-wide)
     for e in endpoints:
         key = f"{e['method']}:{e['path']}"
         m = measurements.get(key, {})
-        ce = m.get("response_headers", {}).get("content-encoding", "")
-        ep_has_gzip = "gzip" in ce.lower()
-        if ep_has_gzip:
+        ce = m.get("response_headers", {}).get("content-encoding", "").lower()
+        ep_has_compression = "gzip" in ce or "br" in ce.split(",") or ce.strip() == "br"
+        if ep_has_compression:
             register("DE01_compression", e["method"], e["path"], True,
-                     "Content-Encoding: gzip in response")
+                     f"Content-Encoding: {ce or 'gzip/br'} in response")
         elif gzip_ok:
-            reason = gzip_reason_spec or "Server supports gzip (confirmed on another endpoint)"
+            reason = gzip_reason_spec or (
+                f"Server supports {detected_algo or 'compression'} "
+                "(confirmed on another endpoint)")
             register("DE01_compression", e["method"], e["path"], True, reason)
         else:
             register("DE01_compression", e["method"], e["path"], False,
-                     "No gzip compression detected")
+                     "No gzip/brotli compression detected")
 
     scores["DE01_compression"] = 15 if gzip_ok else 0
     details["DE01_compression"] = {
-        "note": ("Gzip compression active"
-                 + (f" ({gzip_reason_spec})" if gzip_reason_spec else ""))
-        if gzip_ok else "Gzip not detected",
+        "algorithm": detected_algo or ("declared-in-spec" if gzip_reason_spec else None),
+        "note": (f"Compression active ({detected_algo or 'declared'})"
+                 + (f" — {gzip_reason_spec}" if gzip_reason_spec else ""))
+        if gzip_ok else "Neither gzip nor brotli detected",
     }
 
     # ═══════════════════════════════════════════════════════════════════
@@ -1217,31 +1241,75 @@ def analyze_green_rules(spec, endpoints, base_url, measurements, auth_headers):
     )
 
     # ═══════════════════════════════════════════════════════════════════
-    # AR02 — Binary format (CBOR / Protobuf)
+    # BIN01 (a.k.a. AR02_format_cbor legacy key) — Binary payload format
     # ═══════════════════════════════════════════════════════════════════
+    # Detection strategy:
+    #   1) spec-level: path hint or media-type declared in responses/produces
+    #   2) runtime probe: send Accept: application/cbor,application/x-msgpack,
+    #      application/x-protobuf on the first collection endpoint per base
+    #      and check the response Content-Type.
     _init_rule("AR02_format_cbor")
+    BINARY_MEDIA_HINTS = (
+        "application/cbor", "application/x-cbor",
+        "application/x-msgpack", "application/msgpack",
+        "application/x-protobuf", "application/protobuf", "application/vnd.google.protobuf",
+        "application/octet-stream",
+    )
+    binary_endpoints_spec: set[str] = set()
     for e in endpoints:
         pl = e["path"].lower()
-        produces = str(e.get("produces", []))
+        produces = str(e.get("produces", [])).lower()
         responses_str = json.dumps(e.get("responses", {})).lower()
         is_binary = (
-            "cbor" in pl or "protobuf" in pl or "grpc" in pl
-            or "application/cbor" in produces
-            or "application/cbor" in responses_str
-            or "application/protobuf" in produces
-            or "application/x-protobuf" in produces
-            or "application/octet-stream" in responses_str
+            "cbor" in pl or "protobuf" in pl or "grpc" in pl or "msgpack" in pl
+            or any(h in produces for h in BINARY_MEDIA_HINTS)
+            or any(h in responses_str for h in BINARY_MEDIA_HINTS)
         )
+        if is_binary:
+            binary_endpoints_spec.add(f"{e['method']}:{e['path']}")
+
+    # Runtime probe — one call per unique base_url advertising binary Accept.
+    binary_runtime_hits: list[dict] = []
+    if not binary_endpoints_spec and collection_eps:
+        per_base: dict = {}
+        for e in collection_eps:
+            b = e.get("_base_url") or base_url
+            if b:
+                per_base.setdefault(b, e)
+        accept_hdr = ", ".join(BINARY_MEDIA_HINTS[:3])   # cbor, msgpack, protobuf
+        for b, ep in per_base.items():
+            try:
+                url = build_url(b, ep["path"], {})
+                m_bin = measure_endpoint(
+                    url, headers={**auth_headers, "Accept": accept_hdr},
+                    repeat=1, timeout=10,
+                )
+                ct = (m_bin.get("response_headers") or {}).get("content-type", "").lower()
+                if any(h in ct for h in BINARY_MEDIA_HINTS):
+                    binary_runtime_hits.append({
+                        "base_url": b, "endpoint": f"{ep['method']}:{ep['path']}",
+                        "content_type": ct,
+                    })
+                    binary_endpoints_spec.add(f"{ep['method']}:{ep['path']}")
+            except Exception:
+                continue
+
+    for e in endpoints:
+        key = f"{e['method']}:{e['path']}"
+        is_binary = key in binary_endpoints_spec
         register(
             "AR02_format_cbor", e["method"], e["path"], is_binary,
-            "Binary format (CBOR/protobuf/octet-stream)" if is_binary
+            "Binary format (CBOR/protobuf/msgpack/octet-stream)" if is_binary
             else "Standard JSON format",
         )
     n = _matched_count("AR02_format_cbor")
     scores["AR02_format_cbor"] = 10 if n else 0
     details["AR02_format_cbor"] = {
-        "note": f"Binary format on {n} endpoint(s)" if n
-        else "No binary format endpoint",
+        "note": (f"Binary format on {n} endpoint(s)"
+                 + (f" — runtime probe confirmed on {len(binary_runtime_hits)} base(s)"
+                    if binary_runtime_hits else ""))
+        if n else "No binary format endpoint (spec + runtime probes empty)",
+        "runtime_hits": binary_runtime_hits,
     }
 
     # ═══════════════════════════════════════════════════════════════════
@@ -1823,6 +1891,12 @@ Examples:
                         help="Enable optional GeoIP lookup (ipinfo.io) to compute consumer<->API distance for AR02.")
     parser.add_argument("--source-dir", default="",
                         help="Path to the API source code (Java/.NET/Node) for AR01/AR04 deps & IaC scan (Phase 2).")
+    # ADR verification (Architecture Decision Records with front-matter checkers)
+    parser.add_argument("--adr-dir", default="",
+                        help="Path to ADR folder (Markdown with YAML front-matter). "
+                             "Auto-detected as ./docs/adr or ./adr if omitted.")
+    parser.add_argument("--fail-on-adr-violation", action="store_true",
+                        help="Exit non-zero if any accepted ADR has a failing verifier.")
     args = parser.parse_args()
 
     # ── Resolve paths ──
@@ -2478,6 +2552,55 @@ Examples:
     with open(summary_file, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
+    # ── Step 5b: ADR verification (docs/adr/*.md) ──
+    adr_report: dict = {}
+    adr_failed_count = 0
+    if _ADR_RULES_AVAILABLE:
+        # Auto-discover ADR folder if not passed explicitly
+        adr_dir = (args.adr_dir or "").strip()
+        if not adr_dir:
+            for candidate in (root_dir / "docs" / "adr",
+                              root_dir / "adr",
+                              (Path(args.source_dir).expanduser() / "docs" / "adr") if args.source_dir else None,
+                              (Path(args.source_dir).expanduser() / "adr") if args.source_dir else None):
+                if candidate and candidate.is_dir():
+                    adr_dir = str(candidate)
+                    break
+        if adr_dir and Path(adr_dir).is_dir():
+            log(f"Evaluating ADRs from {adr_dir}...")
+            try:
+                # Pass the same runtime context used by the architecture rules
+                all_measurements = measurements.get("auto_discovery", {}).get(
+                    "all_measurements", {}) or {}
+                iac_signals = []
+                arch_ar04 = (arch_results or {}).get("AR04_scalable_infra", {})
+                iac_signals = list(arch_ar04.get("signal_kinds") or [])
+                adr_report = _evaluate_adrs(
+                    adr_dir=adr_dir,
+                    spec=spec,
+                    endpoints=endpoints,
+                    measurements=all_measurements,
+                    base_urls=[b for (b, _s, _src) in sources if b],
+                    source_dir=args.source_dir or None,
+                    iac_signals=iac_signals,
+                )
+                adr_out = output_dir / "adr-report.json"
+                adr_out.write_text(
+                    json.dumps(adr_report, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                summ = adr_report.get("summary", {})
+                adr_failed_count = int(summ.get("failed", 0))
+                icon = "✅" if adr_failed_count == 0 else "❌"
+                log(f"  {icon} ADR gate: {summ.get('passed',0)}/{summ.get('accepted',0)} "
+                    f"passed ({summ.get('score_pct',0)}%), {adr_failed_count} failed, "
+                    f"{summ.get('skipped',0)} skipped → {adr_out}",
+                    "OK" if adr_failed_count == 0 else "WARN")
+            except Exception as e:
+                log(f"  ADR evaluation failed: {e}", "WARN")
+        else:
+            log("  No ADR folder found (docs/adr, adr/, or --adr-dir). Skipping ADR gate.", "INFO")
+
     # ── Step 6: Generate Dashboard ──
     if not args.skip_dashboard:
         dashboard_py = script_dir / "generate-dashboard.py"
@@ -2486,12 +2609,17 @@ Examples:
         if dashboard_py.is_file() and template.is_file():
             log("Generating dashboard...")
             try:
-                subprocess.run([
+                dash_cmd = [
                     sys.executable, str(dashboard_py),
                     "--report", str(latest_file),
                     "--template", str(template),
                     "--output", str(out_html),
-                ], check=True, capture_output=True, text=True, timeout=30)
+                ]
+                adr_out_path = output_dir / "adr-report.json"
+                if adr_out_path.is_file():
+                    dash_cmd += ["--adr-report", str(adr_out_path)]
+                subprocess.run(dash_cmd, check=True, capture_output=True,
+                               text=True, timeout=30)
                 log(f"Dashboard written to {out_html}", "OK")
             except Exception as e:
                 log(f"Dashboard generation error: {e}", "WARN")
@@ -2525,6 +2653,11 @@ Examples:
         if green_score["total"] < min_score:
             log(f"FAIL: Score {green_score['total']} < threshold {min_score}", "ERR")
             return 1
+
+    # Return non-zero if ADR gate is armed and any accepted ADR failed
+    if args.fail_on_adr_violation and adr_failed_count > 0:
+        log(f"FAIL: {adr_failed_count} ADR(s) failed (--fail-on-adr-violation)", "ERR")
+        return 2
 
     return 0
 

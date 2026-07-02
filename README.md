@@ -1,6 +1,16 @@
 # apigreenscoreanalyzer
 
 Green Score + Creedengo eco-design analyzer for REST APIs.
+Runs on **Java, Python and C#** with the same CLI and the same CI gate.
+
+- 📘 **[Workshop CFP](./Axa%20Summit%20Workshop%20CFP.md)** — pitch AXA Summit.
+- 🗺️ **[Workshop roadmap](./docs/WORKSHOP-ROADMAP.md)** — 2h & 3h formats, animator checkpoints.
+- 📋 **[Promises coverage matrix](./docs/PROMISES-COVERAGE.md)** — 1↔1 CFP ↔ analyzer.
+- 🚦 **[CI integration](./docs/CI-INTEGRATION.md)** — GitHub Actions, GitLab CI, Azure DevOps.
+- 📜 **[ADR templates](./templates/adr/)** — 10 Architecture Decision Records vérifiés automatiquement.
+- 🧪 **[Sample apps](./samples/)** — Java Spring Boot · Python FastAPI · C# ASP.NET Core.
+
+## Score total : **123 pts** (100 code + 23 architecture)
 
 ## Stacks supportés
 
@@ -8,13 +18,16 @@ Green Score + Creedengo eco-design analyzer for REST APIs.
 |----------------|------------------------------------------|--------------------------------|
 | **Java Maven** | `mvn spring-boot:run` ou `java -jar`     | plugin SonarQube `creedengo-java` (D1) |
 | **Java Gradle**| `./gradlew bootRun`                      | plugin SonarQube `creedengo-java` (D1) |
+| **Python**     | `uvicorn app:app` / `flask run`          | plugin SonarQube `creedengo-python` (D1) |
 | **.NET 8+ (C#)** | `dotnet run --urls http://+:<port>`    | plugin SQ `creedengo-csharp` (D1) si publié, sinon scan stock SQ via `dotnet-sonarscanner` (D2) |
 
 > ⚠️ F#/VB.NET sont détectés mais Creedengo ne les couvre pas (warning explicite).
+> JavaScript/TypeScript sont détectés mais non promus dans le CFP workshop.
 
 ## Prérequis
 
 - **Java** : JDK 17+, Maven 3.8+
+- **Python** : 3.10+ (pip)
 - **.NET** : .NET SDK **8.0** (LTS) — `dotnet --version` doit retourner ≥ 8.x
 - **Container runtime** : Docker ou Podman (pour SonarQube)
 - Python 3.9+, curl
@@ -47,14 +60,44 @@ bash scripts/start.sh --stack dotnet --build-and-run \
 
 | Flag                | Effet                                                       |
 |---------------------|-------------------------------------------------------------|
-| `--stack <auto\|java\|dotnet>` | Force le stack ; `auto` détecte depuis `--source-dir`. |
+| `--stack <auto\|java\|python\|dotnet>` | Force le stack ; `auto` détecte depuis `--source-dir`. |
 | `--source-dir <path>` | Dossier du code source local (alternatif à `--git-repo`). |
 | `--build-and-run`   | Compile + démarre l'app avant les health-checks. Exige `--source-dir`. |
 | `--target <url>`    | URL d'API à analyser (Green Score). Répétable.              |
 | `--creedengo`       | Active l'analyse Creedengo (code source).                   |
 | `--git-repo <url>`  | Clone un dépôt Git et l'analyse via Creedengo.              |
 | `--bearer <token>`  | Bearer token pour endpoints protégés.                        |
+| `--adr-dir <path>`  | Dossier des ADR à vérifier (défaut : `docs/adr`).           |
+| `--fail-on-adr-violation` | Fail CI si un ADR `status: accepted` échoue.          |
+| `--consumer-region <ISO2>` | Région consommateurs (AR02).                          |
+| `--enable-geoip`    | GeoIP ipinfo.io pour AR02 anycast/ASN.                       |
+| `--cloud-footprint-confirmed` | Attestation manuelle AR05.                         |
 | `--debug`           | Mode verbeux.                                                |
+
+## 📜 ADR gate (Architecture Decision Records)
+
+Chaque décision d'architecture verte devient un ADR versionné (`docs/adr/*.md`)
+avec un front-matter YAML **vérifié automatiquement** :
+
+```yaml
+---
+adr: 0007
+title: Prefer events over polling
+status: accepted
+green_rules: [AR01, DE06]
+verifies:
+  - kind: sse_endpoint
+    path: /**/events
+    content_type: text/event-stream
+---
+```
+
+Voir [`templates/adr/`](./templates/adr/) pour 10 ADR prêts à copier et la
+liste des checkers disponibles.
+
+```sh
+bash scripts/start.sh --source-dir . --adr-dir docs/adr --fail-on-adr-violation
+```
 
 ## UI interactive
 

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="creedengo-java-plugin-2.1.3">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/.creedengo/plugins/creedengo-java-plugin-2.1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

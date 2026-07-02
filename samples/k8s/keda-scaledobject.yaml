@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sample-api-scaledobject
+  namespace: sample
+spec:
+  scaleTargetRef:
+    name: sample-api
+  minReplicaCount: 0        # scale-to-zero for AR04 max points
+  maxReplicaCount: 20
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring.svc:9090
+        metricName: http_requests_per_second
+        threshold: "100"
+        query: sum(rate(http_requests_total{app="sample-api"}[1m]))
+

@@ -1,0 +1,105 @@
+name: Green API Score
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write        # to update the badge SVG
+  pull-requests: write
+
+jobs:
+  green-score:
+    name: 🌱 Green Score + Creedengo + ADR gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install analyzer dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f scripts/requirements.txt ]; then
+            pip install -r scripts/requirements.txt
+          fi
+
+      - name: Start SonarQube (for Creedengo)
+        run: |
+          docker run -d --name sonarqube \
+            -p 9000:9000 \
+            -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+            sonarqube:community
+          # wait until up (max 3 min)
+          for i in {1..36}; do
+            if curl -sf http://localhost:9000/api/system/status | grep -q '"status":"UP"'; then
+              echo "SonarQube UP"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Build & run sample app (auto-detect stack)
+        run: |
+          bash scripts/start.sh \
+               --stack auto \
+               --source-dir . \
+               --build-and-run \
+               --creedengo \
+               --adr-dir docs/adr \
+               --fail-on-adr-violation
+        env:
+          BEARER_TOKEN: ${{ secrets.API_BEARER_TOKEN }}
+
+      - name: Enforce minimum Green Score threshold
+        run: |
+          python3 - <<'PY'
+          import json, sys, pathlib
+          rep = json.loads(pathlib.Path("reports/latest-report.json").read_text())
+          th  = json.loads(pathlib.Path("green-score-threshold.json").read_text())
+          score = rep.get("total_score", rep.get("score", 0))
+          minimum = th.get("minScore", 0)
+          print(f"Green Score: {score} / threshold: {minimum}")
+          if score < minimum:
+              sys.exit(f"❌ Score {score} < threshold {minimum} — failing build.")
+          PY
+
+      - name: Upload analyzer reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: green-score-reports
+          path: |
+            reports/
+            badges/
+
+      - name: Commit updated badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if [ -f badges/green-score.svg ]; then
+            git config user.name  "green-score-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git add badges/green-score.svg
+            git diff --cached --quiet || git commit -m "chore(badge): update Green Score badge [skip ci]"
+            git push
+          fi
+

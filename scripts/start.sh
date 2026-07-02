@@ -63,6 +63,9 @@ SOBRIIT_APP_CODE="${SOBRIIT_APP_CODE:-}"
 CONSUMER_REGION="${CONSUMER_REGION:-}"   # ISO-3166 alpha-2 (e.g. FR, US) — AR02
 ENABLE_GEOIP="${ENABLE_GEOIP:-false}"    # true → ipinfo.io lookup for AR02
 CLOUD_FOOTPRINT_CONFIRMED="${CLOUD_FOOTPRINT_CONFIRMED:-false}"  # AR05 confirmation
+# ADR gate (forwarded to green-api-auto-discover.py via green-score-analyzer_withdiscovery.sh)
+ADR_DIR="${ADR_DIR:-}"
+FAIL_ON_ADR_VIOLATION="${FAIL_ON_ADR_VIOLATION:-false}"
 
 # Git checkout (when --git-repo is provided): we clone the repo here in start.sh
 # so the same working copy can drive --build-and-run AND be analyzed by Creedengo
@@ -143,6 +146,16 @@ while [ $i -lt ${#args[@]} ]; do
       ;;
     --cloud-footprint-confirmed)
       CLOUD_FOOTPRINT_CONFIRMED=true
+      ;;
+    --adr-dir)
+      i=$((i + 1))
+      ADR_DIR="${args[$i]:-}"
+      ;;
+    --adr-dir=*)
+      ADR_DIR="${args[$i]#--adr-dir=}"
+      ;;
+    --fail-on-adr-violation)
+      FAIL_ON_ADR_VIOLATION=true
       ;;
     --build-and-run)
       BUILD_AND_RUN=true
@@ -1230,6 +1243,14 @@ fi
 if [ "${CLOUD_FOOTPRINT_CONFIRMED:-false}" = "true" ]; then
   export CLOUD_FOOTPRINT_CONFIRMED=true
   echo "✅ Cloud footprint dashboard confirmé (AR05)"
+fi
+if [ -n "${ADR_DIR:-}" ]; then
+  export ADR_DIR
+  echo "📜 ADR dir (Architecture Decision Records): $ADR_DIR"
+fi
+if [ "${FAIL_ON_ADR_VIOLATION:-false}" = "true" ]; then
+  export FAIL_ON_ADR_VIOLATION=true
+  echo "🚦 ADR gate armé — fail build si un ADR 'accepted' échoue"
 fi
 echo ""
 

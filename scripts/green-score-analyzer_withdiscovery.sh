@@ -204,6 +204,14 @@ if [ "${CLOUD_FOOTPRINT_CONFIRMED:-false}" = "true" ]; then
   CMD+=(--cloud-footprint-confirmed)
 fi
 
+# ADR gate — Architecture Decision Records under docs/adr (or --adr-dir)
+if [ -n "${ADR_DIR:-}" ]; then
+  CMD+=(--adr-dir "$ADR_DIR")
+fi
+if [ "${FAIL_ON_ADR_VIOLATION:-false}" = "true" ]; then
+  CMD+=(--fail-on-adr-violation)
+fi
+
 if [ "$SKIP_SPECTRAL" = true ]; then
   CMD+=(--skip-spectral)
 fi
