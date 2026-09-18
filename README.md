@@ -3,6 +3,7 @@
 Green Score + Creedengo eco-design analyzer for REST APIs.
 Runs on **Java, Python and C#** with the same CLI and the same CI gate.
 
+- 🚀 **[HOW-TO complet](./docs/HOWTO.md)** — tous les points d'entrée : CLI, GitHub Actions, Azure DevOps, GitLab CI, UI, Docker, binaires.
 - 📘 **[Workshop CFP](./Axa%20Summit%20Workshop%20CFP.md)** — pitch AXA Summit.
 - 🗺️ **[Workshop roadmap](./docs/WORKSHOP-ROADMAP.md)** — 2h & 3h formats, animator checkpoints.
 - 📋 **[Promises coverage matrix](./docs/PROMISES-COVERAGE.md)** — 1↔1 CFP ↔ analyzer.
