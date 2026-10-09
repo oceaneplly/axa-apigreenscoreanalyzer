@@ -30,6 +30,14 @@
 #    --cloud-footprint-confirmed  Confirm that the cloud provider's carbon
 #                                 dashboard is actively used (validates AR05).
 #
+#    --send-to-sobriit            Send the analysis results to SobriIT.
+#    --sobriit-base-url <url>     SobriIT API base URL (or SOBRIIT_BASE_URL env).
+#    --sobriit-api-key <key>      SobriIT API key (or SOBRIIT_API_KEY env).
+#    --app-code <code>            Application code (or SOBRIIT_APP_CODE env).
+#    --app-dsi <dsi>              DSI name (or SOBRIIT_APP_DSI env).
+#    --app-tribe <tribe>          Tribe name (or SOBRIIT_APP_TRIBE env).
+#    --app-tribe-id <uuid>        Tribe UUID (or SOBRIIT_APP_TRIBE_ID env).
+#
 #    All discovered swaggers are merged into a single discovery resource and
 #    analyzed in one run.
 #
@@ -58,7 +66,15 @@ BUILD_AND_RUN=false   # if true: build + start the API locally before health-che
 APP_PID=""            # PID of the locally-launched app (when --build-and-run)
 APP_LOG=""            # log file of the locally-launched app
 SEND_TO_SOBRIIT=false
+# SobriIT connection + application metadata.
+# All of these can be provided via env vars or the matching CLI flags below,
+# and are propagated as explicit params to scripts/sobriit_sender.py.
+SOBRIIT_BASE_URL="${SOBRIIT_BASE_URL:-}"
+SOBRIIT_API_KEY="${SOBRIIT_API_KEY:-}"
 SOBRIIT_APP_CODE="${SOBRIIT_APP_CODE:-}"
+SOBRIIT_APP_DSI="${SOBRIIT_APP_DSI:-}"
+SOBRIIT_APP_TRIBE="${SOBRIIT_APP_TRIBE:-}"
+SOBRIIT_APP_TRIBE_ID="${SOBRIIT_APP_TRIBE_ID:-}"
 # AR02 Phase 3 / AR04 Phase 2 controls (forwarded to green-api-auto-discover.py)
 CONSUMER_REGION="${CONSUMER_REGION:-}"   # ISO-3166 alpha-2 (e.g. FR, US) — AR02
 ENABLE_GEOIP="${ENABLE_GEOIP:-false}"    # true → ipinfo.io lookup for AR02
@@ -110,9 +126,47 @@ while [ $i -lt ${#args[@]} ]; do
     --send-to-sobriit)
       SEND_TO_SOBRIIT=true
       ;;
+    --sobriit-base-url)
+      i=$((i + 1))
+      SOBRIIT_BASE_URL="${args[$i]:-}"
+      ;;
+    --sobriit-base-url=*)
+      SOBRIIT_BASE_URL="${args[$i]#--sobriit-base-url=}"
+      ;;
+    --sobriit-api-key)
+      i=$((i + 1))
+      SOBRIIT_API_KEY="${args[$i]:-}"
+      ;;
+    --sobriit-api-key=*)
+      SOBRIIT_API_KEY="${args[$i]#--sobriit-api-key=}"
+      ;;
     --app-code)
       i=$((i + 1))
       SOBRIIT_APP_CODE="${args[$i]:-}"
+      ;;
+    --app-code=*)
+      SOBRIIT_APP_CODE="${args[$i]#--app-code=}"
+      ;;
+    --app-dsi)
+      i=$((i + 1))
+      SOBRIIT_APP_DSI="${args[$i]:-}"
+      ;;
+    --app-dsi=*)
+      SOBRIIT_APP_DSI="${args[$i]#--app-dsi=}"
+      ;;
+    --app-tribe)
+      i=$((i + 1))
+      SOBRIIT_APP_TRIBE="${args[$i]:-}"
+      ;;
+    --app-tribe=*)
+      SOBRIIT_APP_TRIBE="${args[$i]#--app-tribe=}"
+      ;;
+    --app-tribe-id)
+      i=$((i + 1))
+      SOBRIIT_APP_TRIBE_ID="${args[$i]:-}"
+      ;;
+    --app-tribe-id=*)
+      SOBRIIT_APP_TRIBE_ID="${args[$i]#--app-tribe-id=}"
       ;;
     --root)
       # Explicit project folder for Creedengo (defaults to CWD otherwise).
@@ -765,7 +819,9 @@ PYEOF
       #        - a single eligible sub-module
       #      otherwise abort with a list so the user can pin via JAVA_MODULE.
       RUN_DIR_ABS="$SOURCE_DIR_ABS"
+      IS_MULTIMODULE=false
       if grep -qE '<packaging>\s*pom\s*</packaging>|<modules>' "$SOURCE_DIR_ABS/pom.xml" 2>/dev/null; then
+        IS_MULTIMODULE=true
         RESOLVED_MODULE=$(python3 - "$SOURCE_DIR_ABS" "${JAVA_MODULE:-}" <<'PYEOF'
 import os, re, sys, glob
 ROOT, PIN = sys.argv[1], sys.argv[2]
@@ -866,8 +922,12 @@ PYEOF
       echo "RUN_DIR=$RUN_DIR_ABS"
       JAR=""
       PACKAGE_OK=true
-      if ( cd "$SOURCE_DIR_ABS" && "$MVN_BIN" -DskipTests \
-             -pl ":$(basename "$RUN_DIR_ABS")" -am package >>"$APP_LOG" 2>&1 ); then
+      if [ "$IS_MULTIMODULE" = true ]; then
+        _MVN_PACKAGE_ARGS=(-DskipTests -pl ":$(basename "$RUN_DIR_ABS")" -am package)
+      else
+        _MVN_PACKAGE_ARGS=(-DskipTests package)
+      fi
+      if ( cd "$SOURCE_DIR_ABS" && "$MVN_BIN" "${_MVN_PACKAGE_ARGS[@]}" >>"$APP_LOG" 2>&1 ); then
         echo "✓ Build réussi avec mvn package"
         # Prefer the Spring Boot fat jar over the *-sources/-javadoc/plain ones.
         JAR=$(ls "$RUN_DIR_ABS"/target/*.jar 2>/dev/null \
@@ -896,7 +956,7 @@ PYEOF
 
       if [ "$PACKAGE_OK" = true ] && [ -n "$JAR" ]; then
         echo "🚀 Lancement: java -jar $JAR --server.port=$APP_PORT"
-        ( java -jar "$JAR" --server.port="$APP_PORT" 2>&1 | tee -a "$APP_LOG" ) &
+        ( java -jar "$JAR" --server.port="$APP_PORT" --spring.profiles.active=local --management.server.port="$APP_PORT" -Dserver.port="$APP_PORT" 2>&1 | tee -a "$APP_LOG" ) &
         APP_PID=$!
         echo "✓ App démarrée avec java -jar (PID $APP_PID)"
       else
@@ -904,8 +964,13 @@ PYEOF
         if grep -q "spring-boot-starter" "$RUN_DIR_ABS/pom.xml" 2>/dev/null \
            || grep -q "spring-boot-maven-plugin" "$RUN_DIR_ABS/pom.xml" 2>/dev/null; then
           echo "⤵ Fallback: spring-boot:run (recompilation à chaud, Maven résident)"
+          if [ "$IS_MULTIMODULE" = true ]; then
+            _MVN_RUN_ARGS=(-B -pl ":$(basename "$RUN_DIR_ABS")" -am spring-boot:run)
+          else
+            _MVN_RUN_ARGS=(-B spring-boot:run)
+          fi
           ( cd "$SOURCE_DIR_ABS" && \
-            "$MVN_BIN" -B -pl ":$(basename "$RUN_DIR_ABS")" -am spring-boot:run \
+            "$MVN_BIN" "${_MVN_RUN_ARGS[@]}" \
               -Dspring-boot.run.jvmArguments="-Dserver.port=$APP_PORT" \
               2>&1 | tee -a "$APP_LOG" ) &
           APP_PID=$!
@@ -1321,7 +1386,15 @@ if [ "$SEND_TO_SOBRIIT" = true ]; then
   echo "━━━ 📤 Sending results to SobriIT ━━━"
   SOBRIIT_CMD=(python3 "$ROOT/scripts/sobriit_sender.py"
                --appname "$APPNAME")
-  [ -n "$SOBRIIT_APP_CODE" ] && SOBRIIT_CMD+=(--app-code "$SOBRIIT_APP_CODE")
+  # Propagate all SobriIT connection + application metadata explicitly so the
+  # sender never has to fall back on its built-in defaults (which point at
+  # localhost:8080 and cause WinError 10013 when nothing listens there).
+  [ -n "$SOBRIIT_BASE_URL" ]     && SOBRIIT_CMD+=(--base-url "$SOBRIIT_BASE_URL")
+  [ -n "$SOBRIIT_API_KEY" ]      && SOBRIIT_CMD+=(--api-key "$SOBRIIT_API_KEY")
+  [ -n "$SOBRIIT_APP_CODE" ]     && SOBRIIT_CMD+=(--app-code "$SOBRIIT_APP_CODE")
+  [ -n "$SOBRIIT_APP_DSI" ]      && SOBRIIT_CMD+=(--app-dsi "$SOBRIIT_APP_DSI")
+  [ -n "$SOBRIIT_APP_TRIBE" ]    && SOBRIIT_CMD+=(--app-tribe "$SOBRIIT_APP_TRIBE")
+  [ -n "$SOBRIIT_APP_TRIBE_ID" ] && SOBRIIT_CMD+=(--app-tribe-id "$SOBRIIT_APP_TRIBE_ID")
   [ -f "$LATEST_REPORT" ]   && SOBRIIT_CMD+=(--green-report "$LATEST_REPORT")
   [ -f "$CREEDENGO_REPORT" ] && SOBRIIT_CMD+=(--creedengo-report "$CREEDENGO_REPORT")
   if "${SOBRIIT_CMD[@]}"; then

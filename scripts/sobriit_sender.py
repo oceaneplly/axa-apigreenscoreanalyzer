@@ -74,7 +74,44 @@ def _api_call(method: str, url: str, api_key: str,
         except Exception:
             return e.code, raw.decode("utf-8", errors="replace")
     except Exception as exc:
-        return 0, str(exc)
+        # Connection-level failures (DNS, refused, socket permission denied…)
+        # surface as status 0. WinError 10013 ("socket access forbidden") on
+        # Windows usually means nothing is listening on the target host/port,
+        # the port is in a Windows-reserved/excluded range, or a firewall/proxy
+        # blocks it. Make that actionable instead of a raw stack string.
+        hint = ""
+        text = str(exc)
+        if "10013" in text or "forbidden by its access permissions" in text:
+            hint = (
+                f" — impossible de joindre '{url}'. Vérifiez SOBRIIT_BASE_URL "
+                "(--sobriit-base-url) : l'hôte/port n'écoute pas, est réservé "
+                "par Windows, ou est bloqué par un firewall/proxy."
+            )
+        return 0, f"{text}{hint}"
+
+
+def _log(msg: str) -> None:
+    """Emit a progress/trace line to stderr so the caller can verify that the
+    build and report were actually sent to SobriIT."""
+    print(msg, file=sys.stderr, flush=True)
+
+
+def _extract_id(resp) -> str | int | None:
+    """Extract an entity id from a SobriIT response.
+
+    SobriIT may return the created entity either flat ({"id": ...}) or wrapped
+    in a {"data": {"id": ...}} / {"data": [{"id": ...}]} envelope. We check all
+    of these so a successful build/report is never treated as a silent failure
+    just because of the response shape."""
+    if isinstance(resp, dict):
+        if resp.get("id"):
+            return resp["id"]
+        data = resp.get("data")
+        if isinstance(data, dict) and data.get("id"):
+            return data["id"]
+        if isinstance(data, list) and data and isinstance(data[0], dict) and data[0].get("id"):
+            return data[0]["id"]
+    return None
 
 
 def _json_str(obj) -> str | None:
@@ -114,12 +151,12 @@ def send_to_sobriit(
     Returns a status dict:
       {"ok": True/False, "applicationId": ..., "buildId": ..., "reportId": ..., "error": ...}
     """
-    base_url = (base_url or os.environ.get("SOBRIIT_BASE_URL", "")).rstrip("/")
-    api_key = api_key or os.environ.get("SOBRIIT_API_KEY", "")
+    base_url = (base_url or os.environ.get("SOBRIIT_BASE_URL", "")).rstrip("/") or "http://localhost:8080"
+    api_key = api_key or os.environ.get("SOBRIIT_API_KEY", "") or "U2kgdm91cyBuZSBwb3V2ZXogcGFzIGxlIG1lc3VyZXIsIHZvdXMgbmUgcG91dmV6IHBhcyBsJ2Ftw6lsaW9yZXIu"
     app_code = app_code or os.environ.get("SOBRIIT_APP_CODE", "") or appname
-    app_dsi = app_dsi or os.environ.get("SOBRIIT_APP_DSI", "") or None
-    app_tribe = app_tribe or os.environ.get("SOBRIIT_APP_TRIBE", "") or None
-    app_tribe_id = app_tribe_id or os.environ.get("SOBRIIT_APP_TRIBE_ID", "") or None
+    app_dsi = app_dsi or os.environ.get("SOBRIIT_APP_DSI", "") or "DSI IARD ET PARTENARIATS"
+    app_tribe = app_tribe or os.environ.get("SOBRIIT_APP_TRIBE", "") or "TRIBU IARD PARTICULIERS"
+    app_tribe_id = app_tribe_id or os.environ.get("SOBRIIT_APP_TRIBE_ID", "") or "C954FAC2-AEAC-41D4-A4FF-D958DC3FD3B3"
 
     if not base_url:
         return {"ok": False, "error": "SOBRIIT_BASE_URL not configured"}
@@ -151,6 +188,8 @@ def send_to_sobriit(
     # ── Step 1: Lookup or create application ──
     app_id = None
     quoted = urllib.request.quote(appname, safe='')
+    _log(f"→ [SobriIT] Base URL: {base_url}")
+    _log(f"→ [SobriIT] Step 1/3: resolving application '{appname}' …")
 
     # Try lookup by name first, then by code via the search endpoint
     for search_field in ("name", "code"):
@@ -178,11 +217,13 @@ def send_to_sobriit(
             f"{base_url}/api/v1/applications/by-name/{quoted}",
             api_key,
         )
-        if status == 200 and isinstance(resp, dict) and resp.get("id"):
-            app_id = resp["id"]
+        if status == 200:
+            app_id = _extract_id(resp)
 
     # If still not found, create the application with all available fields
-    if not app_id:
+    if app_id:
+        _log(f"✓ [SobriIT] Application found: {app_id}")
+    else:
         app_payload = {
             "name": appname,
             "code": app_code,
@@ -203,12 +244,15 @@ def send_to_sobriit(
         app_payload = {k: v for k, v in app_payload.items() if v is not None}
 
         status, resp = _api_call("POST", f"{base_url}/api/v1/applications", api_key, body=app_payload)
-        if status in (200, 201) and isinstance(resp, dict) and resp.get("id"):
-            app_id = resp["id"]
+        app_id = _extract_id(resp) if status in (200, 201) else None
+        if app_id:
+            _log(f"✓ [SobriIT] Application created: {app_id}")
         else:
+            _log(f"✗ [SobriIT] Failed to create application (HTTP {status})")
             return {"ok": False, "error": f"failed to create application (HTTP {status}): {resp}"}
 
     # ── Step 2: Create build ──
+    _log("→ [SobriIT] Step 2/3: creating build …")
     build_payload = {
         "applicationId": app_id,
         "tag": report_timestamp or "",
@@ -223,15 +267,18 @@ def send_to_sobriit(
         "greenBackendScore": 0.0,
     }
     status, resp = _api_call("POST", f"{base_url}/api/v1/builds", api_key, body=build_payload)
-    if status not in (200, 201) or not isinstance(resp, dict) or not resp.get("id"):
+    build_id = _extract_id(resp) if status in (200, 201) else None
+    if not build_id:
+        _log(f"✗ [SobriIT] Failed to create build (HTTP {status}): {resp}")
         return {
             "ok": False,
             "applicationId": app_id,
             "error": f"failed to create build (HTTP {status}): {resp}",
         }
-    build_id = resp["id"]
+    _log(f"✓ [SobriIT] Build created: {build_id}")
 
     # ── Step 3: Create GreenApiBackendReport ──
+    _log("→ [SobriIT] Step 3/3: creating GreenApiBackend report …")
     report_payload = {
         "buildId": build_id,
         "appName": appname,
@@ -274,6 +321,7 @@ def send_to_sobriit(
         "POST", f"{base_url}/api/v1/reports/greenapibackend", api_key, body=report_payload
     )
     if status not in (200, 201):
+        _log(f"✗ [SobriIT] Failed to create report (HTTP {status}): {resp}")
         return {
             "ok": False,
             "applicationId": app_id,
@@ -281,7 +329,9 @@ def send_to_sobriit(
             "error": f"failed to create report (HTTP {status}): {resp}",
         }
 
-    report_id = resp.get("id") if isinstance(resp, dict) else None
+    report_id = _extract_id(resp)
+    _log(f"✓ [SobriIT] Report created: {report_id or '(id non renvoyé)'}")
+    _log(f"✓ [SobriIT] Done — application={app_id}, build={build_id}, report={report_id}")
     return {
         "ok": True,
         "applicationId": app_id,
