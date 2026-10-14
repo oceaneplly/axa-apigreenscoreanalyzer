@@ -76,7 +76,8 @@ bash scripts/start.sh --target http://localhost:8080
 Résultats produits :
 - `reports/latest-report.json` — rapport détaillé,
 - `badges/green-score.svg` — badge de score,
-- `dashboard/index.html` — dashboard interactif (ouvrez-le dans un navigateur).
+- `dashboard/index.html` — dashboard interactif, ouvert automatiquement dans le
+  navigateur par `start.sh` en exécution locale.
 
 ---
 
@@ -543,4 +544,3 @@ empreinte cloud AR05).
 [CI-INTEGRATION](./CI-INTEGRATION.md) ·
 [ADR templates](../templates/adr/) ·
 [Sample apps](../samples/).
-

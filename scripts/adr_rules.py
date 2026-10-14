@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 """
 ADR verification module for the Green Score Analyzer.
 =====================================================

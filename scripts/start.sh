@@ -1,4 +1,27 @@
 #!/usr/bin/env bash
+# NOTE: this boilerplate is duplicated at the top of creedengo-analyzer.sh /
+# setup-sonar-quality.sh too. Guard against re-running it if ever sourced:
+# `command -v python3` matches the shell FUNCTION (not just PATH executables)
+# once it's defined, which would make PYTHON_BIN="python3" and the redefined
+# function call itself forever — an infinite recursion that crashes bash with
+# a segmentation fault (stack overflow). `type -P` only resolves real
+# executables on PATH, never functions/aliases/builtins, so it is immune to this.
+if ! declare -f python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(type -P python3 2>/dev/null)"
+  if [ -z "$PYTHON_BIN" ]; then
+    PYTHON_CAND="$(type -P python 2>/dev/null)"
+    if [ -n "$PYTHON_CAND" ] && "$PYTHON_CAND" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,0) else 1)' >/dev/null 2>&1; then
+      PYTHON_BIN="$PYTHON_CAND"
+    fi
+  fi
+  if [ -z "$PYTHON_BIN" ]; then
+    echo "Python 3 is required" >&2
+    exit 1
+  fi
+  python3() {
+    "$PYTHON_BIN" "$@"
+  }
+fi
 ###############################################################################
 #  Start baseline + optimized (local dev)
 #  Usage: bash scripts/start.sh [--analyze] [--debug] [--appname <name>]
@@ -51,6 +74,49 @@
 ###############################################################################
 set -uo pipefail   # pas de -e : on gère les erreurs manuellement
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Open the generated dashboard in the user's default browser when running
+# locally. CI jobs should keep the generated artifact without launching a GUI.
+open_dashboard() {
+  local dashboard_path="$1"
+  local windows_path=""
+  local dashboard_url="file://$dashboard_path"
+
+  if [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
+    return 0
+  fi
+
+  if command -v wslview >/dev/null 2>&1; then
+    wslview "$dashboard_path" >/dev/null 2>&1 &
+  elif command -v cygstart >/dev/null 2>&1; then
+    cygstart "$dashboard_path" >/dev/null 2>&1 &
+  elif command -v cmd.exe >/dev/null 2>&1; then
+    if [[ "$dashboard_path" == /mnt/* || "$dashboard_path" == /[a-zA-Z]/* ]] && command -v wslpath >/dev/null 2>&1; then
+      windows_path="$(wslpath -w "$dashboard_path" 2>/dev/null)"
+      [ -z "$windows_path" ] && windows_path="$dashboard_path"
+    elif command -v cygpath >/dev/null 2>&1; then
+      windows_path="$(cygpath -w "$dashboard_path")"
+    else
+      windows_path="$dashboard_path"
+    fi
+    if command -v explorer.exe >/dev/null 2>&1; then
+      MSYS_NO_PATHCONV=1 explorer.exe "$windows_path" >/dev/null 2>&1 &
+    else
+      MSYS_NO_PATHCONV=1 cmd.exe //c start "" "$windows_path" >/dev/null 2>&1 &
+    fi
+    if [[ "$windows_path" == [A-Za-z]:\\* ]]; then
+      dashboard_url="file:///${windows_path//\\//}"
+    fi
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$dashboard_path" >/dev/null 2>&1 &
+  elif command -v open >/dev/null 2>&1; then
+    open "$dashboard_path" >/dev/null 2>&1 &
+  else
+    echo "⚠️  Unable to open the dashboard automatically"
+  fi
+
+  printf '🔗 Dashboard: \033]8;;%s\a%s\033]8;;\a\n' "$dashboard_url" "$dashboard_url"
+}
 
 # Parse options
 DEBUG_FLAG=""
@@ -1204,7 +1270,7 @@ else
   WAIT_URLS=("http://localhost:8080" "http://localhost:8081")
 fi
 
-echo "⏳ Attente du démarrage des services (max ${TIMEOUT:-120}s) — ${#WAIT_URLS[@]} cible(s):"
+echo "⏳ Attente du démarrage des services (max ${TIMEOUT:-60}s) — ${#WAIT_URLS[@]} cible(s):"
 for u in "${WAIT_URLS[@]}"; do echo "    • $u"; done
 echo ""
 
@@ -1212,7 +1278,7 @@ echo ""
 READY_FLAGS=()
 for _u in "${WAIT_URLS[@]}"; do READY_FLAGS+=("false"); done
 
-TIMEOUT=150
+TIMEOUT=60
 ELAPSED=0
 ALL_READY=false
 
@@ -1417,6 +1483,7 @@ if [ -f "$ROOT/scripts/generate-dashboard.sh" ] && [ -f "$LATEST_REPORT" ]; then
   fi
   bash "$ROOT/scripts/generate-dashboard.sh" "${DASHBOARD_ARGS[@]}" || true
   echo "✅ Dashboard generated: $ROOT/dashboard/index.html"
+  open_dashboard "$ROOT/dashboard/index.html"
 else
   echo "⚠️  No report found — dashboard not generated"
 fi

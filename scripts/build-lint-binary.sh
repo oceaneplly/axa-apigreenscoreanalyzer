@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+PYTHON_BIN=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python3)"
+elif command -v python >/dev/null 2>&1 && python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,0) else 1)' >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python)"
+fi
+if [ -z "$PYTHON_BIN" ]; then
+  echo "Python 3 is required" >&2
+  exit 1
+fi
+python3() {
+  "$PYTHON_BIN" "$@"
+}
 ###############################################################################
 #  Build a small self-contained `green-api-lint` binary.
 #
@@ -39,11 +52,17 @@ cat > "$STAGE/bundle/__entrypoint.sh" <<'ENTRYPOINT'
 #!/usr/bin/env bash
 set -uo pipefail
 : "${BUNDLE_DIR:=$(cd "$(dirname "$0")" && pwd)}"
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "❌ python3 is required for green-api-lint." >&2
+PYTHON_BIN=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python3)"
+elif command -v python >/dev/null 2>&1 && python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,0) else 1)' >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python)"
+fi
+if [ -z "$PYTHON_BIN" ]; then
+  echo "❌ Python 3 is required for green-api-lint." >&2
   exit 2
 fi
-exec python3 "$BUNDLE_DIR/lint.py" "$@"
+exec "$PYTHON_BIN" "$BUNDLE_DIR/lint.py" "$@"
 ENTRYPOINT
 chmod +x "$STAGE/bundle/__entrypoint.sh"
 

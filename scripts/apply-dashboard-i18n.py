@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 """Make ``dashboard/index.save.html`` bilingual (French by default / English).
 
 The i18n engine + FR→EN dictionary live in ``dashboard/i18n.partial.html``,

@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+PYTHON_BIN=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python3)"
+elif command -v python >/dev/null 2>&1 && python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,0) else 1)' >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python)"
+fi
+if [ -z "$PYTHON_BIN" ]; then
+  echo "Python 3 is required" >&2
+  exit 1
+fi
+python3() {
+  "$PYTHON_BIN" "$@"
+}
 ###############################################################################
 #  Build a single self-extracting executable that bundles the full Green
 #  Analyzer (scripts + dashboard + badges + thresholds) and exposes ONLY a
@@ -84,6 +97,16 @@ cat > "$STAGE/bundle/__entrypoint.sh" <<'ENTRYPOINT'
 set -uo pipefail
 # $BUNDLE_DIR is exported by the outer self-extracting wrapper.
 : "${BUNDLE_DIR:=$(cd "$(dirname "$0")" && pwd)}"
+PYTHON_BIN=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python3)"
+elif command -v python >/dev/null 2>&1 && python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,0) else 1)' >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python)"
+fi
+if [ -z "$PYTHON_BIN" ]; then
+  echo "❌ Python 3 is required to run greenanalyzer." >&2
+  exit 1
+fi
 SCRIPTS="$BUNDLE_DIR/scripts"
 VERSION="1.1.0"
 
@@ -171,7 +194,7 @@ case "$SUB" in
   # ── Offline OpenAPI linter ──
   lint)
     chmod +x "$SCRIPTS/"*.sh 2>/dev/null || true
-    exec python3 "$SCRIPTS/green-api-lint.py" "$@"
+    exec "$PYTHON_BIN" "$SCRIPTS/green-api-lint.py" "$@"
     ;;
 
   # ── Interactive web dashboard ──
@@ -180,7 +203,7 @@ case "$SUB" in
     # The bridge expects to find dashboard/ next to scripts/, which is the
     # case inside the bundle.
     cd "$BUNDLE_DIR"
-    exec python3 "$SCRIPTS/greenapianalyzer-server.py" "$@"
+    exec "$PYTHON_BIN" "$SCRIPTS/greenapianalyzer-server.py" "$@"
     ;;
 
   # ── Live Green Score analysis (default) ──

@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 """
 Green API Auto-Discover & Analyzer
 ===================================

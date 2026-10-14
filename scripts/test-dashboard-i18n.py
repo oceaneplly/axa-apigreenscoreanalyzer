@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 """Smoke-test the dashboard i18n engine (FR -> EN) with Node.js.
 
 Extracts the i18n block from the generated dashboard, stubs a minimal DOM and

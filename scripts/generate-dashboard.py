@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 """Generate dashboard/index.html by embedding the latest report JSON.
 Also generates dashboard/index.md (Markdown equivalent for GitHub rendering).
 """

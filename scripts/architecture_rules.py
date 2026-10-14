@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 """
 Architecture & Infrastructure rules (AR01–AR05) for the Green Score Analyzer.
 =============================================================================

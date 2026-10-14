@@ -1,4 +1,28 @@
 #!/usr/bin/env bash
+# NOTE: this boilerplate is duplicated at the top of start.sh / creedengo-analyzer.sh
+# / setup-sonar-quality.sh, and setup-sonar-quality.sh is `source`d into this very
+# process (Step 7 below). Guard against re-running it: `declare -f python3` would
+# already succeed on the second pass, and `command -v python3` matches the shell
+# FUNCTION (not just PATH executables), which would make PYTHON_BIN="python3" and
+# the redefined function call itself forever — an infinite recursion that crashes
+# bash with a segmentation fault (stack overflow). `type -P` only resolves real
+# executables on PATH, never functions/aliases/builtins, so it is immune to this.
+if ! declare -f python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(type -P python3 2>/dev/null)"
+  if [ -z "$PYTHON_BIN" ]; then
+    PYTHON_CAND="$(type -P python 2>/dev/null)"
+    if [ -n "$PYTHON_CAND" ] && "$PYTHON_CAND" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,0) else 1)' >/dev/null 2>&1; then
+      PYTHON_BIN="$PYTHON_CAND"
+    fi
+  fi
+  if [ -z "$PYTHON_BIN" ]; then
+    echo "Python 3 is required" >&2
+    exit 1
+  fi
+  python3() {
+    "$PYTHON_BIN" "$@"
+  }
+fi
 ###############################################################################
 #  🌱 Creedengo Green Code Analyzer — Fully Local (Auto-Detect)
 #  ==============================================================
@@ -101,9 +125,10 @@ curl_http_code() {
 # NOTE: Creedengo plugins v2.x require SonarQube 10.6+ (Plugin API >= 13.0)
 #       sonarqube:lts-community = 9.x (Plugin API 9.14) → INCOMPATIBLE
 #       sonarqube:10-community  = 10.x (Plugin API 10+) → OK
-#       sonarqube:community     = latest (11.x)         → OK
+#       sonarqube:community     = latest (may be 11.x)  → incompatible with
+#       some Creedengo 2.x plugins
 SONAR_PORT=${SONAR_PORT:-9100}
-SONAR_IMAGE=${SONAR_IMAGE:-"sonarqube:community"}
+SONAR_IMAGE=${SONAR_IMAGE:-"sonarqube:10-community"}
 CREEDENGO_VERSION=${CREEDENGO_VERSION:-"2.1.2"}
 CONTAINER_NAME="creedengo-sonar-$$"
 REPORTS_DIR="$GREEN_DIR/reports"
@@ -1501,7 +1526,7 @@ fi
 # Step 5: Wait for SonarQube to be ready
 ###############################################################################
 echo -e "${YELLOW}━━━ ⏳ Waiting for SonarQube to start (may take 60-120s) ━━━${NC}"
-TIMEOUT=180; ELAPSED=0
+TIMEOUT=150; ELAPSED=0
 SONAR_DEAD=false
 while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
   # Bail out fast if the container died (Elasticsearch shard failure, OOM, …)
@@ -1888,7 +1913,8 @@ SONAR_PROPS=(
   "-Dsonar.host.url=${SONAR_URL}" ${SONAR_AUTH_MAVEN}
   "-Dsonar.projectKey=${PROJECT_KEY}" "-Dsonar.projectName=${APPNAME}"
   "-Dsonar.sources=${SONAR_SOURCES}" "-Dsonar.sourceEncoding=UTF-8"
-  "-Dsonar.exclusions=**/node_modules/**,**/target/**,**/build/**,**/dist/**,**/*.test.*,**/*.spec.*,**/test/**,**/__pycache__/**"
+  "-Dsonar.exclusions=**/.git/**,.git/**,**/node_modules/**,**/target/**,**/build/**,**/dist/**,**/*.test.*,**/*.spec.*,**/test/**,**/__pycache__/**"
+  "-Dsonar.scm.disabled=true"
 )
 [ -n "$SONAR_JAVA_BINARIES" ] && SONAR_PROPS+=("-Dsonar.java.binaries=${SONAR_JAVA_BINARIES}")
 
@@ -1941,6 +1967,7 @@ if echo "$PLUGIN_KEYS" | grep -q "java" && [ -n "$JAVA_MODULE_DIR" ] && [ -f "$J
   fi
 
   [ -n "$JAVA_VER" ] && MVN_SONAR_PROPS+=("-Dsonar.java.source=${JAVA_VER}")
+  MVN_SONAR_PROPS+=("-Dsonar.exclusions=**/.git/**,.git/**,**/node_modules/**,**/target/**,**/build/**,**/dist/**,**/*.test.*,**/*.spec.*,**/test/**,**/__pycache__/**" "-Dsonar.scm.disabled=true")
 
   # Run Maven sonar:sonar from reactor (or single module) POM
   echo -e "  ${CYAN}Running with: ${JAVA_MODULE_DIR}/pom.xml${NC}"
@@ -2091,7 +2118,7 @@ echo -e "  ${GREEN}✓ Analysis submitted${NC}"
 #       /api/ce/activity is more reliable with admin credentials.
 ###############################################################################
 echo -e "${YELLOW}━━━ ⏳ Waiting for analysis to complete ━━━${NC}"
-CE_TIMEOUT=300; CE_ELAPSED=0; CE_STATUS="PENDING"
+CE_TIMEOUT=${CREEDENGO_CE_TIMEOUT:-60}; CE_ELAPSED=0; CE_STATUS="PENDING"
 
 # Use admin credentials for CE polling (project tokens may lack Browse permission)
 CE_AUTH_CURL="-u admin:${SONAR_PASS}"
@@ -2274,4 +2301,3 @@ else
 fi
 echo ""
 echo -e "Open the dashboard: ${YELLOW}open greenanalyzer/dashboard/index.html${NC}"
-

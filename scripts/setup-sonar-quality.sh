@@ -1,4 +1,28 @@
 #!/usr/bin/env bash
+# NOTE: this boilerplate is duplicated at the top of start.sh / creedengo-analyzer.sh
+# / setup-sonar-quality.sh, and this script is `source`d from creedengo-analyzer.sh
+# into the SAME process. Guard against re-running it: `declare -f python3` would
+# already succeed on the second pass, and `command -v python3` matches the shell
+# FUNCTION (not just PATH executables), which would make PYTHON_BIN="python3" and
+# the redefined function call itself forever — an infinite recursion that crashes
+# bash with a segmentation fault (stack overflow). `type -P` only resolves real
+# executables on PATH, never functions/aliases/builtins, so it is immune to this.
+if ! declare -f python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(type -P python3 2>/dev/null)"
+  if [ -z "$PYTHON_BIN" ]; then
+    PYTHON_CAND="$(type -P python 2>/dev/null)"
+    if [ -n "$PYTHON_CAND" ] && "$PYTHON_CAND" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,0) else 1)' >/dev/null 2>&1; then
+      PYTHON_BIN="$PYTHON_CAND"
+    fi
+  fi
+  if [ -z "$PYTHON_BIN" ]; then
+    echo "Python 3 is required" >&2
+    exit 1
+  fi
+  python3() {
+    "$PYTHON_BIN" "$@"
+  }
+fi
 ###############################################################################
 #  🌱 SonarQube Quality Profile & Gate Setup for Creedengo
 #  ========================================================
@@ -263,7 +287,8 @@ echo ""
 ###############################################################################
 echo -e "${CYAN}── Step 3: Creating quality gate '${GATE_NAME}' (extends default) ──${NC}"
 
-# 3a. Find the default (built-in) quality gate
+# 3a. Find the default (built-in) quality gate. SonarQube versions differ in
+# whether the list endpoint exposes the id directly or under qualityGate.
 DEFAULT_GATE_ID=$(curl -s ${SONAR_AUTH_CURL} \
   "${SONAR_URL}/api/qualitygates/list" 2>/dev/null \
   | python3 -c "
@@ -272,7 +297,7 @@ data = json.load(sys.stdin)
 gates = data.get('qualitygates', data.get('qualityGates', []))
 for g in gates:
     if g.get('isDefault', False) or g.get('isBuiltIn', False):
-        print(g.get('id', g.get('name','')))
+        print(g.get('id', g.get('gateId', g.get('qualityGate', {}).get('id', ''))))
         break
 " 2>/dev/null || echo "")
 
@@ -307,17 +332,42 @@ if [ -n "$EXISTING_GATE_ID" ]; then
   echo -e "  ${GREEN}✓ Quality gate '${GATE_NAME}' already exists (id: ${EXISTING_GATE_ID})${NC}"
   CREED_GATE_ID="$EXISTING_GATE_ID"
 else
-  # 3c. Copy the default quality gate to create CreedGate
-  #     SonarQube 10+ supports api/qualitygates/copy
-  COPY_RESP=$(curl -s ${SONAR_AUTH_CURL} -X POST \
-    "${SONAR_URL}/api/qualitygates/copy" \
-    -d "sourceName=${DEFAULT_GATE_NAME}&name=${GATE_NAME}" 2>/dev/null || echo "{}")
+  # 3c. Copy the default quality gate to create CreedGate. The current API
+  # expects the source gate id; sourceName is retained as a compatibility
+  # fallback for older SonarQube versions.
+  COPY_RESP="{}"
+  if [ -n "$DEFAULT_GATE_ID" ]; then
+    COPY_RESP=$(curl -s ${SONAR_AUTH_CURL} -X POST \
+      "${SONAR_URL}/api/qualitygates/copy" \
+      --data-urlencode "id=${DEFAULT_GATE_ID}" \
+      --data-urlencode "name=${GATE_NAME}" 2>/dev/null || echo "{}")
+  fi
+  if [ "$COPY_RESP" = "{}" ] || [ -z "$COPY_RESP" ]; then
+    COPY_RESP=$(curl -s ${SONAR_AUTH_CURL} -X POST \
+      "${SONAR_URL}/api/qualitygates/copy" \
+      --data-urlencode "sourceName=${DEFAULT_GATE_NAME}" \
+      --data-urlencode "name=${GATE_NAME}" 2>/dev/null || echo "{}")
+  fi
 
   CREED_GATE_ID=$(echo "$COPY_RESP" | python3 -c "
 import sys,json
 d = json.load(sys.stdin)
-print(d.get('id', d.get('name','')))
+qg = d.get('qualityGate', d)
+print(qg.get('id', qg.get('name','')))
 " 2>/dev/null || echo "")
+
+  if [ -z "$CREED_GATE_ID" ] && [ -n "$DEFAULT_GATE_NAME" ]; then
+    COPY_RESP=$(curl -s ${SONAR_AUTH_CURL} -X POST \
+      "${SONAR_URL}/api/qualitygates/copy" \
+      --data-urlencode "sourceName=${DEFAULT_GATE_NAME}" \
+      --data-urlencode "name=${GATE_NAME}" 2>/dev/null || echo "{}")
+    CREED_GATE_ID=$(echo "$COPY_RESP" | python3 -c "
+import sys,json
+d = json.load(sys.stdin)
+qg = d.get('qualityGate', d)
+print(qg.get('id', qg.get('name','')))
+" 2>/dev/null || echo "")
+  fi
 
   if [ -n "$CREED_GATE_ID" ]; then
     echo -e "  ${GREEN}✓ Quality gate '${GATE_NAME}' created (copy of '${DEFAULT_GATE_NAME}')${NC}"
@@ -326,12 +376,13 @@ print(d.get('id', d.get('name','')))
     # 3d. Fallback: create an empty gate and add default conditions
     CREATE_GATE_RESP=$(curl -s ${SONAR_AUTH_CURL} -X POST \
       "${SONAR_URL}/api/qualitygates/create" \
-      -d "name=${GATE_NAME}" 2>/dev/null || echo "{}")
+      --data-urlencode "name=${GATE_NAME}" 2>/dev/null || echo "{}")
 
     CREED_GATE_ID=$(echo "$CREATE_GATE_RESP" | python3 -c "
 import sys,json
 d = json.load(sys.stdin)
-print(d.get('id', d.get('name','')))
+qg = d.get('qualityGate', d)
+print(qg.get('id', qg.get('name','')))
 " 2>/dev/null || echo "")
 
     if [ -n "$CREED_GATE_ID" ]; then
@@ -492,4 +543,3 @@ echo -e "$PROJ_QG"
 echo ""
 echo -e "${GREEN}━━━ 📋 Quality setup complete — ready for analysis ━━━${NC}"
 echo ""
-

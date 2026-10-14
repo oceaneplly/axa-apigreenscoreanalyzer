@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 """
 Verify that every artefact promised by docs/PROMISES-COVERAGE.md
 actually exists in the repository. Fails (exit ≠ 0) on any missing
