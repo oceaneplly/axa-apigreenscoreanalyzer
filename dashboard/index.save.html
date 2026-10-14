@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌿 Green API Score Dashboard — Devoxx France 2026</title>
+    <title>🌿 Green API Score Dashboard — Summit AXA 2026</title>
     <style>
         :root {
             --green-50: #f0fdf4; --green-100: #dcfce7; --green-200: #bbf7d0;
@@ -194,7 +194,7 @@
         .accordion-body {
             overflow: hidden;
             transition: max-height 0.35s ease, opacity 0.3s ease;
-            max-height: 5000px;
+            max-height: none;
             opacity: 1;
         }
         .accordion-body.collapsed {
@@ -1333,7 +1333,7 @@
         </div>
         <h1>🌿 Green API Score Dashboard</h1>
         <div class="subtitle">Green Architecture : moins de gras, plus d'impact, plus d'efficacité !</div>
-        <div class="badge">Devoxx France 2026 — Tools in Action</div>
+        <div class="badge">Summit AXA 2026 — Tools in Action</div>
         <div id="app-selector-bar" style="margin-top:10px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
             <span style="color:var(--gray-400);font-size:0.85rem;">📦 API :</span>
             <span id="appname-display" style="font-weight:700;font-size:1.05rem;color:var(--green-400);"></span>
@@ -1675,7 +1675,7 @@
         <p>🌿 API Green Score — <a href="https://github.com/API-Green-Score/APIGreenScore" target="_blank">Framework</a> |
         <a href="https://github.com/API-Green-Score/training-student" target="_blank">Training</a> |
         🌱 <a href="https://github.com/green-code-initiative" target="_blank">Creedengo</a> |
-        Devoxx France 2026</p>
+        Summit AXA 2026</p>
     </div>
 
 <script>
@@ -3433,7 +3433,7 @@ function renderSuggestions(report) {
 
         html += `
         <div class="suggestion-rule-group">
-            <div class="suggestion-rule-header" aria-expanded="true" onclick="toggleSuggestionRule(this, '${ruleId}')">
+            <div class="suggestion-rule-header" aria-expanded="false" onclick="toggleSuggestionRule(this, '${ruleId}')">
                 <span class="rule-icon">${rule.icon}</span>
                 <span class="rule-title">${rule.name}</span>
                 <span class="rule-status ${statusCls}">${statusLabel}</span>
@@ -3441,7 +3441,7 @@ function renderSuggestions(report) {
                 <span class="suggestion-count-badge">${filteredSuggs.length}</span>
                 <span class="chevron-small">▼</span>
             </div>
-            <div class="suggestion-rule-body expanded" id="${ruleId}">
+            <div class="suggestion-rule-body" id="${ruleId}">
                 <div style="font-size:0.78rem;color:var(--gray-400);margin-bottom:10px;">
                     ${rule.description}
                     <span style="margin-left:8px;color:var(--gray-500);">(${rule.matched_count}/${rule.candidate_count} endpoints validés)</span>

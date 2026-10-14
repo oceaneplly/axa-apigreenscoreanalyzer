@@ -1270,15 +1270,18 @@ else
   WAIT_URLS=("http://localhost:8080" "http://localhost:8081")
 fi
 
-echo "⏳ Attente du démarrage des services (max ${TIMEOUT:-60}s) — ${#WAIT_URLS[@]} cible(s):"
+TIMEOUT=60
+MAX_HEALTH_ATTEMPTS=3
+echo "⏳ Attente du démarrage des services (max ${TIMEOUT}s, ${MAX_HEALTH_ATTEMPTS} tentatives par chemin) — ${#WAIT_URLS[@]} cible(s):"
 for u in "${WAIT_URLS[@]}"; do echo "    • $u"; done
 echo ""
 
 # Tableau parallèle des états « prêt » par cible
 READY_FLAGS=()
+HEALTH_ATTEMPTS=()
 for _u in "${WAIT_URLS[@]}"; do READY_FLAGS+=("false"); done
+for _u in "${WAIT_URLS[@]}"; do HEALTH_ATTEMPTS+=("0"); done
 
-TIMEOUT=60
 ELAPSED=0
 ALL_READY=false
 
@@ -1299,11 +1302,12 @@ probe_url() {
 while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
   ALL_READY=true
   for idx in "${!WAIT_URLS[@]}"; do
-    if [ "${READY_FLAGS[$idx]}" = "false" ]; then
+    if [ "${READY_FLAGS[$idx]}" = "false" ] && [ "${HEALTH_ATTEMPTS[$idx]}" -lt "$MAX_HEALTH_ATTEMPTS" ]; then
       if probe_url "${WAIT_URLS[$idx]}"; then
         READY_FLAGS[$idx]="true"
         echo "  ✅ ${WAIT_URLS[$idx]} prêt après ${ELAPSED}s"
       else
+        HEALTH_ATTEMPTS[$idx]=$((HEALTH_ATTEMPTS[$idx] + 1))
         ALL_READY=false
       fi
     fi
@@ -1312,6 +1316,18 @@ while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
     echo "🚀 Toutes les cibles sont démarrées !"
     break
   fi
+
+  RETRY_PENDING=false
+  for idx in "${!WAIT_URLS[@]}"; do
+    if [ "${READY_FLAGS[$idx]}" = "false" ] && [ "${HEALTH_ATTEMPTS[$idx]}" -lt "$MAX_HEALTH_ATTEMPTS" ]; then
+      RETRY_PENDING=true
+      break
+    fi
+  done
+  if ! $RETRY_PENDING; then
+    break
+  fi
+
   sleep 5
   ELAPSED=$((ELAPSED + 5))
 done

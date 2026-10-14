@@ -1945,7 +1945,7 @@ Examples:
         log(f"  Targets ({len(targets)}): {', '.join(targets)}")
     if swaggers:
         log(f"  Swaggers ({len(swaggers)}): {', '.join(swaggers)}")
-    log("  Devoxx France 2026 — Green Architecture")
+    log("Summit AXA 2026 — Green Architecture")
     log("=" * 60)
 
     # ── Step 1: Load/Discover Swagger for every target ──

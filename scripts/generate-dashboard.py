@@ -419,7 +419,7 @@ def generate_markdown(report: dict, *, appname: str = "",
     if appname:
         a(f"> 📦 **Application : {appname}**")
         a(">")
-    a("> **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**")
+    a("> **Summit AXA 2026 — Green Architecture : moins de gras, plus d'impact !**")*")
     a("")
     a(f"📅 *Dernière analyse : {ts}*")
     a("")
@@ -706,7 +706,7 @@ def generate_markdown(report: dict, *, appname: str = "",
     a("")
     a("🌿 *API Green Score — [Framework](https://github.com/API-Green-Score/APIGreenScore) | "
       "[Training](https://github.com/API-Green-Score/training-student) | "
-      "🌱 [Creedengo](https://github.com/green-code-initiative) | Devoxx France 2026*")
+      "🌱 [Creedengo](https://github.com/green-code-initiative) | Summit AXA 2026*")
     a("")
     a("> 📊 Pour le dashboard interactif complet, ouvrez [`dashboard/index.html`](index.html)")
     a("")

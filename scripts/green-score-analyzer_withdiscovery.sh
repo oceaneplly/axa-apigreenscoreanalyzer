@@ -88,8 +88,8 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║  🌿 Green API Score Analyzer — Fully Dynamic Discovery     ║${NC}"
-echo -e "${CYAN}║  Devoxx France 2026 — Green Architecture                   ║${NC}"
+echo -e "${CYAN}║  🌿 Green API Score Analyzer — Fully Dynamic Discovery       ║${NC}"
+echo -e "${CYAN}║  Summit AXA 2026 — Green Architecture                        ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
