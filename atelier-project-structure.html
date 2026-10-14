@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atelier AXA API Green Score Analyzer - Structure du Projet</title>
+  
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@400,500,700">
+  
+  <style>
+    @font-face {
+      font-family: "Publico Headline";
+      font-style: normal;
+      font-weight: 700;
+      src: url("data:font/truetype;base64,AAEAAAAPAIAAAwBwRkZUTXWaZuwAAzYgAAAAHEdERUYOuRD7AAJqKAAAAFpHUE9TQhQ5dQACigQAAKwcR1NVQhYIYa0AAmqEAAAffk9TLzJqIXjbAAABeAAAAGBjbWFwM0usHAAADNgAAAOeZ2FzcP//AAMAAmogAAAACGdseWayfiMWAAAV/AABTzRoZWFk/xUDKgAAAPwAAAA2aGhlYQhIBmAAAAE0AAAAJGhtdHj5QTnGAAAB2AAACwBsb2NhhjQyMAAAEHgAAAWCbWF4cAMJAG4AAAFYAAAAIG5hbWX0LNE2AAFlMAAA7Sdwb3N0r1nrtgACUlgAABfFAAEAAAACAEFudrmPXw889QALA+gAAAAAzHYWhAAAAADPIqhN/4L/BgTaBC0AAAAIAAIAAAAAAAAAAQAAAyH/OQDIBOT/gv+CBNoAAQAAAAAAAAAAAAAAAAAAAsAAAQAAAsAAawAHAAAAAAACAAAAAQABAAAAQAAAAAAAAAAEAjwCvAAFAAQCigJYAAAASwKKAlgAAAFeADIBNwAAAgQIAgYFBAYCAwAAAAcAAAAAAAAAAAAAAABDT01NAYAAIPsEAyH/OQDIBC0A+iAAAJMAAAAAAgcCtQAAACAADAH0AAAAAAAAAU0AAADWAAABHgAlAYQAGQILAB4CCwAKAw0AGQLeABIA0gAXAUAAIwFAAAoBbAARAdoAJQDqABIBFAAVAOUAHwGBAAACrgAhAYoAFgIWAA4CHgAMAkwADQIRABUCWAAYAf4AEgI6ABYCWAAYAOwAIgDtABUB2gAkAgwAJQHaACYB2wAUA3QAGQKx//0CkgARAnAAGwLaABECagARAk8AEQKyABsDAAARAXAAEQFq/4YCzgARAlUAEQNuABECugARAtgAGgKDABEC2AAaAsAAEQIQABgCegANAr8ACgKj//0D9f//Ar0ACgKI//wCQwASAVIAVwGBABEBUgAWAdEAOgFg//0B7wB9AhQAEQJd//cB8AATAmkAFwIOABMBYAAEAg//8wJzAAYBMQAIASz/jAJSAAYBNQAGA5wACAJzAAgCRQATAmwACAJhABcBzwAIAbAAGAFtAAACcAAGAiz/+wNI//sCSwAHAi7//AHpAAwBaAAqAN4AVQFoACcBgwAdANYAAAEeACQB8QATAh4AEgJ8AAcA3gBVAkEAFQH0AEYDFAAkAb0AEQHGAB0BiwAUAfQAegEwAB0B2gAlAVAADAFZAAwB9ACGAhoAFADmACAB9ACjAQQADwHlABMBxgAkAwkAEAMEABADPgAYAdsAIAKx//0Csf/9ArH//QKx//0Csf/9ArH//QOj//wCcAAbAmoAEQJqABECagARAmoAEQFwABEBcAARAXAAEQFw//wC2gARAroAEQLYABoC2AAaAtgAGgLYABoC2AAaAbsAJwLYABoCvwAKAr8ACgK/AAoCvwAKAoj//AKEABEClQAEAhQAEQIUABECFAARAhQAEQIUABECFAARAxIAEQHwABMCDgATAg4AEwIOABMCDgATATEACAExAAgBMQAEATH/5AJGABMCcwAIAkUAEwJFABMCRQATAkUAEwJFABMB2gAlAkUAEwJwAAYCcAAGAnAABgJwAAYCLv/8AmT//gIu//wCsf/9AhQAEQKx//0CFAARArH//QIUABECcAAbAfAAEwJwABsB8AATAnAAGwHwABMCcAAbAfAAEwLaABECaQAXAtoAEQJpABcCagARAg4AEwJqABECDgATAmoAEQIOABMCagARAg4AEwJqABECDgATArIAGwIP//MCsgAbAg//8wKyABsCD//zArIAGwIP//MDAAARAnMABgMAAAsCcwAAAXAADgEx//QBcAARATEACAFwABEBMQAIAXAAEQExAAgBcAARATEACALaABECSgAIAWr/hgEs/4wCzgARAlIABgJVABEBNQAGAlUAEQE1AAYCVQARATUABgJVABEBcwAGAlUABwE1AAQCugAR") format("truetype");
+    }
+
+    :root {
+      /* AXA Colors */
+      --axa-blue: #00008F;
+      --axa-blue-mid: #1414A0;
+      --axa-blue-light: #EEEEF8;
+      --axa-red: #FF1721;
+      --axa-teal: #5CC8E2;
+      
+      /* Fonts */
+      --font-display: "Publico Headline", Georgia, serif;
+      --font-body: 'Satoshi', system-ui, -apple-system, sans-serif;
+      
+      /* Typography */
+      --fs-title: clamp(3rem, 8vw, 6rem);
+      --fs-subtitle: clamp(2rem, 5vw, 4rem);
+      --fs-heading: clamp(1.5rem, 3vw, 2.5rem);
+      --fs-body: clamp(1.25rem, 2.5vw, 1.75rem);
+      --fs-small: clamp(1.125rem, 2vw, 1.5rem);
+      
+      /* Spacing */
+      --spacing-xs: clamp(0.5rem, 1vw, 1rem);
+      --spacing-sm: clamp(1rem, 2vw, 1.5rem);
+      --spacing-md: clamp(1.5rem, 3vw, 2.5rem);
+      --spacing-lg: clamp(2rem, 4vw, 3rem);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      font-family: var(--font-body);
+      font-size: var(--fs-body);
+      color: #1a1a1a;
+      background: #ffffff;
+    }
+
+    .slide {
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100vh;
+      min-height: 100dvh;
+      max-height: 100vh;
+      max-height: 100dvh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: max(var(--spacing-md), 5vh) var(--spacing-lg) max(var(--spacing-lg), 7vh);
+      position: relative;
+    }
+
+    .slide-content {
+      width: 100%;
+      max-width: min(85vw, 1200px);
+      max-height: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .slide.dense {
+      --fs-heading: clamp(1.25rem, 2.4vw, 2rem);
+      --fs-body: clamp(1rem, 1.7vw, 1.35rem);
+      --fs-small: clamp(0.9rem, 1.4vw, 1.1rem);
+      --spacing-md: clamp(0.75rem, 1.8vh, 1.4rem);
+      --spacing-lg: clamp(1rem, 2.5vh, 1.8rem);
+    }
+
+    .slide.dense .slide-content {
+      gap: var(--spacing-md);
+    }
+
+    .slide.dense .grid-2 {
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md) !important;
+      margin-bottom: 0;
+    }
+
+    .slide.dense .grid-item {
+      padding: clamp(0.75rem, 1.7vh, 1.25rem);
+    }
+
+    .slide.dense .grid-item p,
+    .slide.dense .content-list li {
+      line-height: 1.3;
+    }
+
+    .slide.start-slide {
+      --fs-heading: clamp(1.1rem, 2vw, 1.7rem);
+      --fs-body: clamp(0.9rem, 1.45vw, 1.15rem);
+      --fs-small: clamp(0.8rem, 1.15vw, 0.95rem);
+      --spacing-md: clamp(0.55rem, 1.2vh, 0.9rem);
+      --spacing-lg: clamp(0.75rem, 1.8vh, 1.25rem);
+    }
+
+    .slide.start-slide .slide-content {
+      gap: var(--spacing-md);
+    }
+
+    .slide.start-slide .grid-item {
+      padding: clamp(0.55rem, 1.2vh, 0.9rem);
+    }
+
+    .slide.directory-slide .slide-content,
+    .slide.closing-slide .slide-content {
+      gap: clamp(0.5rem, 1.2vh, 1rem);
+    }
+
+    .slide.directory-slide .content-list {
+      gap: clamp(0.35rem, 1vh, 0.75rem);
+    }
+
+    .slide.directory-slide .content-list li,
+    .slide.closing-slide .content-list li {
+      font-size: clamp(0.95rem, 1.55vw, 1.25rem);
+      line-height: 1.2;
+    }
+
+    .slide.directory-slide .badge {
+      padding: 0.25rem 0.55rem;
+      font-size: clamp(0.8rem, 1.2vw, 1rem);
+    }
+
+    .slide.closing-slide h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .slide.closing-slide .subtitle {
+      font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+      margin-top: var(--spacing-sm) !important;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .slide.closing-slide .content-list {
+      gap: clamp(0.4rem, 1vh, 0.8rem);
+      margin-top: var(--spacing-sm) !important;
+    }
+
+    .slide.local-execution-slide .slide-content {
+      gap: clamp(0.75rem, 2vh, 1.5rem);
+    }
+
+    .slide.local-execution-slide h1 {
+      font-size: clamp(2.25rem, 5.5vw, 4.5rem);
+      margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+    }
+
+    .slide.local-execution-slide .subtitle {
+      font-size: clamp(1.25rem, 2.8vw, 2.25rem);
+      margin-bottom: 0;
+    }
+
+    /* Slide Variations */
+    .slide.title {
+      background: linear-gradient(135deg, var(--axa-blue) 0%, var(--axa-blue-mid) 100%);
+      color: #ffffff;
+    }
+
+    .slide.cover-slide {
+      isolation: isolate;
+      align-items: flex-start;
+      background:
+        radial-gradient(circle at 82% 18%, rgba(92, 200, 226, 0.28) 0 0.5rem, transparent 0.55rem),
+        radial-gradient(circle at 88% 27%, rgba(92, 200, 226, 0.16) 0 0.3rem, transparent 0.35rem),
+        linear-gradient(128deg, #00006f 0%, var(--axa-blue) 52%, #2424b3 100%);
+    }
+
+    .cover-slide::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: min(48vw, 42rem);
+      aspect-ratio: 1;
+      right: -12vw;
+      bottom: -28vh;
+      border: 1px solid rgba(92, 200, 226, 0.38);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 3rem rgba(92, 200, 226, 0.07),
+        0 0 0 7rem rgba(92, 200, 226, 0.04);
+      transform: rotate(-18deg);
+    }
+
+    .cover-slide::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 0;
+      right: 13vw;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(transparent, rgba(92, 200, 226, 0.45), transparent);
+    }
+
+    .cover-slide .slide-content {
+      max-width: min(78vw, 980px);
+      gap: clamp(0.7rem, 2vh, 1.4rem);
+      text-align: left;
+    }
+
+    .cover-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: fit-content;
+      color: var(--axa-teal);
+      font-size: clamp(0.85rem, 1.4vw, 1.1rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .cover-kicker::before {
+      content: "";
+      width: 2.75rem;
+      height: 0.2rem;
+      background: var(--axa-red);
+    }
+
+    .cover-slide h1 {
+      max-width: 9ch;
+      margin: 0;
+      font-size: clamp(3.5rem, 9vw, 7.5rem);
+      line-height: 0.94;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+    }
+
+    .cover-slide .subtitle {
+      width: fit-content;
+      margin: 0.5rem 0 0;
+      padding: 0.65rem 1rem;
+      border-left: 0.3rem solid var(--axa-red);
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-size: clamp(1.15rem, 2.4vw, 2rem);
+      line-height: 1.2;
+      font-weight: 500;
+    }
+
+    .cover-slide .tagline {
+      margin: 0.25rem 0 0;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: clamp(0.95rem, 1.6vw, 1.25rem);
+      font-style: normal;
+      letter-spacing: 0.02em;
+    }
+
+    .slide.content {
+      background: #ffffff;
+      color: #1a1a1a;
+    }
+
+    .slide.alternate {
+      background: linear-gradient(135deg, var(--axa-blue-light) 0%, #f5f7fa 100%);
+      color: #1a1a1a;
+    }
+
+    .slide.content a,
+    .slide.alternate a {
+      color: var(--axa-blue);
+      font-weight: 600;
+    }
+
+    .slide.diagram {
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+    }
+
+    .diagram-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      width: 100%;
+      max-width: min(90vw, 1400px);
+      overflow: hidden;
+      margin-top: var(--spacing-md);
+    }
+
+    .diagram-container pre.mermaid {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .diagram-container svg {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--font-display);
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: var(--fs-title);
+      margin-bottom: var(--spacing-md);
+    }
+
+    h2 {
+      font-size: var(--fs-heading);
+      color: var(--axa-blue);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .slide.title h1 {
+      color: #ffffff;
+    }
+
+    h3 {
+      font-size: var(--fs-body);
+      font-weight: 600;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    p {
+      margin-bottom: var(--spacing-sm);
+      line-height: 1.6;
+      font-size: var(--fs-body);
+    }
+
+    .subtitle {
+      font-size: var(--fs-subtitle);
+      font-weight: 600;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .tagline {
+      font-size: var(--fs-body);
+      opacity: 0.9;
+      font-style: italic;
+    }
+
+    /* Lists */
+    .content-list {
+      text-align: left;
+      display: inline-block;
+      gap: var(--spacing-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content-list li {
+      list-style: none;
+      padding-left: 2rem;
+      position: relative;
+      font-size: var(--fs-body);
+      line-height: 1.5;
+    }
+
+    .content-list li:before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: var(--axa-blue);
+      font-weight: bold;
+    }
+
+    /* Grid Layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+      margin: var(--spacing-md) 0;
+    }
+
+    .grid-item {
+      padding: var(--spacing-md);
+      background: #f5f7fa;
+      border-left: 4px solid var(--axa-blue);
+      border-radius: 4px;
+      text-align: left;
+    }
+
+    .grid-item h3 {
+      color: var(--axa-blue);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .grid-item p {
+      font-size: var(--fs-small);
+      margin: 0;
+    }
+
+    /* Screenshot figure: scaled to fit, never cropped */
+    .slide-figure {
+      flex: 0 1 auto;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      margin: 0;
+    }
+
+    .slide-figure img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 34vh;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0, 0, 143, 0.18);
+    }
+
+    /* Text column + screenshot column; image stays whole within the slide height */
+    .slide-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--spacing-md);
+      align-items: center;
+      min-height: 0;
+    }
+
+    .slide-split .grid-2 {
+      grid-template-columns: 1fr;
+      margin: 0 !important;
+    }
+
+    .slide-split .slide-figure img {
+      max-height: 58vh;
+    }
+
+    @media (max-width: 768px) {
+      .slide-split {
+        grid-template-columns: 1fr;
+      }
+
+      .slide-split .slide-figure img {
+        max-height: 40vh;
+      }
+    }
+
+    /* Code/Terminal */
+    .code-block {
+      background: #1a1a1a;
+      color: #00d26a;
+      padding: var(--spacing-md);
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: var(--fs-small);
+      text-align: left;
+      overflow-x: hidden;
+      margin: var(--spacing-sm) 0;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      background: var(--axa-blue);
+      color: #ffffff;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: var(--fs-small);
+      margin: 0.2rem;
+      font-weight: 600;
+    }
+
+    /* Footer */
+    footer {
+      position: fixed;
+      bottom: var(--spacing-sm);
+      left: var(--spacing-sm);
+      font-size: 0.75rem;
+      color: rgba(0, 0, 143, 0.4);
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    #fs-hint {
+      position: fixed;
+      top: 0.8rem;
+      right: 1rem;
+      font-size: 0.8rem;
+      color: rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      z-index: 600;
+    }
+
+    #slide-number {
+      position: fixed;
+      right: var(--spacing-sm);
+      bottom: var(--spacing-sm);
+      color: rgba(0, 0, 143, 0.45);
+      font-size: 0.75rem;
+      font-weight: 700;
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    #slide-number.on-dark {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .slide.title #fs-hint {
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Responsive */
+    @media (max-height: 700px) {
+      :root {
+        --fs-title: clamp(2rem, 6vw, 3rem);
+        --fs-heading: clamp(1.25rem, 2.5vw, 1.75rem);
+        --fs-body: clamp(1rem, 2vw, 1.5rem);
+        --spacing-md: clamp(1rem, 2.5vh, 1.5rem);
+        --spacing-lg: clamp(1.25rem, 3vh, 2rem);
+      }
+
+      .slide {
+        padding-top: max(1rem, 3vh);
+        padding-bottom: max(2.5rem, 5vh);
+      }
+
+      .grid-item {
+        padding: var(--spacing-sm);
+      }
+
+      p {
+        line-height: 1.35;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Print */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 0;
+      }
+
+      html, body {
+        height: auto;
+        overflow: auto;
+        scroll-snap-type: none;
+      }
+
+      .slide {
+        page-break-after: always;
+        min-height: 0;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      #fs-hint,
+      footer,
+      #slide-number {
+        display: none;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .slide {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    /* Highlight */
+    .highlight {
+      color: var(--axa-red);
+      font-weight: 700;
+    }
+
+    .accent {
+      color: var(--axa-teal);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div id="fs-hint">F — Fullscreen</div>
+  <div id="slide-number" aria-live="polite"></div>
+  <footer>
+    Journée dév SICL 15/10
+  </footer>
+
+  <!-- Slide 1: Title -->
+  <section class="slide title cover-slide" data-slide-order="1">
+    <div class="slide-content">
+      <p class="cover-kicker">AXA · Journée dév SICL</p>
+      <h1>API Green Score Analyzer</h1>
+      <p class="subtitle">Préparation pour le Summit</p>
+      <p class="tagline">1h30 · Hands-on workshop</p>
+    </div>
+  </section>
+
+  <!-- Slide 2: Contexte -->
+  <section class="slide content dense" data-slide-order="2">
+    <div class="slide-content">
+      <h2>But de l'atelier</h2>
+      <p>Analyser et scorer les APIs selon le <span class="highlight">Green API Score</span> framework 🌱</p>
+      
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Objectif</h3>
+          <p>Mesurer l'efficacité énergétique et la qualité des APIs</p>
+        </div>
+        <div class="grid-item">
+          <h3>Outils</h3>
+          <p>Creedengo, Spectral, OpenAPI Discovery</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Rapports</h3>
+          <p>Dashboards interactifs et scores détaillés</p>
+        </div>
+        <div class="grid-item">
+          <h3>CI/CD</h3>
+          <p>Pipelines Azure automatisées</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 5: Exécution locale -->
+  <section class="slide title local-execution-slide" data-slide-order="5">
+    <div class="slide-content">
+      <h1>Partie 1 : Exécution du projet en local</h1>
+      <p class="subtitle" style="color: #ffffff;">De la préparation de l'application au dashboard</p>
+      <p class="subtitle" style="color: #ffffff; font-style: italic;">Repo : axa-apigreenscoreanalyzer</p>
+    </div>
+  </section>
+
+  <!-- Slide 6: Architecture Générale -->
+  <section class="slide diagram dense" data-slide-order="6">
+    <h2>Architecture du Projet</h2>
+    <div class="diagram-container">
+      <pre class="mermaid">
+flowchart LR
+    subgraph IN["Entrées"]
+        API["API en fonctionnement<br/>+ OpenAPI / Swagger"]
+        SRC["Code source<br/>Java · .NET · Python"]
+        ADR["ADR<br/>docs/adr"]
+    end
+
+    START["scripts/start.sh<br/>orchestrateur"]
+
+    subgraph ENG["Moteurs d'analyse"]
+        GAS["green-api-auto-discover.py<br/>Green API Score"]
+        ARC["architecture_rules.py<br/>adr_rules.py<br/>AR01-AR05 + ADR"]
+        CRE["creedengo-analyzer.sh<br/>SonarQube + Creedengo"]
+    end
+
+    subgraph OUT["Livrables"]
+        JSON["reports/*.json"]
+        DASH["dashboard/<br/>HTML + Markdown"]
+        BADGE["badges/<br/>SVG"]
+        SOB["SobriIT<br/>sobriit_sender.py"]
+    end
+
+    API --> START
+    SRC --> START
+    ADR --> START
+    START -->|"green-score-analyzer_withdiscovery.sh"| GAS
+    START -->|"--creedengo"| CRE
+    GAS --- ARC
+    GAS --> JSON
+    CRE --> JSON
+    JSON --> DASH
+    JSON --> BADGE
+    JSON --> SOB
+
+    classDef input fill:#EEEEF8,stroke:#00008F,color:#00008F
+    classDef core fill:#00008F,stroke:#00008F,color:#ffffff
+    classDef engine fill:#ffffff,stroke:#1414A0,color:#1a1a1a
+    classDef output fill:#E6F6FA,stroke:#5CC8E2,color:#1a1a1a
+    class API,SRC,ADR input
+    class START core
+    class GAS,ARC,CRE engine
+    class JSON,DASH,BADGE,SOB output
+      </pre>
+    </div>
+    <p style="font-size: var(--fs-small);">Le calcul Green API et le scan Creedengo sont indépendants ; les deux alimentent les mêmes rapports JSON.</p>
+  </section>
+
+  <!-- Slide 4: Creedengo -->
+  <section class="slide content dense" data-slide-order="4">
+    <div class="slide-content">
+      <h2>Creedengo — À quoi ça sert ?</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Analyse du code</h3>
+          <p>Détecte les anti-patterns d'éco-conception dans le code source Java, Python et C#.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Règles GCI</h3>
+          <p>Identifie les requêtes SQL inutiles, les appels en boucle, les ressources mal libérées et autres coûts évitables.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Comment ?</h3>
+          <p>SonarQube + plugin Creedengo, lancé avec <code>--creedengo</code> ou <code>creedengo-analyzer.sh</code>.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Résultat</h3>
+          <p>Score /100, grade, règles violées et rapport <code>reports/creedengo-report.json</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 8: start.sh Parameters -->
+  <section class="slide alternate dense start-slide" data-slide-order="8">
+    <div class="slide-content">
+      <h2><code>scripts/start.sh</code> — Piloter une analyse</h2>
+      <p style="margin-top: var(--spacing-sm);">Le script orchestre une analyse Green API de bout en bout : il prépare la cible, lance éventuellement l'application, exécute les contrôles et produit le dashboard et les rapports.</p>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Cibles & spécifications</h3>
+          <p>Paramètres pour indiquer une ou plusieurs API, leurs contrats OpenAPI et, si nécessaire, un accès authentifié.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Source & exécution</h3>
+          <p>Paramètres pour choisir le stack, fournir le code source, démarrer l'API localement et activer les traces de diagnostic.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Qualité du code & architecture</h3>
+          <p>Options pour lancer Creedengo et contrôler les ADR, y compris depuis un dépôt Git ou un sous-répertoire.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Score & intégrations</h3>
+          <p>Paramètres de contexte pour le scoring, la proximité géographique, l'empreinte cloud et l'envoi vers SobriIT.</p>
+        </div>
+      </div>
+      <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Les valeurs peuvent venir des options CLI ou de variables d'environnement, selon le paramètre. Exemple : <code>bash scripts/start.sh --stack java --build-and-run --source-dir ./my-app --creedengo</code></p>
+    </div>
+  </section>
+
+  <!-- Slide 13.5: Intégration de la pipeline -->
+  <section class="slide title local-execution-slide" data-slide-order="13.5">
+    <div class="slide-content">
+      <h1>Partie 2 : Pour les plus rapides 🚀</h1>
+      <p class="subtitle" style="color: #ffffff;">Intégration d'une pipeline Green API dans votre projet</p>
+    </div>
+  </section>
+
+  <!-- Slide 9: pr-green-api-axa.yml Details -->
+  <section class="slide content dense" data-slide-order="14">
+    <div class="slide-content">
+      <h2>pr-green-api-axa.yml — Pipeline Green API</h2>
+      <ul class="content-list" style="margin-top: var(--spacing-lg);">
+        <li><span class="accent">Trigger</span> : PR + Scheduled (weekly dimanche)</li>
+        <li><span class="accent">Setup</span> : JDK 17, Maven, Python</li>
+        <li><span class="accent">Clone analyzer</span> : Récupère le repo analyzer</li>
+        <li><span class="accent">Exécute</span> : <code>scripts/start.sh</code> avec paramètres</li>
+        <li><span class="accent">Analyse</span> : Creedengo, Green Score, OpenAPI</li>
+        <li><span class="accent">Variables</span> : Targets, Swagger URLs, Stack (auto/java/dotnet)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Slide 14.5: Recommandations pour la pipeline -->
+  <section class="slide alternate dense" data-slide-order="14.5">
+    <div class="slide-content">
+      <h2>Recommandations pour intégrer la pipeline</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Préparation des variables</h3>
+          <p>Renseigner les targets, l'URL du Swagger, le stack, le profil d'exécution, les options de build, etc</p>
+          <p><code>TARGETS</code> · <code>SWAGGER_URL</code> · <code>STACK</code> · <code>BUILD_AND_RUN</code></p>
+        </div>
+        <div class="grid-item">
+          <h3>Swagger accessible</h3>
+          <p>Vérifier que le chemin est accessible depuis l'agent CI : authentification et réponse HTTP 200</p>
+          <p><code>/swagger</code> · <code>/v3/api-docs</code></p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Nom des modules</h3>
+          <p>Contrôler les noms des modules Maven ou Gradle et cibler le bon sous-répertoire avant de la pipeline</p>
+        </div>
+        <div class="grid-item">
+          <h3>Renseignement des secrets</h3>
+          <p>Stocker les tokens et identifiants dans les variables secrètes de la CI, jamais dans le YAML ni les logs</p>
+          <p><code>API_TOKEN</code> · <code>CLIENT_SECRET</code> · <code>etc</code></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 7: Technologies dans le repo -->
+  <section class="slide content dense" data-slide-order="7">
+    <div class="slide-content">
+      <h2>Technologies dans le repo</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Backend</h3>
+          <p>Java 17+, Maven, Gradle</p>
+          <p>.NET 8+, C#</p>
+        </div>
+        <div class="grid-item">
+          <h3>Analysis</h3>
+          <p>SonarQube, Creedengo, Spectral</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Infra</h3>
+          <p>Podman pour la partie Creedengo</p>
+        </div>
+      <div class="grid-2">
+        <div class="grid-item" style="grid-column: 1 / -1;">
+          <h3>API & Web</h3>
+          <p>OpenAPI, HTML5/CSS/JS (Dashboard), Python 3.9+</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3: API Green Score Themes -->
+  <section class="slide alternate dense" data-slide-order="3">
+    <div class="slide-content">
+      <h2>API Green Score — Thèmes de Règles</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Performance</h3>
+          <p>Pagination (DE11), Filtering (DE08), Compression (DE01)</p>
+        </div>
+        <div class="grid-item">
+          <h3>Caching</h3>
+          <p>ETag/304 (DE02/DE03), Delta queries (DE06)</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Scalabilité</h3>
+          <p>Range/206 (Partial Content), Binary formats (Protobuf)</p>
+        </div>
+        <div class="grid-item">
+          <h3>Architecture</h3>
+          <p>Event-driven (AR01), Runtime Proximity (AR02), Single API (AR03)</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item" style="grid-column: 1 / -1;">
+          <h3>Cloud & Observabilité</h3>
+          <p>Scalable Infra (AR04), Cloud Footprint (AR05), Health/Metrics (LO01)</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 10: Génération du rapport -->
+  <section class="slide diagram dense" data-slide-order="10">
+    <h2>Comment le rapport est généré</h2>
+    <div class="diagram-container">
+      <pre class="mermaid">
+flowchart LR
+    A[API en fonctionnement] --> B[OpenAPI / Swagger]
+    B --> C[green-api-auto-discover.py]
+    C --> D[Découverte des endpoints]
+    C --> E[Mesures HTTP]
+    C --> F[Calcul des règles]
+    D --> G[Rapport JSON]
+    E --> G
+    F --> G
+    G --> H[Dashboard HTML]
+    G --> I[Dashboard Markdown]
+      </pre>
+    </div>
+    <p style="font-size: var(--fs-small);">Le wrapper <code>green-score-analyzer_withdiscovery.sh</code> orchestre le lancement ; le calcul est centralisé dans <code>green-api-auto-discover.py</code>.</p>
+  </section>
+
+  <!-- Slide 11: Mesures -->
+  <section class="slide content dense" data-slide-order="11">
+    <div class="slide-content">
+      <h2>Ce qui est mesuré sur chaque endpoint</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Mesures HTTP</h3>
+          <p>Code HTTP, taille téléchargée, temps total et vitesse de téléchargement.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Contexte d'appel</h3>
+          <p>Paramètres OpenAPI, exemples de payload, Bearer token et répétitions configurées.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Énergie réseau</h3>
+          <p><code>taille / Go × kWh réseau</code>, avec une valeur configurable.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Énergie serveur</h3>
+          <p><code>durée × puissance serveur / 3600</code>, puis conversion en CO₂.</p>
+        </div>
+      </div>
+      <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Les mesures sont ensuite agrégées dans <code>auto_discovery.all_measurements</code> et <code>discovered_endpoints</code>.</p>
+    </div>
+  </section>
+
+  <!-- Slide 12: Calcul des scores -->
+  <section class="slide alternate dense" data-slide-order="12">
+    <div class="slide-content">
+      <h2>Comment les scores sont calculés</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Green API Score</h3>
+          <p>Chaque règle est évaluée sur les endpoints découverts : pagination, filtrage, compression, cache, delta, range et formats binaires.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Architecture</h3>
+          <p>AR01 à AR05 ajoutent les signaux événementiels, proximité runtime, API unique, autoscaling et empreinte cloud.</p>
+        </div>
+      </div>
+      <div class="code-block">1. Score total = Somme des points validés<br>
+2. Grade = conversion du score en A+ / A / B / C / D / E<br>
+3. Score Creedengo = (1 - règles violées / règles analysées) × 100</div>
+      <p style="font-size: var(--fs-small);">Le score Green API et le score Creedengo restent distincts : API en fonctionnement d'un côté, qualité éco-conception du code source de l'autre.</p>
+    </div>
+  </section>
+
+  <!-- Slide 13: Sorties -->
+  <section class="slide content dense" data-slide-order="13">
+    <div class="slide-content">
+      <h2>Du JSON aux livrables</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3><code>generate-dashboard.py</code></h3>
+          <p>Lit le dernier rapport et en génère un nouveau (en Markdown + HTML).</p>
+        </div>
+        <div class="grid-item">
+          <h3>Badge</h3>
+          <p>Le score courant est transformé en SVG pour les README et les pull requests.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item" style="grid-column: 1 / -1;">
+          <h3>Comparaison</h3>
+          <p>Le rapport précédent sert de baseline pour suivre l'évolution des performances.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 15: Partie 3 -->
+  <section class="slide title local-execution-slide" data-slide-order="15">
+    <div class="slide-content">
+      <h1>Partie 3 : Quoi de prévu ensuite ?</h1>
+      <p class="subtitle" style="color: #ffffff;">Rapprocher le Green API Score de Sobri-IT</p>
+    </div>
+  </section>
+
+  <!-- Slide 16: Sobri-IT -->
+  <section class="slide content dense" data-slide-order="16">
+    <div class="slide-content">
+      <h2>Sobri-IT — C'est quoi ?</h2>
+      <p>L'application <span class="highlight">Sobri-IT</span> permet la consultation des rapports <a href="https://github.com/GoogleChrome/lighthouse" target="_blank" rel="noopener noreferrer">Lighthouse</a> et <a href="https://github.com/dequelabs/axe-core" target="_blank" rel="noopener noreferrer">Axe-core</a>.</p>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Outillage de test</h3>
+          <p>Les rapports sont générés avec Sobri-IT Playwright Sample.</p>
+        </div>
+        <div class="grid-item">
+          <h3>Communauté</h3>
+          <p>Développé par <a href="https://dev.azure.com/axafrance/GreenIT/" target="_blank" rel="noopener noreferrer">AXA France Green Champions</a>.</p>
+        </div>
+      </div>
+      <figure class="slide-figure">
+        <img src="./docs/images/sobri-it-resultats.png" alt="Liste des applications dans Sobri-IT avec les scores Performance, Best Practices, Ecoindex, Best Practices CNUMR, Accessibility, Green API Score et Green Backend">
+      </figure>
+    </div>
+  </section>
+
+  <!-- Slide 17: Catégories Sobri-IT -->
+  <section class="slide alternate dense" data-slide-order="17">
+    <div class="slide-content">
+      <h2>Sobri-IT — Les catégories d'un rapport</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>Performance</h3>
+          <p>Mesuré par Lighthouse</p>
+        </div>
+        <div class="grid-item">
+          <h3>Best Practices</h3>
+          <p>Mesuré par Lighthouse</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Ecoindex</h3>
+          <p>Mesuré par Lighthouse</p>
+        </div>
+          <div class="grid-item">
+          <h3>Accessibility (Axe-core)</h3>
+          <p>Mesuré par Axe-core</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 18: Lien avec l'analyzer -->
+  <section class="slide content dense" data-slide-order="18">
+    <div class="slide-content">
+      <h2>Et pour nos API ?</h2>
+      <div class="slide-split">
+        <div class="grid-2">
+          <div class="grid-item">
+            <h3>Aujourd'hui</h3>
+            <p>Il n'y a pas de rapports existants concernant cette partie dans Sobri-IT.</p>
+          </div>
+          <div class="grid-item">
+            <h3>En cours de développement</h3>
+            <p>Des résultats sur l'API Green Score et Creedengo seront disponibles sur l'application.</p>
+          </div>
+        </div>
+        <figure class="slide-figure">
+          <img src="./docs/images/sobri-it-creedengo-details.png" alt="Détails Green Score dans Sobri-IT : onglet Creedengo Backend avec un score de 88/100, grade A, mesures et résumé des règles">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 19: Takeaways & Q&A -->
+  <section class="slide title closing-slide" data-slide-order="19">
+    <div class="slide-content">
+      <h1>Les ressources recommandées</h1>
+      
+      <ul class="content-list" style="color: #ffffff; margin-top: var(--spacing-md);">
+        <li>📖 <span class="accent" style="color: var(--axa-teal);">.github/README.md</span> — Documentation complète du projet</li>
+        <li>📊 <span class="accent" style="color: var(--axa-teal);">dashboard/</span> — Visualiser les résultats</li>
+        <li>⚙️ <a class="accent" style="color: var(--axa-teal);" href="https://cdn.digitevent.com/69243f238739dbd18f49846f/websiteBtnFileUrl/0c90ba15-f0d0-4b1a-9fb4-ebd8dfb1717c-71-48-cat-sustainable-api-greenscore-v1-2.pdf" target="_blank" rel="noopener noreferrer">API GreenScore v1.2 (PDF)</a> — Grille API Green Score</li>
+        <li>💚 <a class="accent" style="color: var(--axa-teal);" href="https://sobri-it.axa-fr.intraxa/" target="_blank" rel="noopener noreferrer">Sobri-IT</a> — Sobri-IT</li>
+      </ul>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    function reorderSlides() {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const slideContainer = document.body;
+
+      slides
+        .sort((firstSlide, secondSlide) => {
+          return Number(firstSlide.dataset.slideOrder) - Number(secondSlide.dataset.slideOrder);
+        })
+        .forEach((slide) => slideContainer.appendChild(slide));
+    }
+
+    reorderSlides();
+
+    // Initialize Mermaid
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      flowchart: { useMaxWidth: true }
+    });
+
+    // Presentation Controls
+    class SlidePresentation {
+      constructor() {
+        this.currentSlide = 0;
+        this.slides = document.querySelectorAll('.slide');
+        this.totalSlides = this.slides.length;
+        this.slideNumber = document.getElementById('slide-number');
+        this.init();
+      }
+
+      init() {
+        document.addEventListener('keydown', (e) => this.handleKeydown(e));
+        document.addEventListener('wheel', (e) => this.handleWheel(e));
+        window.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+        window.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+        
+        this.updateCounter();
+      }
+
+      handleKeydown(e) {
+        if (e.key === 'f' || e.key === 'F') {
+          this.toggleFullscreen();
+        }
+      }
+
+      handleWheel(e) {
+        // Allow scroll-snap to work naturally
+      }
+
+      handleTouchStart(e) {
+        this.touchStart = e.touches[0].clientY;
+      }
+
+      handleTouchEnd(e) {
+        // Touch navigation optional
+      }
+
+      toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }
+
+      updateCounter() {
+        const slideIndex = Math.round(window.scrollY / window.innerHeight);
+        this.currentSlide = slideIndex;
+
+        const currentSlide = this.slides[this.currentSlide];
+        const slideOrder = currentSlide?.dataset.slideOrder;
+        const hideNumber = ['1', '5', '13', '15', '19'].includes(slideOrder);
+
+        this.slideNumber.hidden = hideNumber;
+        this.slideNumber.textContent = hideNumber ? '' : slideOrder || '';
+        this.slideNumber.classList.toggle('on-dark', currentSlide?.classList.contains('title') ?? false);
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      new SlidePresentation();
+      mermaid.contentLoaded();
+    });
+
+    // Update counter on scroll
+    window.addEventListener('scroll', () => {
+      const presentation = window.presentation || new SlidePresentation();
+      presentation.updateCounter();
+    });
+
+    window.presentation = new SlidePresentation();
+  </script>
+</body>
+</html>
