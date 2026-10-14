@@ -642,16 +642,16 @@
   <section class="slide content dense" data-slide-order="2">
     <div class="slide-content">
       <h2>But de l'atelier</h2>
-      <p>Analyser et scorer les APIs selon le <span class="highlight">Green API Score</span> framework 🌱</p>
+      <p>Analyser et mesurer nos API selon les règles de l'<span class="highlight">API Green Score</span> 🌱</p>
       
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Objectif</h3>
-          <p>Mesurer l'efficacité énergétique et la qualité des APIs</p>
+          <p>Mesurer l'efficacité énergétique et la qualité des API</p>
         </div>
         <div class="grid-item">
           <h3>Outils</h3>
-          <p>Creedengo, Spectral, OpenAPI Discovery</p>
+          <p>Creedengo, OpenAPI</p>
         </div>
       </div>
 
@@ -736,21 +736,21 @@ flowchart LR
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Analyse du code</h3>
-          <p>Détecte les anti-patterns d'éco-conception dans le code source Java, Python et C#.</p>
+          <p>Détecte les anti-patterns d'éco-conception dans le code source Java, Python et C#</p>
         </div>
         <div class="grid-item">
-          <h3>Règles GCI</h3>
-          <p>Identifie les requêtes SQL inutiles, les appels en boucle, les ressources mal libérées et autres coûts évitables.</p>
+          <h3>Règles de la GCI</h3>
+          <p>Identifie les requêtes SQL inutiles, les appels en boucle, les ressources mal libérées et autres coûts évitables</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
-          <h3>Comment ?</h3>
-          <p>SonarQube + plugin Creedengo, lancé avec <code>--creedengo</code> ou <code>creedengo-analyzer.sh</code>.</p>
+          <h3>Et dans ce repo ?</h3>
+          <p>SonarQube + plugin Creedengo, lancé avec <code>--creedengo</code> ou <code>creedengo-analyzer.sh</code></p>
         </div>
         <div class="grid-item">
           <h3>Résultat</h3>
-          <p>Score /100, grade, règles violées et rapport <code>reports/creedengo-report.json</code>.</p>
+          <p>Score /100, grade, règles violées et rapport</p>
         </div>
       </div>
     </div>
@@ -760,25 +760,25 @@ flowchart LR
   <section class="slide alternate dense start-slide" data-slide-order="8">
     <div class="slide-content">
       <h2><code>scripts/start.sh</code> — Piloter une analyse</h2>
-      <p style="margin-top: var(--spacing-sm);">Le script orchestre une analyse Green API de bout en bout : il prépare la cible, lance éventuellement l'application, exécute les contrôles et produit le dashboard et les rapports.</p>
+      <p style="margin-top: var(--spacing-sm);">Le script orchestre une analyse Green API de bout en bout : il prépare la cible, lance éventuellement l'application, exécute les contrôles et produit le dashboard et les rapports</p>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Cibles & spécifications</h3>
-          <p>Paramètres pour indiquer une ou plusieurs API, leurs contrats OpenAPI et, si nécessaire, un accès authentifié.</p>
+          <p>Paramètres pour indiquer une ou plusieurs API, leurs contrats OpenAPI et, si nécessaire, un accès authentifié</p>
         </div>
         <div class="grid-item">
           <h3>Source & exécution</h3>
-          <p>Paramètres pour choisir le stack, fournir le code source, démarrer l'API localement et activer les traces de diagnostic.</p>
+          <p>Paramètres pour choisir le stack, fournir le code source, démarrer l'API localement et activer les traces de diagnostic</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
           <h3>Qualité du code & architecture</h3>
-          <p>Options pour lancer Creedengo et contrôler les ADR, y compris depuis un dépôt Git ou un sous-répertoire.</p>
+          <p>Options pour lancer Creedengo et contrôler les ADR, y compris depuis un dépôt Git ou un sous-répertoire</p>
         </div>
         <div class="grid-item">
           <h3>Score & intégrations</h3>
-          <p>Paramètres de contexte pour le scoring, la proximité géographique, l'empreinte cloud et l'envoi vers SobriIT.</p>
+          <p>Paramètres de contexte pour le scoring, la proximité géographique, l'empreinte cloud et l'envoi vers SobriIT</p>
         </div>
       </div>
       <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Les valeurs peuvent venir des options CLI ou de variables d'environnement, selon le paramètre. Exemple : <code>bash scripts/start.sh --stack java --build-and-run --source-dir ./my-app --creedengo</code></p>
@@ -850,7 +850,7 @@ flowchart LR
         </div>
         <div class="grid-item">
           <h3>Analysis</h3>
-          <p>SonarQube, Creedengo, Spectral</p>
+          <p>SonarQube, Creedengo</p>
         </div>
       </div>
       <div class="grid-2">
@@ -870,7 +870,7 @@ flowchart LR
   <!-- Slide 3: API Green Score Themes -->
   <section class="slide alternate dense" data-slide-order="3">
     <div class="slide-content">
-      <h2>API Green Score — Thèmes de Règles</h2>
+      <h2>API Green Score — Rappel des règles</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Performance</h3>
@@ -928,21 +928,21 @@ flowchart LR
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Mesures HTTP</h3>
-          <p>Code HTTP, taille téléchargée, temps total et vitesse de téléchargement.</p>
+          <p>Code HTTP, taille téléchargée, temps total et vitesse de téléchargement</p>
         </div>
         <div class="grid-item">
           <h3>Contexte d'appel</h3>
-          <p>Paramètres OpenAPI, exemples de payload, Bearer token et répétitions configurées.</p>
+          <p>Paramètres OpenAPI, exemples de payload, Bearer token et répétitions configurées</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
           <h3>Énergie réseau</h3>
-          <p><code>taille / Go × kWh réseau</code>, avec une valeur configurable.</p>
+          <p><code>taille / Go × kWh réseau</code>, avec une valeur configurable</p>
         </div>
         <div class="grid-item">
           <h3>Énergie serveur</h3>
-          <p><code>durée × puissance serveur / 3600</code>, puis conversion en CO₂.</p>
+          <p><code>durée × puissance serveur / 3600</code>, puis conversion en CO₂</p>
         </div>
       </div>
       <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Les mesures sont ensuite agrégées dans <code>auto_discovery.all_measurements</code> et <code>discovered_endpoints</code>.</p>
@@ -956,17 +956,17 @@ flowchart LR
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Green API Score</h3>
-          <p>Chaque règle est évaluée sur les endpoints découverts : pagination, filtrage, compression, cache, delta, range et formats binaires.</p>
+          <p>Chaque règle est évaluée sur les endpoints découverts : pagination, filtrage, compression, cache, delta, range et formats binaires</p>
         </div>
         <div class="grid-item">
           <h3>Architecture</h3>
-          <p>AR01 à AR05 ajoutent les signaux événementiels, proximité runtime, API unique, autoscaling et empreinte cloud.</p>
+          <p>AR01 à AR05 ajoutent les signaux événementiels, proximité runtime, API unique, autoscaling et empreinte cloud</p>
         </div>
       </div>
       <div class="code-block">1. Score total = Somme des points validés<br>
 2. Grade = conversion du score en A+ / A / B / C / D / E<br>
 3. Score Creedengo = (1 - règles violées / règles analysées) × 100</div>
-      <p style="font-size: var(--fs-small);">Le score Green API et le score Creedengo restent distincts : API en fonctionnement d'un côté, qualité éco-conception du code source de l'autre.</p>
+      <p style="font-size: var(--fs-small);">Le score Green API et le score Creedengo restent distincts : API en fonctionnement d'un côté, qualité éco-conception du code source de l'autre</p>
     </div>
   </section>
 
@@ -977,17 +977,17 @@ flowchart LR
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3><code>generate-dashboard.py</code></h3>
-          <p>Lit le dernier rapport et en génère un nouveau (en Markdown + HTML).</p>
+          <p>Lit le dernier rapport et en génère un nouveau (en Markdown + HTML)</p>
         </div>
         <div class="grid-item">
           <h3>Badge</h3>
-          <p>Le score courant est transformé en SVG pour les README et les pull requests.</p>
+          <p>Le score courant est transformé en SVG pour les README et les pull requests</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item" style="grid-column: 1 / -1;">
           <h3>Comparaison</h3>
-          <p>Le rapport précédent sert de baseline pour suivre l'évolution des performances.</p>
+          <p>Le rapport précédent sert de baseline pour suivre l'évolution des performances</p>
         </div>
       </div>
     </div>
@@ -997,7 +997,7 @@ flowchart LR
   <section class="slide title local-execution-slide" data-slide-order="15">
     <div class="slide-content">
       <h1>Partie 3 : Quoi de prévu ensuite ?</h1>
-      <p class="subtitle" style="color: #ffffff;">Rapprocher le Green API Score de Sobri-IT</p>
+      <p class="subtitle" style="color: #ffffff;">Rapprocher les résultats obtenus dans Sobri-IT</p>
     </div>
   </section>
 
@@ -1009,11 +1009,11 @@ flowchart LR
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Outillage de test</h3>
-          <p>Les rapports sont générés avec Sobri-IT Playwright Sample.</p>
+          <p>Les rapports sont générés avec Sobri-IT Playwright Sample</p>
         </div>
         <div class="grid-item">
           <h3>Communauté</h3>
-          <p>Développé par <a href="https://dev.azure.com/axafrance/GreenIT/" target="_blank" rel="noopener noreferrer">AXA France Green Champions</a>.</p>
+          <p>Développé par <a href="https://dev.azure.com/axafrance/GreenIT/" target="_blank" rel="noopener noreferrer">AXA France Green Champions</a></p>
         </div>
       </div>
       <figure class="slide-figure">
@@ -1057,11 +1057,11 @@ flowchart LR
         <div class="grid-2">
           <div class="grid-item">
             <h3>Aujourd'hui</h3>
-            <p>Il n'y a pas de rapports existants concernant cette partie dans Sobri-IT.</p>
+            <p>Il n'y a pas de rapports existants concernant cette partie dans Sobri-IT</p>
           </div>
           <div class="grid-item">
             <h3>En cours de développement</h3>
-            <p>Des résultats sur l'API Green Score et Creedengo seront disponibles sur l'application.</p>
+            <p>Des résultats sur l'API Green Score et Creedengo seront disponibles sur l'application</p>
           </div>
         </div>
         <figure class="slide-figure">
