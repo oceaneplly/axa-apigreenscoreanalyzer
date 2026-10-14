@@ -1,0 +1,21 @@
+lockfile_version: '1'
+generated_at: '2026-10-13T16:01:53.749358+00:00'
+apm_version: 0.8.11
+dependencies:
+- repo_url: axafrance/GuildeDev/copilot-instructions
+  host: dev.azure.com
+  virtual_path: .github/instructions/follow-up-question.instructions.md
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .github/instructions/follow-up-question.instructions.md
+  content_hash: sha256:8d1555fb0f4d401243a56714ff57fc4a4d83b4bda9c5facc222b9e0807cc428c
+- repo_url: axafrance/GuildeDev/copilot-instructions
+  host: dev.azure.com
+  resolved_commit: 25547bf82bc61d142c2030b8dbf87fa3b03163e5
+  virtual_path: .github/skills/frontend-slides
+  is_virtual: true
+  package_type: claude_skill
+  deployed_files:
+  - .github/skills/frontend-slides
+  content_hash: sha256:b897e14dce671232e5608a277108c5200ded83d4ac9667bf1bd7e9d2fc269b36
