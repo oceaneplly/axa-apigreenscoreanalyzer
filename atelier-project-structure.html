@@ -672,8 +672,8 @@
   <section class="slide title local-execution-slide" data-slide-order="5">
     <div class="slide-content">
       <h1>Partie 1 : Exécution du projet en local</h1>
-      <p class="subtitle" style="color: #ffffff;">De la préparation de l'application au dashboard</p>
-      <p class="subtitle" style="color: #ffffff; font-style: italic;">Repo : axa-apigreenscoreanalyzer</p>
+      <p class="subtitle" style="color: #ffffff; font-style: italic;">Branche : feat/atelier-journee-dev <br> Doc : docs/WORKSHOP-SICL.md</p>
+      <p class="subtitle" style="color: #ffffff;">Un petit pull sur le projet avant de commencer 🤓👆🏻</p>
     </div>
   </section>
 
@@ -692,7 +692,7 @@ flowchart LR
     START["scripts/start.sh<br/>orchestrateur"]
 
     subgraph ENG["Moteurs d'analyse"]
-        GAS["green-api-auto-discover.py<br/>Green API Score"]
+        GAS["green-api-auto-discover.py<br/>API Green Score"]
         ARC["architecture_rules.py<br/>adr_rules.py<br/>AR01-AR05 + ADR"]
         CRE["creedengo-analyzer.sh<br/>SonarQube + Creedengo"]
     end
@@ -726,7 +726,7 @@ flowchart LR
     class JSON,DASH,BADGE,SOB output
       </pre>
     </div>
-    <p style="font-size: var(--fs-small);">Le calcul Green API et le scan Creedengo sont indépendants ; les deux alimentent les mêmes rapports JSON.</p>
+    <p style="font-size: var(--fs-small);">Le calcul de l'API Green Score et le scan Creedengo sont indépendants ; les deux alimentent les mêmes rapports JSON.</p>
   </section>
 
   <!-- Slide 4: Creedengo -->
@@ -760,7 +760,7 @@ flowchart LR
   <section class="slide alternate dense start-slide" data-slide-order="8">
     <div class="slide-content">
       <h2><code>scripts/start.sh</code> — Piloter une analyse</h2>
-      <p style="margin-top: var(--spacing-sm);">Le script orchestre une analyse Green API de bout en bout : il prépare la cible, lance éventuellement l'application, exécute les contrôles et produit le dashboard et les rapports</p>
+      <p style="margin-top: var(--spacing-sm);">Le script orchestre une analyse green (API Green Score + Creedengo) de bout en bout : il prépare la cible, exécute les contrôles et produit le dashboard et les rapports</p>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Cibles & spécifications</h3>
@@ -789,17 +789,16 @@ flowchart LR
   <section class="slide title local-execution-slide" data-slide-order="13.5">
     <div class="slide-content">
       <h1>Partie 2 : Pour les plus rapides 🚀</h1>
-      <p class="subtitle" style="color: #ffffff;">Intégration d'une pipeline Green API dans votre projet</p>
+      <p class="subtitle" style="color: #ffffff;">Intégration d'une pipeline avec l'API Green Score + Creedengo dans votre projet</p>
     </div>
   </section>
 
   <!-- Slide 9: pr-green-api-axa.yml Details -->
   <section class="slide content dense" data-slide-order="14">
     <div class="slide-content">
-      <h2>pr-green-api-axa.yml — Pipeline Green API</h2>
+      <h2>pr-green-api-axa.yml — Pipeline API Green</h2>
       <ul class="content-list" style="margin-top: var(--spacing-lg);">
-        <li><span class="accent">Trigger</span> : PR + Scheduled (weekly dimanche)</li>
-        <li><span class="accent">Setup</span> : JDK 17, Maven, Python</li>
+        <li><span class="accent">Setup</span> : JDK 17+, Maven, Python</li>
         <li><span class="accent">Clone analyzer</span> : Récupère le repo analyzer</li>
         <li><span class="accent">Exécute</span> : <code>scripts/start.sh</code> avec paramètres</li>
         <li><span class="accent">Analyse</span> : Creedengo, Green Score, OpenAPI</li>
@@ -955,7 +954,7 @@ flowchart LR
       <h2>Comment les scores sont calculés</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
-          <h3>Green API Score</h3>
+          <h3>API Green Score</h3>
           <p>Chaque règle est évaluée sur les endpoints découverts : pagination, filtrage, compression, cache, delta, range et formats binaires</p>
         </div>
         <div class="grid-item">
@@ -963,10 +962,10 @@ flowchart LR
           <p>AR01 à AR05 ajoutent les signaux événementiels, proximité runtime, API unique, autoscaling et empreinte cloud</p>
         </div>
       </div>
-      <div class="code-block">1. Score total = Somme des points validés<br>
-2. Grade = conversion du score en A+ / A / B / C / D / E<br>
+      <div class="code-block">1. API Green Score = Somme des points validés<br>
+2. API Green Score = conversion du score en A+ / A / B / C / D / E<br>
 3. Score Creedengo = (1 - règles violées / règles analysées) × 100</div>
-      <p style="font-size: var(--fs-small);">Le score Green API et le score Creedengo restent distincts : API en fonctionnement d'un côté, qualité éco-conception du code source de l'autre</p>
+      <p style="font-size: var(--fs-small);">L'API Green Score et le score Creedengo restent distincts : API en fonctionnement d'un côté, qualité éco-conception du code source de l'autre</p>
     </div>
   </section>
 
@@ -988,6 +987,37 @@ flowchart LR
         <div class="grid-item" style="grid-column: 1 / -1;">
           <h3>Comparaison</h3>
           <p>Le rapport précédent sert de baseline pour suivre l'évolution des performances</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 13.1: Sources des mesures Green -->
+  <section class="slide alternate dense" data-slide-order="13.1">
+    <div class="slide-content">
+      <h2>D'où viennent les mesures Green ?</h2>
+      <div class="grid-2" style="margin-top: var(--spacing-lg);">
+        <div class="grid-item">
+          <h3>The Shift Project</h3>
+          <p>Groupe de réflexion qui vise à éclairer et influencer le débat sur les défis climat-énergie</p>
+        </div>
+        <div class="grid-item">
+          <h3>ADEME</h3>
+          <p>Agence de la transition écologique résolument engagée dans la lutte contre le réchauffement climatique et la dégradation des ressources</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="grid-item">
+          <h3>Green Software Foundation</h3>
+          <p>Référence pour la spécification <em>Software Carbon Intensity (SCI)</em>, qui structure l'estimation de l'impact logiciel</p>
+        </div>
+        <div class="grid-item">
+          <h3>Green Code Initiative / ecoCode</h3>
+          <p>Communauté et benchmarks utilisés par Creedengo pour relier les issues d'éco-conception aux surcoûts CPU et mémoire</p>
+        </div>
+        <div class="grid-item" style="grid-column: 1 / -1;">
+          <h3>EPA</h3>
+          <p>Agence américaine utilisée pour les équivalences pédagogiques d'émissions : kilomètres en voiture et absorption d'un arbre</p>
         </div>
       </div>
     </div>
@@ -1017,7 +1047,7 @@ flowchart LR
         </div>
       </div>
       <figure class="slide-figure">
-        <img src="./docs/images/sobri-it-resultats.png" alt="Liste des applications dans Sobri-IT avec les scores Performance, Best Practices, Ecoindex, Best Practices CNUMR, Accessibility, Green API Score et Green Backend">
+        <img src="./docs/images/sobri-it-resultats.png" alt="Liste des applications dans Sobri-IT avec les scores Performance, Best Practices, Ecoindex, Best Practices CNUMR, Accessibility, API Green Score et Green Backend">
       </figure>
     </div>
   </section>

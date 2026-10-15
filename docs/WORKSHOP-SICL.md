@@ -53,13 +53,8 @@ pip install -r scripts/requirements.txt
 
 ### 1.1 Choisir l'application
 
-- **Option A (recommandée)** : l'API Java de l'équipe.
-- **Option B (secours)** : le sample fourni.
+Choisir une API Java qui tourne correctement sur votre poste (ça devrait aller normalement🤓👆🏻)
 
-```bash
-cd samples/java-spring
-mvn spring-boot:run
-```
 
 ### 1.2 Vérifier que l'API répond
 
@@ -67,7 +62,7 @@ Adapter le port si nécessaire (par défaut `8080`).
 
 ```bash
 http://localhost:8080/actuator/health
-http://localhost:8080/v3/api-docs
+http://localhost:8080/v3/api-docs ou http://localhost:8080/swagger
 ```
 
 ### 1.3 Checklist de l'étape
@@ -110,20 +105,20 @@ Documentation sur le script.sh et les différents paramètres : [Fichier HOWTO.m
 
 ### 3.1 Lancer l'analyse
 
-**Cas 1 : l'API tourne déjà (fortement conseillée)**
+**Option 1 : l'API tourne déjà (fortement conseillée)**
 
 ```bash
 bash scripts/start.sh --target http://localhost:8080 --swagger http://localhost:8080/swagger --source-dir ./chemin/vers/mon-app --appname nom-du-projet
 ```
 
-**Cas 2 : laisser l'analyzer compiler et démarrer l'API**
+**Option 2 : laisser l'analyzer compiler et démarrer l'API (après plusieurs heures de désespoir, je vous la déconseille 🥲)**
 
 ```bash
 bash scripts/start.sh --stack java --build-and-run --source-dir ./chemin/vers/mon-app --appname nom-du-projet
 ```
 ⚠️ Attention, il faut rajouter les varibles d'environnements (SECRET surtout) si l'API en a besoin pour démarrer 
 
-**Cas 3 : API sécurisée avec un bearer token**
+**Option 3 : API sécurisée avec un bearer token**
 
 ```bash
 BEARER_TOKEN="<token-de-test>" bash scripts/start.sh --target http://localhost:8080
@@ -227,7 +222,7 @@ La pipeline (`pr-green-api-axa.yml`) :
 | Modules | Noms des modules Maven/Gradle corrects ; bon sous-répertoire ciblé (`JAVA_MODULE`). |
 | Secrets | `API_TOKEN`, `CLIENT_SECRET`, etc. dans les variables **secrètes** de la CI, jamais dans le YAML ni les logs. |
 
-💡 Exemple sur Data Director (avec quelques galères, c'était super) : 
+💡 Exemple sur Data Director (avec quelques galères, c'était [super](https://dev.azure.com/axafrance/MDM/_build?definitionId=33895)) : 
 
 - [ ] Pipeline ajoutée dans une branche à part 
 - [ ] Première exécution réussie.
