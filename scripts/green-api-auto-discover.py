@@ -39,7 +39,7 @@ import ssl
 _SSL_CTX = ssl.create_default_context()
 _SSL_CTX.check_hostname = False
 _SSL_CTX.verify_mode = ssl.CERT_NONE
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 # Local module: Architecture/Infrastructure rules (AR01..AR05)
@@ -90,6 +90,7 @@ SWAGGER_DISCOVERY_PATHS = [
     "/v2/api-docs",           # springfox legacy
     "/openapi.json",          # generic
     "/openapi.yaml",
+    "/swagger", # honey format
     "/swagger/v1/swagger.json",  # .NET / Swashbuckle
     "/swagger.json",
     "/swagger.yaml",
@@ -225,13 +226,26 @@ def http_head(url, headers=None, timeout=10):
         return 0, {}
 
 
+def _json_compatible(value):
+    """Convert YAML-native scalar values into JSON-compatible values."""
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {key: _json_compatible(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_compatible(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_compatible(item) for item in value]
+    return value
+
+
 def parse_spec_text(text, source_label):
     try:
         return json.loads(text)
     except Exception:
         if yaml is not None:
             try:
-                return yaml.safe_load(text)
+                return _json_compatible(yaml.safe_load(text))
             except Exception:
                 pass
         raise ValueError(f"Cannot parse OpenAPI spec from {source_label}")

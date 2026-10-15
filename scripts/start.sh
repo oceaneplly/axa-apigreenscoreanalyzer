@@ -1438,10 +1438,17 @@ if [ ${#TARGETS[@]} -gt 0 ]; then
 fi
 
 echo "Running Green Score analyzer..."
+GREEN_ANALYZER_EXIT=0
 if [ "$RUN_CREEDENGO" = true ]; then
-  bash "$ROOT/scripts/green-score-analyzer_withdiscovery.sh" $DEBUG_FLAG --skip-dashboard || true
+  bash "$ROOT/scripts/green-score-analyzer_withdiscovery.sh" $DEBUG_FLAG --skip-dashboard || GREEN_ANALYZER_EXIT=$?
 else
-  bash "$ROOT/scripts/green-score-analyzer_withdiscovery.sh" $DEBUG_FLAG || true
+  bash "$ROOT/scripts/green-score-analyzer_withdiscovery.sh" $DEBUG_FLAG || GREEN_ANALYZER_EXIT=$?
+fi
+
+if [ "$GREEN_ANALYZER_EXIT" -ne 0 ]; then
+  echo ""
+  echo "❌ Green API Auto-Discover & Analyzer failed (exit $GREEN_ANALYZER_EXIT) — aborting before dashboard generation."
+  exit "$GREEN_ANALYZER_EXIT"
 fi
 
 # ── Creedengo eco-design analysis (optional, requires Docker) ──
@@ -1478,7 +1485,7 @@ if [ "$SEND_TO_SOBRIIT" = true ]; then
   [ -n "$SOBRIIT_APP_TRIBE" ]    && SOBRIIT_CMD+=(--app-tribe "$SOBRIIT_APP_TRIBE")
   [ -n "$SOBRIIT_APP_TRIBE_ID" ] && SOBRIIT_CMD+=(--app-tribe-id "$SOBRIIT_APP_TRIBE_ID")
   [ -f "$LATEST_REPORT" ]   && SOBRIIT_CMD+=(--green-report "$LATEST_REPORT")
-  [ -f "$CREEDENGO_REPORT" ] && SOBRIIT_CMD+=(--creedengo-report "$CREEDENGO_REPORT")
+  [ "$RUN_CREEDENGO" = true ] && [ -f "$CREEDENGO_REPORT" ] && SOBRIIT_CMD+=(--creedengo-report "$CREEDENGO_REPORT")
   if "${SOBRIIT_CMD[@]}"; then
     echo "✅ Results sent to SobriIT"
   else
@@ -1487,6 +1494,7 @@ if [ "$SEND_TO_SOBRIIT" = true ]; then
 fi
 
 ###############################################################################
+#
 # Dashboard generation — AFTER all analyses (green-score + creedengo)
 ###############################################################################
 echo ""
@@ -1494,7 +1502,7 @@ echo "━━━ 📊 Generating final Dashboard ━━━"
 
 if [ -f "$ROOT/scripts/generate-dashboard.sh" ] && [ -f "$LATEST_REPORT" ]; then
   DASHBOARD_ARGS=("$LATEST_REPORT" "$ROOT/dashboard/index.save.html" "$ROOT/dashboard/index.html")
-  if [ -f "$CREEDENGO_REPORT" ]; then
+  if [ "$RUN_CREEDENGO" = true ] && [ -f "$CREEDENGO_REPORT" ]; then
     DASHBOARD_ARGS+=("$CREEDENGO_REPORT")
   fi
   bash "$ROOT/scripts/generate-dashboard.sh" "${DASHBOARD_ARGS[@]}" || true
@@ -1543,7 +1551,12 @@ if [ "$RUN_CREEDENGO" = true ] && [ -f "$SONAR_CONTAINER_FILE" ]; then
   # Détection du runtime container
   source "$ROOT/scripts/_container-runtime.sh"
 
+  SONAR_CLEANUP_DONE=false
   cleanup_sonar() {
+    if [ "$SONAR_CLEANUP_DONE" = true ]; then
+      return 0
+    fi
+    SONAR_CLEANUP_DONE=true
     echo ""
     echo "🧹 Nettoyage du container SonarQube..."
     if [ -n "${SONAR_CONTAINER:-}" ]; then
@@ -1557,7 +1570,13 @@ if [ "$RUN_CREEDENGO" = true ] && [ -f "$SONAR_CONTAINER_FILE" ]; then
     echo "✅ Containers SonarQube nettoyés."
   }
 
-  trap cleanup_sonar EXIT INT TERM
+  stop_on_signal() {
+    trap - INT TERM
+    exit 130
+  }
+
+  trap cleanup_sonar EXIT
+  trap stop_on_signal INT TERM
 
   # Attente : 5 minutes (500 secondes) avec countdown
   WAIT_TOTAL=300

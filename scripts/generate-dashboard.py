@@ -419,7 +419,7 @@ def generate_markdown(report: dict, *, appname: str = "",
     if appname:
         a(f"> 📦 **Application : {appname}**")
         a(">")
-    a("> **Summit AXA 2026 — Green Architecture : moins de gras, plus d'impact !**")*")
+    a("> **Summit AXA 2026 — Green Architecture : moins de gras, plus d'impact !**")
     a("")
     a(f"📅 *Dernière analyse : {ts}*")
     a("")
@@ -810,4 +810,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

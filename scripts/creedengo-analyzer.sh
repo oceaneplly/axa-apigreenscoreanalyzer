@@ -262,8 +262,8 @@ fi
 
 
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║  🌱 Creedengo Green Code Analyzer — Auto-Detect            ║${NC}"
-echo -e "${CYAN}║  Eco-design static analysis for all languages              ║${NC}"
+echo -e "${CYAN}║  🌱 Creedengo Green Code Analyzer — Auto-Detect              ║${NC}"
+echo -e "${CYAN}║  Eco-design static analysis for all languages                ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

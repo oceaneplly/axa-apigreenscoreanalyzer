@@ -73,33 +73,26 @@ http://localhost:8080/v3/api-docs
 ### 1.3 Checklist de l'étape
 
 - [ ] L'application démarre sans erreur.
-- [ ] Une URL de santé répond en `200`.
+- [ ] Une URL répond en `200` (ex : http://localhost:8080, http://localhost:8080/actuator/health).
 - [ ] Le contrat OpenAPI est accessible (`/v3/api-docs` ou `/swagger`) en `200`.
-- [ ] Les endpoints de collection retournent des données (base locale / données de test).
 - [ ] Si l'API est protégée : un **Bearer token** de test est disponible (ne **jamais** le committer).
 
 
 ### Dépannage rapide
 
-| Symptôme | Piste |
-|----------|-------|
-| Port 8080 occupé | Changer `server.port` ou arrêter l'autre processus. |
-| 401/403 sur Swagger | Ouvrir le chemin Swagger dans la config de sécurité en profil local, ou fournir `--bearer`. |
-| `/v3/api-docs` absent | Ajouter la dépendance `springdoc-openapi-starter-webmvc-ui`. |
-| Base de données requise | Utiliser un profil `local` avec base H2 en mémoire. |
+| Symptôme                         | Piste                                                                                                                                                                                                                                                       |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Port 8080 occupé                 | Changer `server.port` ou arrêter l'autre processus.                                                                                                                                                                                                         |
+| 401/403 sur Swagger              | Ouvrir le chemin Swagger dans la config de sécurité en profil local, ou fournir `--bearer`.                                                                                                                                                                 |
+| Option A : `/swagger` absent     | Dans le fichier `application.yml` ou `application-local.yml`, ajouter dans la partie `security.permit-all` le chemin `/swagger`. Exemple : [Fichier Data Director](https://dev.azure.com/axafrance/MDM/_git/client-data-director-bff?path=/clientdatadirector/src/main/resources/application.yml)                                                                                        |
+| Option B : `/v3/api-docs` absent | Ajouter la dépendance `springdoc-openapi-starter-webmvc-ui`. Exemple : [Commit Data Director](https://dev.azure.com/axafrance/MDM/_git/client-data-director-bff/commit/519a90d4a44e6a0a4d958d81eb22b5f0be814932?refName=refs%2Fheads%2Ffeat%2Fadd_pr_green) |
+| Base de données requise          | Utiliser un profil `local` avec base H2 en mémoire.                                                                                                                                                                                                         |
 
 ---
 
 ## Étape 2 — Installer l'analyzer
 
 Depuis la racine du dépôt de l'analyzer :
-
-```bash
-bash scripts/start.sh --help
-```
-
-Si l'API est **déjà démarrée** (étape 1), un premier test à vide :
-
 ```bash
 bash scripts/start.sh --target http://localhost:8080
 ```
@@ -107,6 +100,9 @@ bash scripts/start.sh --target http://localhost:8080
 - [ ] Le script détecte l'API et termine sans erreur.
 - [ ] `reports/latest-report.json` est créé.
 - [ ] `dashboard/index.html` s'ouvre.
+- ⚠️️️ Changer le port si nécessaire (`--target http://localhost:<port>`).
+
+Documentation sur le script.sh et les différents paramètres : [Fichier HOWTO.md / Partie 3](./HOWTO.md).
 
 ---
 
@@ -114,27 +110,20 @@ bash scripts/start.sh --target http://localhost:8080
 
 ### 3.1 Lancer l'analyse
 
-**Cas 1 : l'API tourne déjà**
+**Cas 1 : l'API tourne déjà (fortement conseillée)**
 
 ```bash
-bash scripts/start.sh \
-  --target http://localhost:8080 \
-  --swagger http://localhost:8080/v3/api-docs \
-  --source-dir ./chemin/vers/mon-app \
-  --appname nom-du-projet
+bash scripts/start.sh --target http://localhost:8080 --swagger http://localhost:8080/swagger --source-dir ./chemin/vers/mon-app --appname nom-du-projet
 ```
 
 **Cas 2 : laisser l'analyzer compiler et démarrer l'API**
 
 ```bash
-bash scripts/start.sh \
-  --stack java \
-  --build-and-run \
-  --source-dir ./chemin/vers/mon-app \
-  --appname nom-du-projet
+bash scripts/start.sh --stack java --build-and-run --source-dir ./chemin/vers/mon-app --appname nom-du-projet
 ```
+⚠️ Attention, il faut rajouter les varibles d'environnements (SECRET surtout) si l'API en a besoin pour démarrer 
 
-**Cas 3 : API protégée**
+**Cas 3 : API sécurisée avec un bearer token**
 
 ```bash
 BEARER_TOKEN="<token-de-test>" bash scripts/start.sh --target http://localhost:8080
@@ -175,11 +164,7 @@ Creedengo analyse le **code source** (anti-patterns d'éco-conception) via Sonar
 Il nécessite Podman ou Docker.
 
 ```bash
-bash scripts/start.sh \
-  --stack java \
-  --source-dir ./chemin/vers/mon-app \
-  --target http://localhost:8080 \
-  --creedengo
+bash scripts/start.sh --stack java --source-dir ./chemin/vers/mon-app --target http://localhost:8080 --creedengo
 ```
 
 Ou seul :
@@ -228,7 +213,7 @@ Intégrer l'analyzer dans la pipeline du projet (Azure DevOps ou GitHub Actions)
 La pipeline (`pr-green-api-axa.yml`) :
 
 - se déclenche sur **PR** et **hebdomadairement** (dimanche) ;
-- installe JDK 17, Maven et Python ;
+- installe JDK 17+, Maven et Python ;
 - clone l'analyzer ;
 - exécute `scripts/start.sh` avec les paramètres ;
 - analyse Creedengo, Green Score et OpenAPI.
@@ -242,7 +227,9 @@ La pipeline (`pr-green-api-axa.yml`) :
 | Modules | Noms des modules Maven/Gradle corrects ; bon sous-répertoire ciblé (`JAVA_MODULE`). |
 | Secrets | `API_TOKEN`, `CLIENT_SECRET`, etc. dans les variables **secrètes** de la CI, jamais dans le YAML ni les logs. |
 
-- [ ] Pipeline ajoutée dans une branche.
+💡 Exemple sur Data Director (avec quelques galères, c'était super) : 
+
+- [ ] Pipeline ajoutée dans une branche à part 
 - [ ] Première exécution réussie.
 - [ ] Rapport / dashboard publié en artefact.
 
@@ -264,6 +251,7 @@ La pipeline (`pr-green-api-axa.yml`) :
 ## Ressources
 
 - [README du projet](../README.md) · [HOWTO](HOWTO.md) · [Intégration CI](CI-INTEGRATION.md)
-- `dashboard/` — résultats générés
-- Grille **API GreenScore v1.2** (PDF) — voir la slide « Ressources recommandées »
-- Sobri-IT — AXA France Green Champions
+- `dashboard/` : résultats générés
+- [Grille **API GreenScore v1.2** (PDF)](https://cdn.digitevent.com/69243f238739dbd18f49846f/websiteBtnFileUrl/0c90ba15-f0d0-4b1a-9fb4-ebd8dfb1717c-71-48-cat-sustainable-api-greenscore-v1-2.pdf)
+- [Sobri-IT](https://sobri-it.axa-fr.intraxa/)
+- Slides de l'atelier : voir le fichier **atelier-project-structure.html**

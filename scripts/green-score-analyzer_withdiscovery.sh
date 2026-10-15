@@ -286,9 +286,9 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║  📦 APP: ${GREEN}${APP_DISPLAY}${CYAN}                                        ║${NC}"
-echo -e "${CYAN}║  🌿 GREEN SCORE:  ${GREEN}${TOTAL}/100${CYAN}   Grade: ${GREEN}${GRADE}${CYAN}                    ║${NC}"
-echo -e "${CYAN}║  🔍 Endpoints discovered: ${GREEN}${EP_DISC}${CYAN}  measured: ${GREEN}${EP_MEAS}${CYAN}              ║${NC}"
+echo -e "${CYAN}   📦 APP: ${GREEN}${APP_DISPLAY}${CYAN}                        ${NC}"
+echo -e "${CYAN}   🌿 GREEN SCORE:  ${GREEN}${TOTAL}/100${CYAN}   Grade: ${GREEN}${GRADE}${CYAN} ${NC}"
+echo -e "${CYAN}   🔍 Endpoints discovered: ${GREEN}${EP_DISC}${CYAN}  measured: ${GREEN}${EP_MEAS}${CYAN}              ${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

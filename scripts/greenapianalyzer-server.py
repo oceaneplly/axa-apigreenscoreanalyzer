@@ -53,6 +53,7 @@ SWAGGER_DISCOVERY_PATHS = [
     "/v2/api-docs",
     "/openapi.json",
     "/openapi.yaml",
+    "/swagger",
     "/swagger/v1/swagger.json",
     "/swagger.json",
     "/swagger.yaml",
