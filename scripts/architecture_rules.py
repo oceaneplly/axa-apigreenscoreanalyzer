@@ -417,18 +417,18 @@ def evaluate_AR01(spec: dict, base_urls: list[str], endpoints: list[dict],
     if not matched:
         if advice:
             recommendations.append(
-                f"Aucun signal EDA détecté mais {len(advice)} opportunité(s) "
-                "de migration vers SSE/AsyncAPI/WebSocket trouvées (cf. EDA Advisor)."
+                f"No EDA signal detected, but {len(advice)} opportunity(ies) "
+                "to migrate to SSE/AsyncAPI/WebSocket were found (see EDA Advisor)."
             )
         else:
             recommendations.append(
-                "Aucun signal EDA détecté. Documentez vos flux d'événements via "
-                "AsyncAPI ou ajoutez des callbacks/webhooks dans votre OpenAPI."
+                "No EDA signal detected. Document your event flows with AsyncAPI "
+                "or add callbacks/webhooks to your OpenAPI."
             )
     else:
         recommendations.append(
-            "Architecture événementielle détectée. Vérifiez que la documentation "
-            "(AsyncAPI/callbacks) couvre tous les flux asynchrones."
+            "Event-driven architecture detected. Check that the documentation "
+            "(AsyncAPI/callbacks) covers all asynchronous flows."
         )
 
     return {
@@ -629,16 +629,15 @@ def evaluate_AR03(specs_per_target: list, thresholds: dict | None = None) -> dic
                                  f"bow={d['summary_cosine']})"
                              )})
             recommendations.append(
-                f"APIs très proches détectées entre **{d['left']}** et "
-                f"**{d['right']}**. Mutualiser pour éviter la double "
-                f"infrastructure (et la double empreinte carbone)."
+                f"Very similar APIs detected between **{d['left']}** and "
+                f"**{d['right']}**. Consolidate them to avoid duplicate "
+                f"infrastructure (and duplicate carbon footprint)."
             )
         else:
             recommendations.append(
-                f"Cohabitation de versions sur **{d['base_url']}** : "
+                f"Multiple versions coexist on **{d['base_url']}**: "
                 f"{d['method']} {' ⇄ '.join(d['duplicate_paths'])}. "
-                "Déprécier explicitement l'ancienne version pour "
-                "supprimer le runtime redondant."
+                "Explicitly deprecate the old version to remove the redundant runtime."
             )
 
     matched = (len(duplicates) == 0)
@@ -817,9 +816,9 @@ def evaluate_AR02(spec: dict, base_urls: list[str], measurements: dict,
             evidence.append({"kind": "cdn_header_uncorroborated",
                              "where": p, "value": evs[:1]})
         recs.append(
-            "Aucun signal d'edge/CDN cross-validé (runtime + HEAD). Mettre l'API "
-            "derrière un edge/CDN multi-régions (Cloudflare, CloudFront, "
-            "Front Door, Fastly, Akamai…) pour rapprocher le runtime des consommateurs."
+            "No cross-validated edge/CDN signal (runtime + HEAD). Place the API "
+            "behind a multi-region edge/CDN (Cloudflare, CloudFront, "
+            "Front Door, Fastly, Akamai…) to bring the runtime closer to consumers."
         )
 
     # ── 2) Multi-region servers (spec + DNS) ───────────────────────────────
@@ -848,9 +847,9 @@ def evaluate_AR02(spec: dict, base_urls: list[str], measurements: dict,
                                    "ip_count": len(distinct_ips)}})
     elif len(distinct_hosts) <= 1:
         recs.append(
-            "La spec OpenAPI ne déclare qu'une seule URL de serveur. Ajouter "
-            "plusieurs entrées `servers[]` régionales (ex: eu-west, us-east) "
-            "pour documenter un déploiement multi-régions."
+            "The OpenAPI spec declares only one server URL. Add multiple "
+            "regional `servers[]` entries (e.g. eu-west, us-east) to document "
+            "a multi-region deployment."
         )
     else:
         evidence.append({"kind": "single_region_dns", "where": "dns",
@@ -858,9 +857,9 @@ def evaluate_AR02(spec: dict, base_urls: list[str], measurements: dict,
                                    "ip_count": len(distinct_ips),
                                    "regions": region_tokens}})
         recs.append(
-            "Plusieurs URLs `servers[]` déclarées mais elles résolvent vers la "
-            "même région DNS. Vérifier que chaque URL pointe bien vers un "
-            "déploiement régional distinct (anycast ou DNS GSLB)."
+            "Several `servers[]` URLs are declared, but they resolve to the "
+            "same DNS region. Verify that each URL points to a distinct "
+            "regional deployment (anycast or GSLB DNS)."
         )
 
     # ── 3) TLS handshake latency ───────────────────────────────────────────
@@ -889,17 +888,17 @@ def evaluate_AR02(spec: dict, base_urls: list[str], measurements: dict,
                                    "consumer_region": consumer_region or None}})
         if ms >= 300:
             recs.append(
-                f"Latence TLS médiane élevée ({ms} ms) depuis l'environnement "
-                f"d'analyse. Activer un edge/CDN ou rapprocher le runtime "
-                f"de la zone consommateur ({consumer_region or 'à préciser'})."
+                f"High median TLS latency ({ms} ms) from the analysis "
+                f"environment. Enable an edge/CDN or move the runtime closer "
+                f"to the consumer region ({consumer_region or 'to be specified'})."
             )
     else:
         if not tls_target:
             evidence.append({"kind": "tls_skip", "where": "n/a",
                              "value": "no HTTPS target available"})
             recs.append(
-                "Activer HTTPS sur la cible pour permettre la mesure de "
-                "latence TLS et bénéficier d'un edge/CDN moderne."
+                "Enable HTTPS on the target to measure TLS latency and benefit "
+                "from a modern edge/CDN."
             )
         elif tls_result:
             evidence.append({"kind": "tls_handshake_failed", "where": tls_target,
@@ -932,16 +931,16 @@ def evaluate_AR02(spec: dict, base_urls: list[str], measurements: dict,
             elif consumer_region and info.get("country") and \
                     info.get("country", "").upper() != consumer_region.upper():
                 recs.append(
-                    f"Cible {h} hébergée en {info.get('country')} alors que les "
-                    f"consommateurs sont en {consumer_region.upper()} — envisager "
-                    "un déploiement régional plus proche."
+                    f"Target {h} is hosted in {info.get('country')} while "
+                    f"consumers are in {consumer_region.upper()} — consider "
+                    "a closer regional deployment."
                 )
     elif consumer_region:
         evidence.append({"kind": "consumer_region_declared",
                          "where": "cli", "value": consumer_region.upper()})
         recs.append(
-            "Activer --enable-geoip pour corréler la région des consommateurs "
-            f"({consumer_region.upper()}) avec la localisation IP de l'API."
+            "Enable --enable-geoip to correlate the consumer region "
+            f"({consumer_region.upper()}) with the API's IP location."
         )
 
     # Cap score
@@ -1063,20 +1062,20 @@ def evaluate_AR05(measurements: dict, base_urls: list[str],
         url = (cloud_dashboards or {}).get(canonical)
         if url:
             recommendations.append(
-                f"Cloud détecté: **{canonical.upper()}**. "
-                f"Activez et consultez régulièrement le dashboard d'empreinte: {url}"
+                f"Cloud detected: **{canonical.upper()}**. "
+                f"Enable and regularly review the carbon footprint dashboard: {url}"
             )
     elif not footprint_confirmed:
         recommendations.append(
-            "Aucun cloud provider détecté via les en-têtes HTTP. "
-            "Si l'API est hébergée sur AWS/Azure/GCP/OVH, vérifiez l'exposition "
-            "des en-têtes edge ou confirmez l'usage du dashboard manuellement "
-            "via ``--cloud-footprint-confirmed``."
+            "No cloud provider detected through HTTP headers. "
+            "If the API is hosted on AWS/Azure/GCP/OVH, check edge header exposure "
+            "or manually confirm dashboard usage with "
+            "``--cloud-footprint-confirmed``."
         )
     if not obs_hits and not footprint_confirmed:
         recommendations.append(
-            "Aucune télémétrie standard détectée (/actuator/metrics, /metrics, "
-            "/q/metrics). Exposez les métriques pour alimenter le dashboard."
+            "No standard telemetry detected (/actuator/metrics, /metrics, "
+            "/q/metrics). Expose metrics to feed the dashboard."
         )
 
     return {
@@ -1264,8 +1263,8 @@ def evaluate_AR04(source_dir: str | None,
             "matched": False, "category": "infrastructure",
             "candidates": [], "evidence": [],
             "recommendations": [
-                "AR04 nécessite --source-dir pour scanner IaC (HPA, KEDA, "
-                "autoscale Terraform/Bicep) et marqueurs serverless "
+                "AR04 requires --source-dir to scan IaC (HPA, KEDA, "
+                "Terraform/Bicep autoscaling) and serverless markers "
                 "(pom.xml, *.csproj, package.json)."
             ],
             "signal_kinds": [],
@@ -1278,8 +1277,8 @@ def evaluate_AR04(source_dir: str | None,
             "matched": False, "category": "infrastructure",
             "candidates": [], "evidence": [],
             "recommendations": [
-                f"--source-dir='{source_dir}' introuvable, vide ou aucun "
-                "fichier IaC/build pertinent détecté."
+                f"--source-dir='{source_dir}' not found, empty, or no relevant "
+                "IaC/build file detected."
             ],
             "signal_kinds": [],
         }
@@ -1345,20 +1344,20 @@ def evaluate_AR04(source_dir: str | None,
 
     if n >= 2:
         recs = [
-            f"Auto-scaling/serverless validé ({n} types de signaux): "
+            f"Auto-scaling/serverless validated ({n} signal types): "
             f"{', '.join(sorted(signals))}.",
         ]
     elif n == 1:
         recs = [
-            f"Signal partiel ({next(iter(signals))}). Pour valider 5/5, "
-            "ajouter un second signal indépendant (ex. HPA + KEDA, "
+            f"Partial signal ({next(iter(signals))}). To validate 5/5, "
+            "add a second independent signal (e.g. HPA + KEDA, "
             "Terraform autoscale + FaaS deps)."
         ]
     else:
         recs = [
-            "Aucun signal d'auto-scaling détecté dans les fichiers IaC/build.",
-            "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, "
-            "ou déployer en serverless (Azure Functions, AWS Lambda, Cloud Run).",
+            "No auto-scaling signal detected in IaC/build files.",
+            "Enable HPA/KEDA (Kubernetes), Terraform/Bicep autoscaling, "
+            "or deploy serverless (Azure Functions, AWS Lambda, Cloud Run).",
         ]
 
     candidates = [
@@ -1429,14 +1428,14 @@ def evaluate_architecture_rules(
             ar01.setdefault("evidence", []).extend(broker_ev)
             if not ar01.get("matched"):
                 ar01.setdefault("recommendations", []).append(
-                    f"{len(broker_ev)} dépendance(s) de broker détectée(s) dans le "
-                    "source-dir mais aucun signal AsyncAPI/callbacks/SSE dans la "
-                    "spec → documentez vos flux d'événements pour valider AR01."
+                    f"{len(broker_ev)} broker dependencies detected in the source "
+                    "directory, but no AsyncAPI/callbacks/SSE signal was found in "
+                    "the spec → document your event flows to validate AR01."
                 )
             else:
                 ar01.setdefault("recommendations", []).append(
-                    f"Cross-validation: {len(broker_ev)} dépendance(s) broker "
-                    "trouvée(s) dans le code source — cohérent avec les signaux EDA."
+                    f"Cross-validation: {len(broker_ev)} broker dependencies "
+                    "found in the source code — consistent with EDA signals."
                 )
     out["AR01_event_driven"] = ar01
 
@@ -1459,8 +1458,8 @@ def evaluate_architecture_rules(
             "evidence": [{"kind": "error", "where": "evaluate_AR02",
                           "value": str(e)}],
             "recommendations": [
-                "Évaluation AR02 en erreur — vérifier la connectivité réseau "
-                "et les flags --enable-geoip / --consumer-region."
+                "AR02 evaluation failed — check network connectivity and the "
+                "--enable-geoip / --consumer-region flags."
             ],
         }
 
@@ -1479,10 +1478,10 @@ def evaluate_architecture_rules(
             "candidates": [],
             "evidence": [],
             "recommendations": [
-                "AR04 sera évalué via scan IaC (HPA, KEDA, autoscale "
-                "Terraform/Bicep) et marqueurs serverless dans "
-                "pom.xml/*.csproj/package.json — passer --source-dir "
-                "<chemin> pour activer le scan Phase 2."
+                "AR04 will be evaluated through an IaC scan (HPA, KEDA, "
+                "Terraform/Bicep autoscaling) and serverless markers in "
+                "pom.xml/*.csproj/package.json — pass --source-dir "
+                "<path> to enable the Phase 2 scan."
             ],
             "signal_kinds": [],
         }
@@ -1508,4 +1507,3 @@ if __name__ == "__main__":  # pragma: no cover
         endpoints=[], measurements={}, footprint_confirmed=False,
     )
     print(json.dumps(res, indent=2, ensure_ascii=False))
-

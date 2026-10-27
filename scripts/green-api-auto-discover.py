@@ -100,37 +100,37 @@ GREEN_RULES = {
     "DE11_pagination": {
         "id": "DE11", "label": "Pagination", "max_pts": 15,
         "check": "collection_has_pagination_params",
-        "description": "Les endpoints de collection doivent supporter la pagination (page/size ou limit/offset).",
+        "description": "Collection endpoints must support pagination (page/size or limit/offset).",
         "category": "data-efficiency",
     },
     "DE08_fields": {
         "id": "DE08", "label": "Filtrage de champs", "max_pts": 15,
         "check": "has_fields_param",
-        "description": "Supporter un parametre 'fields' pour reduire le payload.",
+        "description": "Support a 'fields' parameter to reduce the payload.",
         "category": "data-efficiency",
     },
     "DE01_compression": {
         "id": "DE01", "label": "Compression", "max_pts": 15,
         "check": "server_supports_gzip",
-        "description": "Le serveur doit supporter Accept-Encoding: gzip.",
+        "description": "The server must support Accept-Encoding: gzip.",
         "category": "data-efficiency",
     },
     "DE02_DE03_cache": {
         "id": "DE02/DE03", "label": "Cache ETag/304", "max_pts": 15,
         "check": "supports_etag_304",
-        "description": "Les ressources unitaires doivent supporter ETag + If-None-Match -> 304.",
+        "description": "Individual resources must support ETag + If-None-Match -> 304.",
         "category": "data-efficiency",
     },
     "DE06_delta": {
         "id": "DE06", "label": "Delta / Changes", "max_pts": 10,
         "check": "has_delta_endpoint",
-        "description": "Un endpoint /changes?since= ou equivalent doit exister.",
+        "description": "A /changes?since= endpoint or equivalent must exist.",
         "category": "data-efficiency",
     },
     "range_206": {
         "id": "206", "label": "Range / Partial Content", "max_pts": 10,
         "check": "supports_range_206",
-        "description": "Supporter le header Range pour les gros payloads.",
+        "description": "Support the Range header for large payloads.",
         "category": "data-efficiency",
     },
     "AR02_format_cbor": {
@@ -139,19 +139,19 @@ GREEN_RULES = {
         # rule key is kept unchanged so legacy reports remain readable.
         "id": "BIN01", "label": "Format binaire (CBOR)", "max_pts": 10,
         "check": "has_binary_format",
-        "description": "Un endpoint en format binaire (CBOR, protobuf...) doit exister.",
+        "description": "A binary-format endpoint (CBOR, protobuf...) must exist.",
         "category": "data-efficiency",
     },
     "LO01_observability": {
         "id": "LO01", "label": "Observabilite", "max_pts": 5,
         "check": "has_actuator",
-        "description": "Actuator / health / metrics doit etre expose.",
+        "description": "Actuator / health / metrics must be exposed.",
         "category": "logs-observability",
     },
     "US07_rate_limit": {
         "id": "US07", "label": "Rate Limiting", "max_pts": 5,
         "check": "assumed_if_running",
-        "description": "Un mecanisme de rate limiting doit etre present.",
+        "description": "A rate-limiting mechanism must be present.",
         "category": "usage",
     },
 
@@ -161,27 +161,27 @@ GREEN_RULES = {
     "AR01_event_driven": {
         "id": "AR01", "label": "Architecture événementielle", "max_pts": 6,
         "check": "external_arch_rules", "category": "architecture",
-        "description": "Utiliser une architecture événementielle (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) pour éviter le polling.",
+        "description": "Use an event-driven architecture (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) to avoid polling.",
     },
     "AR02_runtime_close": {
         "id": "AR02", "label": "Runtime proche du consommateur", "max_pts": 7,
         "check": "external_arch_rules", "category": "architecture",
-        "description": "Déployer l'API au plus près des consommateurs (CDN, edge, anycast multi-régions).",
+        "description": "Deploy the API as close as possible to consumers (CDN, edge, multi-region anycast).",
     },
     "AR03_unique_api": {
         "id": "AR03", "label": "Une seule API par besoin", "max_pts": 3,
         "check": "external_arch_rules", "category": "architecture",
-        "description": "Éviter la duplication d'APIs servant le même besoin (double infrastructure = double empreinte).",
+        "description": "Avoid duplicating APIs that serve the same purpose (duplicate infrastructure = duplicate footprint).",
     },
     "AR04_scalable_infra": {
         "id": "AR04", "label": "Infrastructure scalable", "max_pts": 5,
         "check": "external_arch_rules", "category": "infrastructure",
-        "description": "Préférer une infrastructure auto-scalable (HPA, KEDA, autoscale, serverless).",
+        "description": "Prefer auto-scalable infrastructure (HPA, KEDA, autoscaling, serverless).",
     },
     "AR05_cloud_footprint": {
         "id": "AR05", "label": "Dashboard d'empreinte cloud", "max_pts": 2,
         "check": "external_arch_rules", "category": "infrastructure",
-        "description": "Suivre l'empreinte carbone via le dashboard natif du provider cloud.",
+        "description": "Track the carbon footprint through the cloud provider's native dashboard.",
     },
 }
 
@@ -2679,4 +2679,3 @@ Examples:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atelier AXA API Green Score Analyzer - Structure du Projet</title>
+  <title>AXA API Green Score Analyzer Workshop - Project Structure</title>
   
   <link rel="preconnect" href="https://api.fontshare.com">
   <link rel="stylesheet" href="https://api.fontshare.com/css?f[]=satoshi@400,500,700">
@@ -74,6 +74,21 @@
       align-items: center;
       padding: max(var(--spacing-md), 5vh) var(--spacing-lg) max(var(--spacing-lg), 7vh);
       position: relative;
+    }
+
+    .summit-logo {
+      position: absolute;
+      right: var(--spacing-sm);
+      bottom: var(--spacing-sm);
+      z-index: 450;
+      display: block;
+      width: clamp(7rem, 14vw, 11rem);
+      max-width: calc(100% - (2 * var(--spacing-sm)));
+      height: auto;
+      max-height: 8vh;
+      object-fit: contain;
+      object-position: right bottom;
+      pointer-events: none;
     }
 
     .slide-content {
@@ -519,7 +534,7 @@
 
     #slide-number {
       position: fixed;
-      right: var(--spacing-sm);
+      right: calc(clamp(7rem, 14vw, 11rem) + var(--spacing-md));
       bottom: var(--spacing-sm);
       color: rgba(0, 0, 143, 0.45);
       font-size: 0.75rem;
@@ -625,44 +640,43 @@
   <div id="fs-hint">F — Fullscreen</div>
   <div id="slide-number" aria-live="polite"></div>
   <footer>
-    Journée dév SICL 15/10
+    Workshop Summit
   </footer>
 
   <!-- Slide 1: Title -->
   <section class="slide title cover-slide" data-slide-order="1">
     <div class="slide-content">
-      <p class="cover-kicker">AXA · Journée dév SICL</p>
+      <p class="cover-kicker">AXA · Workshop Summit</p>
       <h1>API Green Score Analyzer</h1>
-      <p class="subtitle">Préparation pour le Summit</p>
-      <p class="tagline">1h30 · Hands-on workshop</p>
+      <p class="tagline">1 hour· Hands-on workshop</p>
     </div>
   </section>
 
   <!-- Slide 2: Contexte -->
   <section class="slide content dense" data-slide-order="2">
     <div class="slide-content">
-      <h2>But de l'atelier</h2>
-      <p>Analyser et mesurer nos API selon les règles de l'<span class="highlight">API Green Score</span> 🌱</p>
+      <h2>Workshop goals</h2>
+      <p>Analyze and measure our APIs against the <span class="highlight">API Green Score</span> rules 🌱</p>
       
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
-          <h3>Objectif</h3>
-          <p>Mesurer l'efficacité énergétique et la qualité des API</p>
+          <h3>Objective</h3>
+          <p>Measure API energy efficiency and quality</p>
         </div>
         <div class="grid-item">
-          <h3>Outils</h3>
+          <h3>Tools</h3>
           <p>Creedengo, OpenAPI</p>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="grid-item">
-          <h3>Rapports</h3>
-          <p>Dashboards interactifs et scores détaillés</p>
+          <h3>Reports</h3>
+          <p>Interactive dashboards and detailed scores</p>
         </div>
         <div class="grid-item">
           <h3>CI/CD</h3>
-          <p>Pipelines Azure automatisées</p>
+          <p>Automated Azure pipelines</p>
         </div>
       </div>
     </div>
@@ -671,33 +685,32 @@
   <!-- Slide 5: Exécution locale -->
   <section class="slide title local-execution-slide" data-slide-order="5">
     <div class="slide-content">
-      <h1>Partie 1 : Exécution du projet en local</h1>
-      <p class="subtitle" style="color: #ffffff; font-style: italic;">Branche : feat/atelier-journee-dev <br> Doc : docs/WORKSHOP-SICL.md</p>
-      <p class="subtitle" style="color: #ffffff;">Un petit pull sur le projet avant de commencer 🤓👆🏻</p>
+      <h1>Part 1: Running the project locally</h1>
+      <p class="subtitle" style="color: #ffffff;">Pull the project before getting started 🤓👆🏻</p>
     </div>
   </section>
 
   <!-- Slide 6: Architecture Générale -->
   <section class="slide diagram dense" data-slide-order="6">
-    <h2>Architecture du Projet</h2>
+    <h2>Project Architecture</h2>
     <div class="diagram-container">
       <pre class="mermaid">
 flowchart LR
-    subgraph IN["Entrées"]
-        API["API en fonctionnement<br/>+ OpenAPI / Swagger"]
-        SRC["Code source<br/>Java · .NET · Python"]
+    subgraph IN["Inputs"]
+        API["Running API<br/>+ OpenAPI / Swagger"]
+        SRC["Source code<br/>Java · .NET · Python"]
         ADR["ADR<br/>docs/adr"]
     end
 
-    START["scripts/start.sh<br/>orchestrateur"]
+    START["scripts/start.sh<br/>orchestrator"]
 
-    subgraph ENG["Moteurs d'analyse"]
+    subgraph ENG["Analysis engines"]
         GAS["green-api-auto-discover.py<br/>API Green Score"]
         ARC["architecture_rules.py<br/>adr_rules.py<br/>AR01-AR05 + ADR"]
         CRE["creedengo-analyzer.sh<br/>SonarQube + Creedengo"]
     end
 
-    subgraph OUT["Livrables"]
+    subgraph OUT["Deliverables"]
         JSON["reports/*.json"]
         DASH["dashboard/<br/>HTML + Markdown"]
         BADGE["badges/<br/>SVG"]
@@ -726,31 +739,31 @@ flowchart LR
     class JSON,DASH,BADGE,SOB output
       </pre>
     </div>
-    <p style="font-size: var(--fs-small);">Le calcul de l'API Green Score et le scan Creedengo sont indépendants ; les deux alimentent les mêmes rapports JSON.</p>
+    <p style="font-size: var(--fs-small);">The API Green Score calculation and Creedengo scan are independent; both feed the same JSON reports.</p>
   </section>
 
   <!-- Slide 4: Creedengo -->
   <section class="slide content dense" data-slide-order="4">
     <div class="slide-content">
-      <h2>Creedengo — À quoi ça sert ?</h2>
+      <h2>Creedengo — What is it for?</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
-          <h3>Analyse du code</h3>
-          <p>Détecte les anti-patterns d'éco-conception dans le code source Java, Python et C#</p>
+          <h3>Code analysis</h3>
+          <p>Detects eco-design anti-patterns in Java, Python, and C# source code</p>
         </div>
         <div class="grid-item">
-          <h3>Règles de la GCI</h3>
-          <p>Identifie les requêtes SQL inutiles, les appels en boucle, les ressources mal libérées et autres coûts évitables</p>
+          <h3>GCI rules</h3>
+          <p>Identifies unnecessary SQL queries, calls inside loops, poorly released resources, and other avoidable costs</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
-          <h3>Et dans ce repo ?</h3>
-          <p>SonarQube + plugin Creedengo, lancé avec <code>--creedengo</code> ou <code>creedengo-analyzer.sh</code></p>
+          <h3>And in this repo?</h3>
+          <p>SonarQube + Creedengo plugin, launched with <code>--creedengo</code> or <code>creedengo-analyzer.sh</code></p>
         </div>
         <div class="grid-item">
-          <h3>Résultat</h3>
-          <p>Score /100, grade, règles violées et rapport</p>
+          <h3>Result</h3>
+          <p>Score /100, grade, violated rules, and report</p>
         </div>
       </div>
     </div>
@@ -759,50 +772,50 @@ flowchart LR
   <!-- Slide 8: start.sh Parameters -->
   <section class="slide alternate dense start-slide" data-slide-order="8">
     <div class="slide-content">
-      <h2><code>scripts/start.sh</code> — Piloter une analyse</h2>
-      <p style="margin-top: var(--spacing-sm);">Le script orchestre une analyse green (API Green Score + Creedengo) de bout en bout : il prépare la cible, exécute les contrôles et produit le dashboard et les rapports</p>
+      <h2><code>scripts/start.sh</code> — Run an analysis</h2>
+      <p style="margin-top: var(--spacing-sm);">The script orchestrates an end-to-end green analysis (API Green Score + Creedengo): it prepares the target, runs the checks, and produces the dashboard and reports</p>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
-          <h3>Cibles & spécifications</h3>
-          <p>Paramètres pour indiquer une ou plusieurs API, leurs contrats OpenAPI et, si nécessaire, un accès authentifié</p>
+          <h3>Targets & specifications</h3>
+          <p>Parameters to specify one or more APIs, their OpenAPI contracts, and authenticated access when required</p>
         </div>
         <div class="grid-item">
-          <h3>Source & exécution</h3>
-          <p>Paramètres pour choisir le stack, fournir le code source, démarrer l'API localement et activer les traces de diagnostic</p>
+          <h3>Source & execution</h3>
+          <p>Parameters to choose the stack, provide source code, start the API locally, and enable diagnostic traces</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
-          <h3>Qualité du code & architecture</h3>
-          <p>Options pour lancer Creedengo et contrôler les ADR, y compris depuis un dépôt Git ou un sous-répertoire</p>
+          <h3>Code quality & architecture</h3>
+          <p>Options to run Creedengo and check ADRs, including from a Git repository or subdirectory</p>
         </div>
         <div class="grid-item">
-          <h3>Score & intégrations</h3>
-          <p>Paramètres de contexte pour le scoring, la proximité géographique, l'empreinte cloud et l'envoi vers SobriIT</p>
+          <h3>Score & integrations</h3>
+          <p>Context parameters for scoring, geographic proximity, cloud footprint, and sending results to SobriIT</p>
         </div>
       </div>
-      <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Les valeurs peuvent venir des options CLI ou de variables d'environnement, selon le paramètre. Exemple : <code>bash scripts/start.sh --stack java --build-and-run --source-dir ./my-app --creedengo</code></p>
+      <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Values can come from CLI options or environment variables, depending on the parameter. Example: <code>bash scripts/start.sh --stack java --build-and-run --source-dir ./my-app --creedengo</code></p>
     </div>
   </section>
 
   <!-- Slide 13.5: Intégration de la pipeline -->
   <section class="slide title local-execution-slide" data-slide-order="13.5">
     <div class="slide-content">
-      <h1>Partie 2 : Pour les plus rapides 🚀</h1>
-      <p class="subtitle" style="color: #ffffff;">Intégration d'une pipeline avec l'API Green Score + Creedengo dans votre projet</p>
+      <h1>Part 2: For the fast-paced 🚀</h1>
+      <p class="subtitle" style="color: #ffffff;">Integrating an API Green Score + Creedengo pipeline into your project</p>
     </div>
   </section>
 
   <!-- Slide 9: pr-green-api-axa.yml Details -->
   <section class="slide content dense" data-slide-order="14">
     <div class="slide-content">
-      <h2>pr-green-api-axa.yml — Pipeline API Green</h2>
+      <h2>pr-green-api-axa.yml — Green API pipeline</h2>
       <ul class="content-list" style="margin-top: var(--spacing-lg);">
         <li><span class="accent">Setup</span> : JDK 17+, Maven, Python</li>
-        <li><span class="accent">Clone analyzer</span> : Récupère le repo analyzer</li>
-        <li><span class="accent">Exécute</span> : <code>scripts/start.sh</code> avec paramètres</li>
-        <li><span class="accent">Analyse</span> : Creedengo, Green Score, OpenAPI</li>
-        <li><span class="accent">Variables</span> : Targets, Swagger URLs, Stack (auto/java/dotnet)</li>
+        <li><span class="accent">Clone analyzer</span>: Fetches the analyzer repository</li>
+        <li><span class="accent">Run</span>: <code>scripts/start.sh</code> with parameters</li>
+        <li><span class="accent">Analysis</span>: Creedengo, Green Score, OpenAPI</li>
+        <li><span class="accent">Variables</span>: Targets, Swagger URLs, stack (auto/java/dotnet)</li>
       </ul>
     </div>
   </section>
@@ -810,27 +823,27 @@ flowchart LR
   <!-- Slide 14.5: Recommandations pour la pipeline -->
   <section class="slide alternate dense" data-slide-order="14.5">
     <div class="slide-content">
-      <h2>Recommandations pour intégrer la pipeline</h2>
+      <h2>Recommendations for integrating the pipeline</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
-          <h3>Préparation des variables</h3>
-          <p>Renseigner les targets, l'URL du Swagger, le stack, le profil d'exécution, les options de build, etc</p>
+          <h3>Prepare variables</h3>
+          <p>Set the targets, Swagger URL, stack, execution profile, build options, etc.</p>
           <p><code>TARGETS</code> · <code>SWAGGER_URL</code> · <code>STACK</code> · <code>BUILD_AND_RUN</code></p>
         </div>
         <div class="grid-item">
-          <h3>Swagger accessible</h3>
-          <p>Vérifier que le chemin est accessible depuis l'agent CI : authentification et réponse HTTP 200</p>
+          <h3>Accessible Swagger</h3>
+          <p>Check that the path is accessible from the CI agent: authentication and HTTP 200 response</p>
           <p><code>/swagger</code> · <code>/v3/api-docs</code></p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
-          <h3>Nom des modules</h3>
-          <p>Contrôler les noms des modules Maven ou Gradle et cibler le bon sous-répertoire avant de la pipeline</p>
+          <h3>Module names</h3>
+          <p>Check Maven or Gradle module names and target the right subdirectory before running the pipeline</p>
         </div>
         <div class="grid-item">
-          <h3>Renseignement des secrets</h3>
-          <p>Stocker les tokens et identifiants dans les variables secrètes de la CI, jamais dans le YAML ni les logs</p>
+          <h3>Secrets management</h3>
+          <p>Store tokens and credentials in CI secret variables, never in YAML or logs</p>
           <p><code>API_TOKEN</code> · <code>CLIENT_SECRET</code> · <code>etc</code></p>
         </div>
       </div>
@@ -840,7 +853,7 @@ flowchart LR
   <!-- Slide 7: Technologies dans le repo -->
   <section class="slide content dense" data-slide-order="7">
     <div class="slide-content">
-      <h2>Technologies dans le repo</h2>
+      <h2>Technologies in the repo</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Backend</h3>
@@ -855,7 +868,7 @@ flowchart LR
       <div class="grid-2">
         <div class="grid-item">
           <h3>Infra</h3>
-          <p>Podman pour la partie Creedengo</p>
+          <p>Podman for the Creedengo component</p>
         </div>
       <div class="grid-2">
         <div class="grid-item" style="grid-column: 1 / -1;">
@@ -869,20 +882,20 @@ flowchart LR
   <!-- Slide 3: API Green Score Themes -->
   <section class="slide alternate dense" data-slide-order="3">
     <div class="slide-content">
-      <h2>API Green Score — Rappel des règles</h2>
+      <h2>API Green Score — Rules refresher</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Performance</h3>
-          <p>Pagination (DE11), Filtering (DE08), Compression (DE01)</p>
+          <p>Pagination (DE11), filtering (DE08), compression (DE01)</p>
         </div>
         <div class="grid-item">
           <h3>Caching</h3>
-          <p>ETag/304 (DE02/DE03), Delta queries (DE06)</p>
+          <p>ETag/304 (DE02/DE03), delta queries (DE06)</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
-          <h3>Scalabilité</h3>
+          <h3>Scalability</h3>
           <p>Range/206 (Partial Content), Binary formats (Protobuf)</p>
         </div>
         <div class="grid-item">
@@ -892,7 +905,7 @@ flowchart LR
       </div>
       <div class="grid-2">
         <div class="grid-item" style="grid-column: 1 / -1;">
-          <h3>Cloud & Observabilité</h3>
+          <h3>Cloud & observability</h3>
           <p>Scalable Infra (AR04), Cloud Footprint (AR05), Health/Metrics (LO01)</p>
         </div>
       </div>
@@ -901,92 +914,92 @@ flowchart LR
 
   <!-- Slide 10: Génération du rapport -->
   <section class="slide diagram dense" data-slide-order="10">
-    <h2>Comment le rapport est généré</h2>
+    <h2>How the report is generated</h2>
     <div class="diagram-container">
       <pre class="mermaid">
 flowchart LR
-    A[API en fonctionnement] --> B[OpenAPI / Swagger]
+    A[Running API] --> B[OpenAPI / Swagger]
     B --> C[green-api-auto-discover.py]
-    C --> D[Découverte des endpoints]
-    C --> E[Mesures HTTP]
-    C --> F[Calcul des règles]
-    D --> G[Rapport JSON]
+    C --> D[Endpoint discovery]
+    C --> E[HTTP measurements]
+    C --> F[Rule calculation]
+    D --> G[JSON report]
     E --> G
     F --> G
-    G --> H[Dashboard HTML]
-    G --> I[Dashboard Markdown]
+    G --> H[HTML dashboard]
+    G --> I[Markdown dashboard]
       </pre>
     </div>
-    <p style="font-size: var(--fs-small);">Le wrapper <code>green-score-analyzer_withdiscovery.sh</code> orchestre le lancement ; le calcul est centralisé dans <code>green-api-auto-discover.py</code>.</p>
+    <p style="font-size: var(--fs-small);">The <code>green-score-analyzer_withdiscovery.sh</code> wrapper orchestrates the run; calculation is centralized in <code>green-api-auto-discover.py</code>.</p>
   </section>
 
   <!-- Slide 11: Mesures -->
   <section class="slide content dense" data-slide-order="11">
     <div class="slide-content">
-      <h2>Ce qui est mesuré sur chaque endpoint</h2>
+      <h2>What is measured for each endpoint</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
-          <h3>Mesures HTTP</h3>
-          <p>Code HTTP, taille téléchargée, temps total et vitesse de téléchargement</p>
+          <h3>HTTP measurements</h3>
+          <p>HTTP status code, downloaded size, total time, and download speed</p>
         </div>
         <div class="grid-item">
-          <h3>Contexte d'appel</h3>
-          <p>Paramètres OpenAPI, exemples de payload, Bearer token et répétitions configurées</p>
+          <h3>Call context</h3>
+          <p>OpenAPI parameters, payload examples, bearer token, and configured repetitions</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
-          <h3>Énergie réseau</h3>
-          <p><code>taille / Go × kWh réseau</code>, avec une valeur configurable</p>
+          <h3>Network energy</h3>
+          <p><code>size / GB × network kWh</code>, with a configurable value</p>
         </div>
         <div class="grid-item">
-          <h3>Énergie serveur</h3>
-          <p><code>durée × puissance serveur / 3600</code>, puis conversion en CO₂</p>
+          <h3>Server energy</h3>
+          <p><code>duration × server power / 3600</code>, then converted to CO₂</p>
         </div>
       </div>
-      <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Les mesures sont ensuite agrégées dans <code>auto_discovery.all_measurements</code> et <code>discovered_endpoints</code>.</p>
+      <p style="margin-top: var(--spacing-lg); font-size: var(--fs-small);">Measurements are then aggregated in <code>auto_discovery.all_measurements</code> and <code>discovered_endpoints</code>.</p>
     </div>
   </section>
 
   <!-- Slide 12: Calcul des scores -->
   <section class="slide alternate dense" data-slide-order="12">
     <div class="slide-content">
-      <h2>Comment les scores sont calculés</h2>
+      <h2>How scores are calculated</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>API Green Score</h3>
-          <p>Chaque règle est évaluée sur les endpoints découverts : pagination, filtrage, compression, cache, delta, range et formats binaires</p>
+          <p>Each rule is evaluated on discovered endpoints: pagination, filtering, compression, caching, delta, range, and binary formats</p>
         </div>
         <div class="grid-item">
           <h3>Architecture</h3>
-          <p>AR01 à AR05 ajoutent les signaux événementiels, proximité runtime, API unique, autoscaling et empreinte cloud</p>
+          <p>AR01 to AR05 add event-driven signals, runtime proximity, single API, autoscaling, and cloud footprint</p>
         </div>
       </div>
-      <div class="code-block">1. API Green Score = Somme des points validés<br>
-2. API Green Score = conversion du score en A+ / A / B / C / D / E<br>
-3. Score Creedengo = (1 - règles violées / règles analysées) × 100</div>
-      <p style="font-size: var(--fs-small);">L'API Green Score et le score Creedengo restent distincts : API en fonctionnement d'un côté, qualité éco-conception du code source de l'autre</p>
+      <div class="code-block">1. API Green Score = Sum of validated points<br>
+2. API Green Score = score converted to A+ / A / B / C / D / E<br>
+3. Creedengo score = (1 - violated rules / analyzed rules) × 100</div>
+      <p style="font-size: var(--fs-small);">The API Green Score and Creedengo score remain separate: running API on one side, source-code eco-design quality on the other</p>
     </div>
   </section>
 
   <!-- Slide 13: Sorties -->
   <section class="slide content dense" data-slide-order="13">
     <div class="slide-content">
-      <h2>Du JSON aux livrables</h2>
+      <h2>From JSON to deliverables</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3><code>generate-dashboard.py</code></h3>
-          <p>Lit le dernier rapport et en génère un nouveau (en Markdown + HTML)</p>
+          <p>Reads the latest report and generates a new one (in Markdown + HTML)</p>
         </div>
         <div class="grid-item">
           <h3>Badge</h3>
-          <p>Le score courant est transformé en SVG pour les README et les pull requests</p>
+          <p>The current score is converted to SVG for READMEs and pull requests</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item" style="grid-column: 1 / -1;">
-          <h3>Comparaison</h3>
-          <p>Le rapport précédent sert de baseline pour suivre l'évolution des performances</p>
+          <h3>Comparison</h3>
+          <p>The previous report serves as a baseline for tracking performance changes</p>
         </div>
       </div>
     </div>
@@ -995,29 +1008,29 @@ flowchart LR
   <!-- Slide 13.1: Sources des mesures Green -->
   <section class="slide alternate dense" data-slide-order="13.1">
     <div class="slide-content">
-      <h2>D'où viennent les mesures Green ?</h2>
+      <h2>Where do the Green measurements come from?</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>The Shift Project</h3>
-          <p>Groupe de réflexion qui vise à éclairer et influencer le débat sur les défis climat-énergie</p>
+          <p>Think tank aiming to inform and influence debate on climate and energy challenges</p>
         </div>
         <div class="grid-item">
           <h3>ADEME</h3>
-          <p>Agence de la transition écologique résolument engagée dans la lutte contre le réchauffement climatique et la dégradation des ressources</p>
+          <p>Agency for ecological transition, firmly committed to fighting climate change and resource degradation</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
           <h3>Green Software Foundation</h3>
-          <p>Référence pour la spécification <em>Software Carbon Intensity (SCI)</em>, qui structure l'estimation de l'impact logiciel</p>
+          <p>Reference for the <em>Software Carbon Intensity (SCI)</em> specification, which structures software impact estimation</p>
         </div>
         <div class="grid-item">
           <h3>Green Code Initiative / ecoCode</h3>
-          <p>Communauté et benchmarks utilisés par Creedengo pour relier les issues d'éco-conception aux surcoûts CPU et mémoire</p>
+          <p>Community and benchmarks used by Creedengo to link eco-design issues to CPU and memory overhead</p>
         </div>
         <div class="grid-item" style="grid-column: 1 / -1;">
           <h3>EPA</h3>
-          <p>Agence américaine utilisée pour les équivalences pédagogiques d'émissions : kilomètres en voiture et absorption d'un arbre</p>
+          <p>US agency used for educational emissions equivalents: car kilometres and tree absorption</p>
         </div>
       </div>
     </div>
@@ -1026,28 +1039,28 @@ flowchart LR
   <!-- Slide 15: Partie 3 -->
   <section class="slide title local-execution-slide" data-slide-order="15">
     <div class="slide-content">
-      <h1>Partie 3 : Quoi de prévu ensuite ?</h1>
-      <p class="subtitle" style="color: #ffffff;">Rapprocher les résultats obtenus dans Sobri-IT</p>
+      <h1>Part 3: What comes next?</h1>
+      <p class="subtitle" style="color: #ffffff;">Bringing the results into Sobri-IT</p>
     </div>
   </section>
 
   <!-- Slide 16: Sobri-IT -->
   <section class="slide content dense" data-slide-order="16">
     <div class="slide-content">
-      <h2>Sobri-IT — C'est quoi ?</h2>
-      <p>L'application <span class="highlight">Sobri-IT</span> permet la consultation des rapports <a href="https://github.com/GoogleChrome/lighthouse" target="_blank" rel="noopener noreferrer">Lighthouse</a> et <a href="https://github.com/dequelabs/axe-core" target="_blank" rel="noopener noreferrer">Axe-core</a>.</p>
+      <h2>Sobri-IT — What is it?</h2>
+      <p>The <span class="highlight">Sobri-IT</span> application lets you view <a href="https://github.com/GoogleChrome/lighthouse" target="_blank" rel="noopener noreferrer">Lighthouse</a> and <a href="https://github.com/dequelabs/axe-core" target="_blank" rel="noopener noreferrer">Axe-core</a> reports.</p>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
-          <h3>Outillage de test</h3>
-          <p>Les rapports sont générés avec Sobri-IT Playwright Sample</p>
+          <h3>Testing tools</h3>
+          <p>Reports are generated with Sobri-IT Playwright Sample</p>
         </div>
         <div class="grid-item">
-          <h3>Communauté</h3>
-          <p>Développé par <a href="https://dev.azure.com/axafrance/GreenIT/" target="_blank" rel="noopener noreferrer">AXA France Green Champions</a></p>
+          <h3>Community</h3>
+          <p>Developed by <a href="https://dev.azure.com/axafrance/GreenIT/" target="_blank" rel="noopener noreferrer">AXA France Green Champions</a></p>
         </div>
       </div>
       <figure class="slide-figure">
-        <img src="./docs/images/sobri-it-resultats.png" alt="Liste des applications dans Sobri-IT avec les scores Performance, Best Practices, Ecoindex, Best Practices CNUMR, Accessibility, API Green Score et Green Backend">
+        <img src="./docs/images/sobri-it-resultats.png" alt="Sobri-IT application list with Performance, Best Practices, Ecoindex, CNUMR Best Practices, Accessibility, API Green Score, and Green Backend scores">
       </figure>
     </div>
   </section>
@@ -1055,25 +1068,25 @@ flowchart LR
   <!-- Slide 17: Catégories Sobri-IT -->
   <section class="slide alternate dense" data-slide-order="17">
     <div class="slide-content">
-      <h2>Sobri-IT — Les catégories d'un rapport</h2>
+      <h2>Sobri-IT — Report categories</h2>
       <div class="grid-2" style="margin-top: var(--spacing-lg);">
         <div class="grid-item">
           <h3>Performance</h3>
-          <p>Mesuré par Lighthouse</p>
+          <p>Measured by Lighthouse</p>
         </div>
         <div class="grid-item">
           <h3>Best Practices</h3>
-          <p>Mesuré par Lighthouse</p>
+          <p>Measured by Lighthouse</p>
         </div>
       </div>
       <div class="grid-2">
         <div class="grid-item">
           <h3>Ecoindex</h3>
-          <p>Mesuré par Lighthouse</p>
+          <p>Measured by Lighthouse</p>
         </div>
           <div class="grid-item">
           <h3>Accessibility (Axe-core)</h3>
-          <p>Mesuré par Axe-core</p>
+          <p>Measured by Axe-core</p>
         </div>
       </div>
     </div>
@@ -1082,20 +1095,20 @@ flowchart LR
   <!-- Slide 18: Lien avec l'analyzer -->
   <section class="slide content dense" data-slide-order="18">
     <div class="slide-content">
-      <h2>Et pour nos API ?</h2>
+      <h2>What about our APIs?</h2>
       <div class="slide-split">
         <div class="grid-2">
           <div class="grid-item">
-            <h3>Aujourd'hui</h3>
-            <p>Il n'y a pas de rapports existants concernant cette partie dans Sobri-IT</p>
+            <h3>Today</h3>
+            <p>No reports currently exist for this area in Sobri-IT</p>
           </div>
           <div class="grid-item">
-            <h3>En cours de développement</h3>
-            <p>Des résultats sur l'API Green Score et Creedengo seront disponibles sur l'application</p>
+            <h3>In development</h3>
+            <p>API Green Score and Creedengo results will be available in the application</p>
           </div>
         </div>
         <figure class="slide-figure">
-          <img src="./docs/images/sobri-it-creedengo-details.png" alt="Détails Green Score dans Sobri-IT : onglet Creedengo Backend avec un score de 88/100, grade A, mesures et résumé des règles">
+          <img src="./docs/images/sobri-it-creedengo-details.png" alt="Green Score details in Sobri-IT: Creedengo Backend tab with an 88/100 score, grade A, measurements, and rule summary">
         </figure>
       </div>
     </div>
@@ -1104,12 +1117,12 @@ flowchart LR
   <!-- Slide 19: Takeaways & Q&A -->
   <section class="slide title closing-slide" data-slide-order="19">
     <div class="slide-content">
-      <h1>Les ressources recommandées</h1>
+      <h1>Recommended resources</h1>
       
       <ul class="content-list" style="color: #ffffff; margin-top: var(--spacing-md);">
-        <li>📖 <span class="accent" style="color: var(--axa-teal);">.github/README.md</span> — Documentation complète du projet</li>
-        <li>📊 <span class="accent" style="color: var(--axa-teal);">dashboard/</span> — Visualiser les résultats</li>
-        <li>⚙️ <a class="accent" style="color: var(--axa-teal);" href="https://cdn.digitevent.com/69243f238739dbd18f49846f/websiteBtnFileUrl/0c90ba15-f0d0-4b1a-9fb4-ebd8dfb1717c-71-48-cat-sustainable-api-greenscore-v1-2.pdf" target="_blank" rel="noopener noreferrer">API GreenScore v1.2 (PDF)</a> — Grille API Green Score</li>
+        <li>📖 <span class="accent" style="color: var(--axa-teal);">.github/README.md</span> — Complete project documentation</li>
+        <li>📊 <span class="accent" style="color: var(--axa-teal);">dashboard/</span> — View results</li>
+        <li>⚙️ <a class="accent" style="color: var(--axa-teal);" href="https://cdn.digitevent.com/69243f238739dbd18f49846f/websiteBtnFileUrl/0c90ba15-f0d0-4b1a-9fb4-ebd8dfb1717c-71-48-cat-sustainable-api-greenscore-v1-2.pdf" target="_blank" rel="noopener noreferrer">API GreenScore v1.2 (PDF)</a> — API Green Score framework</li>
         <li>💚 <a class="accent" style="color: var(--axa-teal);" href="https://sobri-it.axa-fr.intraxa/" target="_blank" rel="noopener noreferrer">Sobri-IT</a> — Sobri-IT</li>
       </ul>
     </div>
@@ -1129,6 +1142,23 @@ flowchart LR
     }
 
     reorderSlides();
+
+    function addSummitLogos() {
+      document.querySelectorAll('.slide').forEach((slide) => {
+        const logo = document.createElement('img');
+        const isDarkSlide = slide.classList.contains('title');
+
+        logo.className = 'summit-logo';
+        logo.src = isDarkSlide
+          ? './docs/images/logo_summit_white.png'
+          : './docs/images/logo_summit_black.png';
+        logo.alt = 'Summit';
+        logo.decoding = 'async';
+        slide.appendChild(logo);
+      });
+    }
+
+    addSummitLogos();
 
     // Initialize Mermaid
     mermaid.initialize({
