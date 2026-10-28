@@ -1419,6 +1419,12 @@ if [ ${#TARGETS[@]} -gt 0 ]; then
                  --targets "$TARGET_URL_JOINED"
                  --output-dir "$REPORTS_DIR"
                  --repeat 3)
+  if [ -n "${SWAGGER_URL:-}" ]; then
+    # User-provided --swagger (file path or URL), paired by index with
+    # --target, so the interactive-config extraction uses the exact spec
+    # given instead of auto-discovering one from the target's base URL.
+    BUILD_CFG_CMD+=(--swaggers "$SWAGGER_URL")
+  fi
   if [ -n "${BEARER_TOKEN:-}" ]; then
     BUILD_CFG_CMD+=(--bearer "$BEARER_TOKEN")
   fi

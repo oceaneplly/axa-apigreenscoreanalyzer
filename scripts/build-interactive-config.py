@@ -229,6 +229,30 @@ def _request_body_example(spec, op):
     return None
 
 
+def _load_explicit_swagger(source: str) -> tuple[str, dict | None]:
+    """Load a user-provided swagger/OpenAPI spec, either a local file path or
+    a URL, instead of auto-discovering it from the target's well-known
+    endpoints. Mirrors ``green-api-auto-discover.py``'s ``load_spec``."""
+    if source.startswith("http://") or source.startswith("https://"):
+        code, ctype, raw = _http_get(source)
+        if code == 200 and raw:
+            spec = _parse_spec(raw, ctype)
+            if spec:
+                return source, spec
+        return "", None
+    path_obj = Path(source)
+    if not path_obj.is_file():
+        return "", None
+    try:
+        raw = path_obj.read_bytes()
+    except OSError:
+        return "", None
+    spec = _parse_spec(raw, "")
+    if spec:
+        return str(path_obj), spec
+    return "", None
+
+
 def _discover_swagger_for(base_url: str, bearer: str) -> tuple[str, dict | None]:
     base = base_url.rstrip("/")
     headers = {"Accept": "application/json, application/yaml, */*"}
@@ -340,9 +364,15 @@ def _resolve_path(template: str, path_params: dict | None,
 
 
 def build_artifacts(targets: list[str], bearer: str, appname: str,
-                    repeat: int, output_dir: Path) -> dict:
+                    repeat: int, output_dir: Path,
+                    explicit_swaggers: list[str] | None = None) -> dict:
     """Discover every target, extract example-driven resources, persist
     ``interactive-config.json`` and ``.interactive-scenario.json``.
+
+    ``explicit_swaggers`` (paired by index with ``targets``, same convention
+    as ``green-api-auto-discover.py``'s ``--swagger``/``--target``) lets the
+    caller pin the exact OpenAPI spec to use (local file path or URL) instead
+    of auto-discovering it from the target's well-known endpoints.
 
     Returns a small summary dict (also printed to stdout) so the caller can
     grep it for diagnostics.
@@ -355,12 +385,21 @@ def build_artifacts(targets: list[str], bearer: str, appname: str,
     scenario = {"pathParams": {}, "requestBodies": {}, "queryParams": {}}
 
     body_methods = {"POST", "PUT", "PATCH"}
+    explicit_swaggers = explicit_swaggers or []
 
-    for raw in targets:
+    for idx, raw in enumerate(targets):
         t = raw.strip().rstrip("/")
         if not t:
             continue
-        swurl, spec = _discover_swagger_for(t, bearer)
+        explicit = explicit_swaggers[idx].strip() if idx < len(explicit_swaggers) else ""
+        swurl, spec = ("", None)
+        if explicit:
+            swurl, spec = _load_explicit_swagger(explicit)
+            if not spec:
+                print(f"  ⚠️  {t}: could not load user-provided swagger '{explicit}' — "
+                      f"falling back to auto-discovery", file=sys.stderr)
+        if not spec:
+            swurl, spec = _discover_swagger_for(t, bearer)
         if not spec:
             print(f"  ⚠️  {t}: no OpenAPI spec found (tried {len(SWAGGER_DISCOVERY_PATHS)} paths)",
                   file=sys.stderr)
@@ -464,6 +503,11 @@ def main():
     p.add_argument("--targets", required=True,
                    help="Comma-separated list of base URLs (e.g. "
                         "http://localhost:8080,http://localhost:8081).")
+    p.add_argument("--swaggers", default="",
+                   help="Comma-separated list of explicit OpenAPI specs "
+                        "(local file path or URL), paired by index with "
+                        "--targets. When set, the matching target's spec is "
+                        "loaded directly instead of being auto-discovered.")
     p.add_argument("--bearer", default="",
                    help="Optional bearer token used during swagger discovery.")
     p.add_argument("--appname", default="",
@@ -481,6 +525,7 @@ def main():
         sys.exit(1)
 
     out_dir = Path(args.output_dir).resolve()
+    explicit_swaggers = [s for s in (args.swaggers or "").split(",")] if args.swaggers else []
     print(f"🔎 Discovering swagger + extracting examples for {len(targets)} target(s)…")
     summary = build_artifacts(
         targets=targets,
@@ -488,6 +533,7 @@ def main():
         appname=args.appname.strip(),
         repeat=max(1, min(args.repeat, 50)),
         output_dir=out_dir,
+        explicit_swaggers=explicit_swaggers,
     )
     print(f"📝 Wrote {summary['config']}")
     print(f"📝 Wrote {summary['scenario']}")
