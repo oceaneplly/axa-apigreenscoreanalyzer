@@ -1250,8 +1250,17 @@ export PODMAN_COMPOSE_WARNING_LOGS=false
  # mintty --title "Container Compose" -e bash -c "cd '$ROOT' && $COMPOSE_CMD up --build --force-recreate; read -p 'Appuyez sur Entrée pour fermer...'" &
 #fi
 
-echo "⏳ Attente du démarrage des services 20s..."
-sleep 20
+SKIP_HEALTHCHECK=false
+if [ ${#TARGETS[@]} -eq 0 ] && [ ${#SWAGGERS[@]} -gt 0 ]; then
+  # Swagger provided without --target: nothing local to wait for (the spec
+  # may describe a remote/dev API or be analyzed as-is), so skip the
+  # artificial startup delay and the readiness probing entirely.
+  SKIP_HEALTHCHECK=true
+  echo "ℹ️  --swagger fourni sans --target — le health-check local est ignoré"
+else
+  echo "⏳ Attente du démarrage des services 20s..."
+  sleep 20
+fi
 
 ANALYZE=false
 if [[ "${1:-}" == "--analyze" ]] || [[ "${2:-}" == "--analyze" ]]; then
@@ -1261,6 +1270,9 @@ fi
 # --- Attente du démarrage des services (max TIMEOUT s) ---
 echo ""
 
+if [ "$SKIP_HEALTHCHECK" = true ]; then
+  ALL_READY=true
+else
 # Si l'utilisateur a passé --targets, on attend exactement ces URL.
 # Sinon, on retombe sur les ports historiques (8080 et/ou 8081).
 WAIT_URLS=()
@@ -1331,6 +1343,7 @@ while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
   sleep 5
   ELAPSED=$((ELAPSED + 5))
 done
+fi  # end SKIP_HEALTHCHECK else branch
 
 if ! $ALL_READY; then
   echo ""
