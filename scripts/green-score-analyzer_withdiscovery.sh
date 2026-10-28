@@ -204,8 +204,8 @@ CMD=(python3 "$AUTODISCOVER_PY"
 )
 
 if [ "$SWAGGER_ONLY_MODE" = true ]; then
-  # No target at all — list the endpoints without ever calling them.
-  CMD+=(--dry-run)
+  # No target at all — score the spec without ever calling endpoints.
+  CMD+=(--swagger-only)
 fi
 
 IFS=',' read -r -a TARGET_LIST <<< "$TARGET_URL"
@@ -278,9 +278,7 @@ echo ""
 LATEST_REPORT="${OUTPUT_DIR}/latest-report.json"
 
 if [ "$SWAGGER_ONLY_MODE" = true ]; then
-  echo -e "${GREEN}✅ Swagger-only dry-run complete — endpoints listed above, no HTTP request was made.${NC}"
-  echo -e "${YELLOW}ℹ️  No Green Score report is generated in this mode (requires a live --target to measure).${NC}"
-  exit 0
+  echo -e "${GREEN}✅ Spec-only analysis complete — Green Score computed from the OpenAPI spec, no HTTP request was made.${NC}"
 fi
 
 if [ ! -f "$LATEST_REPORT" ]; then

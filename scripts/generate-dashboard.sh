@@ -18,7 +18,7 @@ GREEN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 REPORT_FILE=${1:-"$GREEN_DIR/reports/latest-report.json"}
 TEMPLATE_FILE=${2:-"$GREEN_DIR/dashboard/index.save.html"}
 OUT_FILE=${3:-"$GREEN_DIR/dashboard/index.html"}
-CREEDENGO_REPORT=${4:-"$GREEN_DIR/reports/creedengo-report.json"}
+CREEDENGO_REPORT=${4:-""}
 
 # Build optional args
 EXTRA_ARGS=""

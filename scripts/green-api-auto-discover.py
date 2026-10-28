@@ -1879,6 +1879,11 @@ Examples:
   python green-api-auto-discover.py --target http://localhost:8081 --bearer MY_TOKEN
         """,
     )
+    parser.add_argument(
+        "--swagger-only",
+        action="store_true",
+        help="Score the OpenAPI spec without HTTP measurements",
+    )
     parser.add_argument("--appname", default="", help="Application name for reports (default: root folder name)")
     parser.add_argument("--target", action="append", default=[],
                         help="Base URL of a running API. Repeat the flag (or use a comma-separated list) "
@@ -2008,7 +2013,7 @@ Examples:
         fixed_sources.append((t, sp, src))
     sources = fixed_sources
 
-    if not args.dry_run and not all(s[0] for s in sources):
+    if not args.swagger_only and not args.dry_run and not all(s[0] for s in sources):
         missing = [s[2] for s in sources if not s[0]]
         log(f"Cannot determine base URL for: {missing}. Provide --target.", "ERR")
         sys.exit(1)
@@ -2126,11 +2131,15 @@ Examples:
         if len(filtered_eps) < before:
             log(f"Excluded {before - len(filtered_eps)} endpoint(s) per scenario", "INFO")
 
-    log(f"Measuring {len(filtered_eps)} endpoints ({args.repeat} repeats each)...")
+    measurement_eps = [] if args.swagger_only else filtered_eps
+    if args.swagger_only:
+        log(f"Skipping HTTP measurement of {len(filtered_eps)} endpoint(s) — spec-only mode.", "INFO")
+    else:
+        log(f"Measuring {len(filtered_eps)} endpoints ({args.repeat} repeats each)...")
     measurements = {}
     endpoint_reports = []
 
-    for i, ep in enumerate(filtered_eps, 1):
+    for i, ep in enumerate(measurement_eps, 1):
         # ── Resolve path params (scenario > user > OpenAPI example > "1") ──
         ep_params = {}
         ep_params.update(ep.get("_example_path_params") or {})  # weakest
@@ -2505,6 +2514,18 @@ Examples:
         base_url, full_key, args.network_kwh_per_gb, args.server_power_w,
         previous_report,
     )
+    dashboard_report["spec_only"] = args.swagger_only
+    if args.swagger_only:
+        dashboard_report["auto_discovery"]["discovered_endpoints"] = [
+            {
+                "method": ep["method"].upper(),
+                "path": ep["path"],
+                "operationId": ep.get("operationId", ""),
+                "summary": ep.get("summary", ""),
+                "tags": ep.get("tags", []),
+            }
+            for ep in filtered_eps
+        ]
 
     # Add spectral results
     if spectral_issues is not None:
