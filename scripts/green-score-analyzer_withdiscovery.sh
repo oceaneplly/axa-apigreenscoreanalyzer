@@ -66,8 +66,20 @@ OPTIMIZED_PORT=${OPTIMIZED_PORT:-${BASELINE_PORT:-8081}}
 # TARGET_URL / SWAGGER_URL accept a single value or a comma-separated list of
 # several APIs (multi-target mode).  All discovered specs are merged into one
 # discovery resource and analyzed together.
-TARGET_URL=${TARGET_URL:-"http://localhost:${OPTIMIZED_PORT}"}
+#
+# Swagger-only mode: when the caller provides a swagger but no target at all
+# (TARGET_URL unset/empty), there is no live API to call. Do NOT fall back to
+# the localhost:8081 default in that case — stay target-less and run the
+# analyzer in --dry-run so it only lists the discovered endpoints without
+# ever issuing an HTTP request (no "Waiting for API(s)" probing either).
 SWAGGER_URL=${SWAGGER_URL:-""}
+SWAGGER_ONLY_MODE=false
+if [ -z "${TARGET_URL:-}" ] && [ -n "$SWAGGER_URL" ]; then
+  SWAGGER_ONLY_MODE=true
+  TARGET_URL=""
+else
+  TARGET_URL=${TARGET_URL:-"http://localhost:${OPTIMIZED_PORT}"}
+fi
 BEARER_TOKEN=${BEARER_TOKEN:-""}
 REPEAT=${REPEAT:-3}
 SKIP_SPECTRAL=${SKIP_SPECTRAL:-true}
@@ -112,42 +124,47 @@ fi
 # Wait for the target API(s) to be available — supports comma-separated list.
 # Tries several common health paths so the script is portable across stacks
 # (Spring Boot, plain HTTP, /healthz, etc.) instead of assuming /actuator/health.
-echo -e "${YELLOW}━━━ ⏳ Waiting for API(s): ${TARGET_URL} ━━━${NC}"
-MAX_WAIT=90
-HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
-IFS=',' read -r -a TARGET_LIST <<< "$TARGET_URL"
+# Skipped entirely in swagger-only mode — no target means no HTTP request.
+if [ "$SWAGGER_ONLY_MODE" = true ]; then
+  echo -e "${YELLOW}ℹ️  No --target provided — skipping API wait/probing (swagger-only, dry-run)${NC}"
+else
+  echo -e "${YELLOW}━━━ ⏳ Waiting for API(s): ${TARGET_URL} ━━━${NC}"
+  MAX_WAIT=90
+  HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
+  IFS=',' read -r -a TARGET_LIST <<< "$TARGET_URL"
 
-probe_target() {
-  local base="$1"
-  local p
-  for p in "${HEALTH_PATHS[@]}"; do
-    if curl -ks -o /dev/null -w '' --max-time 3 "${base%/}${p}" 2>/dev/null; then
-      # curl with -w '' returns 0 if the server responded at all; that's enough
-      # to consider the target reachable. We don't require 200 since some APIs
-      # return 401/403 on / when auth is required.
-      return 0
+  probe_target() {
+    local base="$1"
+    local p
+    for p in "${HEALTH_PATHS[@]}"; do
+      if curl -ks -o /dev/null -w '' --max-time 3 "${base%/}${p}" 2>/dev/null; then
+        # curl with -w '' returns 0 if the server responded at all; that's enough
+        # to consider the target reachable. We don't require 200 since some APIs
+        # return 401/403 on / when auth is required.
+        return 0
+      fi
+    done
+    return 1
+  }
+
+  for raw_url in "${TARGET_LIST[@]}"; do
+    url="$(echo "$raw_url" | xargs)"   # trim
+    [ -z "$url" ] && continue
+    echo -e "  → checking ${url}..."
+    ready=false
+    for i in $(seq 1 $MAX_WAIT); do
+      if probe_target "$url"; then
+        echo -e "  ${GREEN}✓ ${url} is up${NC}"
+        ready=true
+        break
+      fi
+      sleep 1
+    done
+    if [ "$ready" = false ]; then
+      echo -e "  ${YELLOW}⚠ ${url} did not respond within ${MAX_WAIT}s — will still try${NC}"
     fi
   done
-  return 1
-}
-
-for raw_url in "${TARGET_LIST[@]}"; do
-  url="$(echo "$raw_url" | xargs)"   # trim
-  [ -z "$url" ] && continue
-  echo -e "  → checking ${url}..."
-  ready=false
-  for i in $(seq 1 $MAX_WAIT); do
-    if probe_target "$url"; then
-      echo -e "  ${GREEN}✓ ${url} is up${NC}"
-      ready=true
-      break
-    fi
-    sleep 1
-  done
-  if [ "$ready" = false ]; then
-    echo -e "  ${YELLOW}⚠ ${url} did not respond within ${MAX_WAIT}s — will still try${NC}"
-  fi
-done
+fi
 echo ""
 
 ###############################################################################
@@ -166,7 +183,11 @@ echo ""
 ###############################################################################
 
 echo -e "${YELLOW}━━━ 🔍 Running Auto-Discover Analyzer ━━━${NC}"
-echo -e "  Target:   ${CYAN}${TARGET_URL}${NC}"
+if [ "$SWAGGER_ONLY_MODE" = true ]; then
+  echo -e "  Target:   ${CYAN}(none — dry-run, no HTTP request)${NC}"
+else
+  echo -e "  Target:   ${CYAN}${TARGET_URL}${NC}"
+fi
 echo -e "  Repeat:   ${CYAN}${REPEAT}${NC}"
 if [ -n "$SWAGGER_URL" ]; then
   echo -e "  Swagger:  ${CYAN}${SWAGGER_URL}${NC}"
@@ -181,6 +202,11 @@ CMD=(python3 "$AUTODISCOVER_PY"
   --repeat "$REPEAT"
   --appname "$APPNAME"
 )
+
+if [ "$SWAGGER_ONLY_MODE" = true ]; then
+  # No target at all — list the endpoints without ever calling them.
+  CMD+=(--dry-run)
+fi
 
 IFS=',' read -r -a TARGET_LIST <<< "$TARGET_URL"
 for t in "${TARGET_LIST[@]}"; do
@@ -250,6 +276,12 @@ echo ""
 ###############################################################################
 
 LATEST_REPORT="${OUTPUT_DIR}/latest-report.json"
+
+if [ "$SWAGGER_ONLY_MODE" = true ]; then
+  echo -e "${GREEN}✅ Swagger-only dry-run complete — endpoints listed above, no HTTP request was made.${NC}"
+  echo -e "${YELLOW}ℹ️  No Green Score report is generated in this mode (requires a live --target to measure).${NC}"
+  exit 0
+fi
 
 if [ ! -f "$LATEST_REPORT" ]; then
   echo -e "${RED}❌ Report not generated: $LATEST_REPORT${NC}"
