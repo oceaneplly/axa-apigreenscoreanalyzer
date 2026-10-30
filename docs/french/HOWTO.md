@@ -10,7 +10,7 @@ lancer l'analyzer :
 - ou via l'**UI interactive** / le **binaire autonome** / le **conteneur Docker**.
 
 > 💡 **En une phrase** : le point d'entrée principal est
-> [`scripts/start.sh`](../scripts/start.sh). Il orchestre TOUT
+> [`scripts/start.sh`](../../scripts/start.sh). Il orchestre TOUT
 > (build de l'app, health-check, mesure Green Score, analyse éco-conception
 > Creedengo, badge SVG, dashboard HTML, gate ADR). Tous les autres scripts sont
 > des briques appelées par `start.sh` — mais vous pouvez aussi les lancer seuls.
@@ -386,7 +386,7 @@ Barème conseillé : **60** (POC/legacy) · **85** (production) · **100+** (cri
 
 ### 5.1 GitHub Actions
 
-Copiez [`templates/ci/green-score.yml`](../templates/ci/green-score.yml) dans
+Copiez [`templates/ci/green-score.yml`](../../templates/ci/green-score.yml) dans
 `.github/workflows/` de votre repo. Il fait déjà tout :
 
 - Setup **JDK 17 + Python 3.11 + .NET 8**,
@@ -540,7 +540,7 @@ empreinte cloud AR05).
 ---
 
 📚 Voir aussi :
-[README](../README.md) ·
-[CI-INTEGRATION](./CI-INTEGRATION.md) ·
+[README](../../README.md) ·
+[CI-INTEGRATION](CI-INTEGRATION.md) ·
 [ADR templates](../templates/adr/) ·
 [Sample apps](../samples/).

@@ -97,7 +97,7 @@ bash scripts/start.sh --target http://localhost:8080
 - [ ] `dashboard/index.html` s'ouvre.
 - ⚠️️️ Changer le port si nécessaire (`--target http://localhost:<port>`).
 
-Documentation sur le script.sh et les différents paramètres : [Fichier HOWTO.md / Partie 3](./HOWTO.md).
+Documentation sur le script.sh et les différents paramètres : [Fichier HOWTO.md / Partie 3](HOWTO.md).
 
 ---
 
@@ -203,7 +203,7 @@ Si vous avez encore du temps, n'hésitez pas à fixer dans votre code une ou 2 r
 
 ## Partie 2 — Pour les plus rapides : pipeline CI (bonus)
 
-Intégrer l'analyzer dans la pipeline du projet (Azure DevOps ou GitHub Actions). Modèles : [`templates/ci`](../templates/ci) et [CI-INTEGRATION.md](CI-INTEGRATION.md).
+Intégrer l'analyzer dans la pipeline du projet (Azure DevOps ou GitHub Actions). Modèles : [`templates/ci`](../../templates/ci) et [CI-INTEGRATION.md](CI-INTEGRATION.md).
 
 La pipeline (`pr-green-api-axa.yml`) :
 
@@ -245,7 +245,7 @@ La pipeline (`pr-green-api-axa.yml`) :
 
 ## Ressources
 
-- [README du projet](../README.md) · [HOWTO](HOWTO.md) · [Intégration CI](CI-INTEGRATION.md)
+- [README du projet](../../README.md) · [HOWTO](HOWTO.md) · [Intégration CI](CI-INTEGRATION.md)
 - `dashboard/` : résultats générés
 - [Grille **API GreenScore v1.2** (PDF)](https://cdn.digitevent.com/69243f238739dbd18f49846f/websiteBtnFileUrl/0c90ba15-f0d0-4b1a-9fb4-ebd8dfb1717c-71-48-cat-sustainable-api-greenscore-v1-2.pdf)
 - [Sobri-IT](https://sobri-it.axa-fr.intraxa/)
