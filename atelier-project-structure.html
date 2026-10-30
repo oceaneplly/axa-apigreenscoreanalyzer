@@ -203,6 +203,7 @@
     .slide.cover-slide {
       isolation: isolate;
       align-items: flex-start;
+      justify-content: flex-start;
       background:
         radial-gradient(circle at 82% 18%, rgba(92, 200, 226, 0.28) 0 0.5rem, transparent 0.55rem),
         radial-gradient(circle at 88% 27%, rgba(92, 200, 226, 0.16) 0 0.3rem, transparent 0.35rem),
@@ -262,12 +263,16 @@
     }
 
     .cover-slide h1 {
-      max-width: 9ch;
+      position: absolute;
+      top: 45%;
+      left: var(--spacing-lg);
+      max-width: 13ch;
       margin: 0;
-      font-size: clamp(3.5rem, 9vw, 7.5rem);
-      line-height: 0.94;
+      font-size: clamp(3rem, 6vw, 5.5rem);
+      line-height: 0.96;
       letter-spacing: -0.03em;
       text-wrap: balance;
+      transform: translateY(-50%);
     }
 
     .cover-slide .subtitle {
@@ -288,6 +293,110 @@
       font-size: clamp(0.95rem, 1.6vw, 1.25rem);
       font-style: normal;
       letter-spacing: 0.02em;
+    }
+
+    .cover-team {
+      position: absolute;
+      left: var(--spacing-lg);
+      bottom: var(--spacing-sm);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(1rem, 3vw, 3rem);
+      width: min(78vw, 980px);
+      margin-top: 0;
+    }
+
+    .cover-profile {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) clamp(4.5rem, 9vw, 7rem);
+      align-items: center;
+      gap: clamp(0.6rem, 1.5vw, 1.25rem);
+      min-width: 0;
+    }
+
+    .cover-profile--oceane {
+      grid-template-columns: clamp(4.5rem, 9vw, 7rem) minmax(0, 1fr);
+    }
+
+    .cover-profile--oceane .cover-profile__text {
+      order: 2;
+      text-align: right;
+    }
+
+    .cover-profile__text {
+      min-width: 0;
+    }
+
+    .cover-profile__name {
+      margin-bottom: 0;
+      color: #ffffff;
+      font-size: clamp(1.05rem, 2vw, 1.55rem);
+      font-weight: 700;
+      line-height: 1.05;
+    }
+
+    .cover-profile__role {
+      margin-top: 0.05rem;
+      margin-bottom: 0;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: clamp(0.8rem, 1.35vw, 1.05rem);
+      line-height: 1.18;
+    }
+
+    .cover-profile__photo {
+      display: block;
+      width: clamp(4.5rem, 9vw, 7rem);
+      aspect-ratio: 1;
+      object-fit: cover;
+      border: 0.18rem solid rgba(255, 255, 255, 0.78);
+      border-radius: 50%;
+      box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.24);
+    }
+
+    @media (max-width: 768px) {
+      .cover-team {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+        width: calc(100% - (2 * var(--spacing-lg)));
+      }
+
+      .cover-profile,
+      .cover-profile--oceane {
+        grid-template-columns: clamp(4rem, 16vw, 5.5rem) minmax(0, 1fr);
+      }
+
+      .cover-profile--oceane .cover-profile__text {
+        order: initial;
+        text-align: left;
+      }
+
+      .cover-profile__photo {
+        width: clamp(4rem, 16vw, 5.5rem);
+      }
+    }
+
+    @media (max-height: 700px) {
+      .cover-slide h1 {
+        font-size: clamp(2.8rem, 7vw, 5.5rem);
+      }
+
+      .cover-team {
+        margin-top: 0;
+      }
+    }
+
+    @media (max-height: 560px) {
+      .cover-slide h1 {
+        font-size: clamp(2.4rem, 6vw, 4.5rem);
+      }
+
+      .cover-profile__name {
+        font-size: clamp(0.95rem, 1.7vw, 1.25rem);
+      }
+
+      .cover-profile__role {
+        font-size: clamp(0.72rem, 1.1vw, 0.9rem);
+      }
     }
 
     .slide.content {
@@ -647,8 +756,23 @@
   <section class="slide title cover-slide" data-slide-order="1">
     <div class="slide-content">
       <p class="cover-kicker">AXA · Workshop Summit</p>
-      <h1>API Green Score Analyzer</h1>
-      <p class="tagline">1 hour· Hands-on workshop</p>
+      <h1>Green Architecture : less fat, more impact, more efficiency!</h1>
+      <div class="cover-team" aria-label="Workshop facilitators">
+        <article class="cover-profile">
+          <div class="cover-profile__text">
+            <p class="cover-profile__name">Thierno Diallo</p>
+            <p class="cover-profile__role">Staff Engineer, Green Champion<br>@Axa France</p>
+          </div>
+          <img class="cover-profile__photo" src="./docs/images/picture_thierno.png" alt="Thierno Diallo">
+        </article>
+        <article class="cover-profile cover-profile--oceane">
+          <img class="cover-profile__photo" src="./docs/images/picture_oceane.png" alt="Océane Pouilly">
+          <div class="cover-profile__text">
+            <p class="cover-profile__name">Océane Pouilly</p>
+            <p class="cover-profile__role">Software Engineer, Green Champion<br>@Axa France</p>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
 
@@ -685,7 +809,7 @@
   <!-- Slide 5: Exécution locale -->
   <section class="slide title local-execution-slide" data-slide-order="5">
     <div class="slide-content">
-      <h1>Part 1: Running the project locally</h1>
+      <h1>Part 1 : Generate Green Score report</h1>
       <p class="subtitle" style="color: #ffffff;">Pull the project before getting started 🤓👆🏻</p>
     </div>
   </section>
