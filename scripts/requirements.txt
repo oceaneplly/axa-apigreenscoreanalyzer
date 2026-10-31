@@ -1,2 +1,2 @@
-# Ce script utilise uniquement la bibliotheque standard Python.
+# Dependency for parsing YAML OpenAPI specifications.
 pyyaml>=6.0

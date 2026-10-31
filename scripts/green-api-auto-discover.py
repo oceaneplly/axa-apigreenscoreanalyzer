@@ -33,6 +33,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from urllib.parse import urljoin, urlsplit
 import ssl
 
 # Global SSL context that skips certificate verification (for self-signed dev certs)
@@ -242,13 +243,19 @@ def _json_compatible(value):
 def parse_spec_text(text, source_label):
     try:
         return json.loads(text)
-    except Exception:
-        if yaml is not None:
-            try:
-                return _json_compatible(yaml.safe_load(text))
-            except Exception:
-                pass
-        raise ValueError(f"Cannot parse OpenAPI spec from {source_label}")
+    except json.JSONDecodeError as json_error:
+        if yaml is None:
+            raise ValueError(
+                f"Cannot parse OpenAPI spec from {source_label}: "
+                "the file is not valid JSON and YAML parsing requires PyYAML. "
+                "Install dependencies with `python -m pip install -r scripts/requirements.txt`."
+            ) from json_error
+        try:
+            return _json_compatible(yaml.safe_load(text))
+        except yaml.YAMLError as yaml_error:
+            raise ValueError(
+                f"Cannot parse OpenAPI spec from {source_label}: {yaml_error}"
+            ) from yaml_error
 
 
 def load_spec(source):
@@ -259,6 +266,20 @@ def load_spec(source):
         raise ValueError(f"HTTP {status} fetching {source}")
     with open(source, "r", encoding="utf-8") as f:
         return parse_spec_text(f.read(), source)
+
+
+def resolve_server_url(server_url, spec_source):
+    """Resolve a relative OpenAPI server URL against its spec document URL."""
+    server_url = (server_url or "").strip()
+    if not server_url:
+        return ""
+    if urlsplit(server_url).scheme:
+        return server_url.rstrip("/")
+
+    source_parts = urlsplit(spec_source)
+    if source_parts.scheme in ("http", "https") and source_parts.netloc:
+        return urljoin(spec_source, server_url).rstrip("/")
+    return ""
 
 
 def slugify(text):
@@ -2006,7 +2027,7 @@ Examples:
         if not t:
             servers = sp.get("servers", [])
             if servers:
-                t = (servers[0].get("url") or "").rstrip("/")
+                t = resolve_server_url(servers[0].get("url"), src)
             elif sp.get("host"):
                 scheme = (sp.get("schemes") or ["http"])[0]
                 t = f"{scheme}://{sp['host']}{sp.get('basePath', '')}".rstrip("/")

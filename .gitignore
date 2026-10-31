@@ -1,6 +1,9 @@
-reports/
 .checkouts/
 .app-run.log
 apm_modules/
 .github/
 .idea/
+scripts/__pycache__/
+reports
+dashboard
+badges

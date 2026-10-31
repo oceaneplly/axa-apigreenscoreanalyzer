@@ -5,10 +5,10 @@
 
 ## Démarrer
 ```bash
-dotnet run --urls http://+:5050
-# → http://localhost:5050
-# OpenAPI: http://localhost:5050/swagger/v1/swagger.json
-# Swagger UI: http://localhost:5050/swagger
+dotnet run --urls http://+:8080
+# → http://localhost:8080
+# OpenAPI: http://localhost:8080/swagger/v1/swagger.json
+# Swagger UI: http://localhost:8080/swagger
 ```
 
 ## Règles couvertes par le workshop
