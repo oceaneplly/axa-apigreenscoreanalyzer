@@ -1,12 +1,12 @@
 {
-  "appname": "APIXP Orchestrateur FrontDeGestion",
-  "timestamp": "2026-10-08T16:11:55Z",
-  "service_base_url": "http://localhost:8082",
+  "appname": "example-java-sample",
+  "timestamp": "2026-11-02T10:45:07Z",
+  "service_base_url": "http://localhost:8080",
   "service_base_urls": [
-    "http://localhost:8082"
+    "http://localhost:8080"
   ],
   "green_score_summary": {
-    "total": 9,
+    "total": 18,
     "max": 123,
     "grade": "E"
   },
@@ -14,145 +14,39 @@
     "DE11_pagination": {
       "id": "DE11",
       "label": "Pagination",
-      "description": "Les endpoints de collection doivent supporter la pagination (page/size ou limit/offset).",
+      "description": "Collection endpoints must support pagination (page/size or limit/offset).",
       "max_pts": 15,
       "candidates": [
         {
           "method": "GET",
-          "path": "/swagger",
-          "matched": false,
-          "reason": "No pagination params (page/size/limit/offset/cursor)"
+          "path": "/books",
+          "matched": true,
+          "reason": "Pagination params: page, size"
         }
       ],
-      "validated": false,
-      "score": 0,
-      "matched_count": 0,
+      "validated": true,
+      "score": 15,
+      "matched_count": 1,
       "candidate_count": 1,
-      "suggestions": [
-        {
-          "target": "GET /swagger",
-          "action": "Add pagination parameters (page & size)",
-          "priority": "high",
-          "impact": "+15.0 pts/endpoint (total gap: 15 pts) \u2014 reduces payload size for large collections",
-          "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-        }
-      ]
+      "suggestions": []
     },
     "DE08_fields": {
       "id": "DE08",
       "label": "Filtrage de champs",
-      "description": "Supporter un parametre 'fields' pour reduire le payload.",
+      "description": "Support a 'fields' parameter to reduce the payload.",
       "max_pts": 15,
       "candidates": [
         {
           "method": "GET",
-          "path": "/agreements/{identifier}/operations",
+          "path": "/books",
           "matched": false,
           "reason": "No field filter param (fields/select)"
         },
         {
           "method": "GET",
-          "path": "/swagger",
+          "path": "/books/{id}",
           "matched": false,
           "reason": "No field filter param (fields/select)"
-        },
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}",
-          "matched": false,
-          "reason": "No field filter param (fields/select)"
-        }
-      ],
-      "validated": false,
-      "score": 0,
-      "matched_count": 0,
-      "candidate_count": 3,
-      "suggestions": [
-        {
-          "target": "GET /agreements/{identifier}/operations",
-          "action": "Add a 'fields' query parameter for sparse fieldsets",
-          "priority": "medium",
-          "impact": "+5.0 pts/endpoint (total gap: 15 pts) \u2014 lets clients request only needed fields, reducing payload",
-          "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-        },
-        {
-          "target": "GET /swagger",
-          "action": "Add a 'fields' query parameter for sparse fieldsets",
-          "priority": "high",
-          "impact": "+5.0 pts/endpoint (total gap: 15 pts) \u2014 lets clients request only needed fields, reducing payload",
-          "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-        },
-        {
-          "target": "GET /agreements/{identifier}",
-          "action": "Add a 'fields' query parameter for sparse fieldsets",
-          "priority": "medium",
-          "impact": "+5.0 pts/endpoint (total gap: 15 pts) \u2014 lets clients request only needed fields, reducing payload",
-          "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-        }
-      ]
-    },
-    "DE01_compression": {
-      "id": "DE01",
-      "label": "Compression",
-      "description": "Le serveur doit supporter Accept-Encoding: gzip.",
-      "max_pts": 15,
-      "candidates": [
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}/operations",
-          "matched": false,
-          "reason": "No gzip/brotli compression detected"
-        },
-        {
-          "method": "POST",
-          "path": "/agreements/{identifier}/operations",
-          "matched": false,
-          "reason": "No gzip/brotli compression detected"
-        },
-        {
-          "method": "GET",
-          "path": "/swagger",
-          "matched": false,
-          "reason": "No gzip/brotli compression detected"
-        },
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}",
-          "matched": false,
-          "reason": "No gzip/brotli compression detected"
-        }
-      ],
-      "validated": false,
-      "score": 0,
-      "matched_count": 0,
-      "candidate_count": 4,
-      "suggestions": [
-        {
-          "target": "ALL endpoints (server-level)",
-          "action": "Enable gzip compression on the server",
-          "priority": "high",
-          "impact": "+3.8 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
-          "how": "Option 1 \u2014 Spring Boot application.yml:\n  server:\n    compression:\n      enabled: true\n      min-response-size: 1024\n      mime-types: application/json,application/xml,text/html,text/plain\n\nOption 2 \u2014 Nginx (if reverse proxy):\n  gzip on;\n  gzip_types application/json application/xml text/plain;\n  gzip_min_length 1024;\n  gzip_comp_level 6;\n\nBoth options apply to ALL endpoints automatically."
-        }
-      ]
-    },
-    "DE02_DE03_cache": {
-      "id": "DE02/DE03",
-      "label": "Cache ETag/304",
-      "description": "Les ressources unitaires doivent supporter ETag + If-None-Match -> 304.",
-      "max_pts": 15,
-      "candidates": [
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}/operations",
-          "matched": false,
-          "reason": "No ETag header in HEAD/GET response"
-        },
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}",
-          "matched": false,
-          "reason": "No ETag header in HEAD/GET response"
         }
       ],
       "validated": false,
@@ -161,17 +55,77 @@
       "candidate_count": 2,
       "suggestions": [
         {
-          "target": "GET /agreements/{identifier}/operations",
-          "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
+          "target": "GET /books",
+          "action": "Add a 'fields' query parameter for sparse fieldsets",
           "priority": "high",
-          "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-          "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
+          "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 lets clients request only needed fields, reducing payload",
+          "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
         },
         {
-          "target": "GET /agreements/{identifier}",
+          "target": "GET /books/{id}",
+          "action": "Add a 'fields' query parameter for sparse fieldsets",
+          "priority": "medium",
+          "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 lets clients request only needed fields, reducing payload",
+          "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
+        }
+      ]
+    },
+    "DE01_compression": {
+      "id": "DE01",
+      "label": "Compression",
+      "description": "The server must support Accept-Encoding: gzip.",
+      "max_pts": 15,
+      "candidates": [
+        {
+          "method": "GET",
+          "path": "/books",
+          "matched": false,
+          "reason": "No gzip/brotli compression detected"
+        },
+        {
+          "method": "GET",
+          "path": "/books/{id}",
+          "matched": false,
+          "reason": "No gzip/brotli compression detected"
+        }
+      ],
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
+      "candidate_count": 2,
+      "suggestions": [
+        {
+          "target": "ALL endpoints (server-level)",
+          "action": "Enable gzip compression on the server",
+          "priority": "high",
+          "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
+          "how": "Option 1 \u2014 Spring Boot application.yml:\n  server:\n    compression:\n      enabled: true\n      min-response-size: 1024\n      mime-types: application/json,application/xml,text/html,text/plain\n\nOption 2 \u2014 Nginx (if reverse proxy):\n  gzip on;\n  gzip_types application/json application/xml text/plain;\n  gzip_min_length 1024;\n  gzip_comp_level 6;\n\nBoth options apply to ALL endpoints automatically."
+        }
+      ]
+    },
+    "DE02_DE03_cache": {
+      "id": "DE02/DE03",
+      "label": "Cache ETag/304",
+      "description": "Individual resources must support ETag + If-None-Match -> 304.",
+      "max_pts": 15,
+      "candidates": [
+        {
+          "method": "GET",
+          "path": "/books/{id}",
+          "matched": false,
+          "reason": "No ETag header in HEAD/GET response"
+        }
+      ],
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
+      "candidate_count": 1,
+      "suggestions": [
+        {
+          "target": "GET /books/{id}",
           "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
           "priority": "high",
-          "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
+          "impact": "+15.0 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
           "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
         }
       ]
@@ -179,24 +133,18 @@
     "DE06_delta": {
       "id": "DE06",
       "label": "Delta / Changes",
-      "description": "Un endpoint /changes?since= ou equivalent doit exister.",
+      "description": "A /changes?since= endpoint or equivalent must exist.",
       "max_pts": 10,
       "candidates": [
         {
           "method": "GET",
-          "path": "/agreements/{identifier}/operations",
+          "path": "/books",
           "matched": false,
           "reason": "Not a delta/changes endpoint"
         },
         {
           "method": "GET",
-          "path": "/swagger",
-          "matched": false,
-          "reason": "Not a delta/changes endpoint"
-        },
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}",
+          "path": "/books/{id}",
           "matched": false,
           "reason": "Not a delta/changes endpoint"
         }
@@ -204,56 +152,50 @@
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 3,
+      "candidate_count": 2,
       "suggestions": [
         {
-          "target": "GET /swagger/changes  (new endpoint)",
+          "target": "GET /books/changes  (new endpoint)",
           "action": "Add a delta/changes endpoint with a 'since' parameter",
           "priority": "medium",
-          "impact": "+3.3 pts/endpoint (total gap: 10 pts) \u2014 clients fetch only what changed since last sync",
-          "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /swagger."
+          "impact": "+5.0 pts/endpoint (total gap: 10 pts) \u2014 clients fetch only what changed since last sync",
+          "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /books."
         }
       ]
     },
     "range_206": {
       "id": "206",
       "label": "Range / Partial Content",
-      "description": "Supporter le header Range pour les gros payloads.",
+      "description": "Support the Range header for large payloads.",
       "max_pts": 10,
       "candidates": [
         {
           "method": "GET",
-          "path": "/agreements/{identifier}/operations",
+          "path": "/books/{id}",
           "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 400 (not 206)"
+          "reason": "Range: bytes=0-99 \u2192 0 (not 206)"
         },
         {
           "method": "GET",
-          "path": "/agreements/{identifier}",
+          "path": "/books",
           "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 400 (not 206)"
-        },
-        {
-          "method": "GET",
-          "path": "/swagger",
-          "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 200 (not 206)"
+          "reason": "Range: bytes=0-99 \u2192 0 (not 206)"
         }
       ],
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 3,
+      "candidate_count": 2,
       "suggestions": [
         {
-          "target": "GET /agreements/{identifier}/operations",
+          "target": "GET /books/{id}",
           "action": "Support HTTP Range header for partial content (206)",
           "priority": "low",
           "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
           "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
         },
         {
-          "target": "GET /agreements/{identifier}",
+          "target": "GET /books",
           "action": "Support HTTP Range header for partial content (206)",
           "priority": "low",
           "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
@@ -264,30 +206,18 @@
     "AR02_format_cbor": {
       "id": "BIN01",
       "label": "Format binaire (CBOR)",
-      "description": "Un endpoint en format binaire (CBOR, protobuf...) doit exister.",
+      "description": "A binary-format endpoint (CBOR, protobuf...) must exist.",
       "max_pts": 10,
       "candidates": [
         {
           "method": "GET",
-          "path": "/agreements/{identifier}/operations",
-          "matched": false,
-          "reason": "Standard JSON format"
-        },
-        {
-          "method": "POST",
-          "path": "/agreements/{identifier}/operations",
+          "path": "/books",
           "matched": false,
           "reason": "Standard JSON format"
         },
         {
           "method": "GET",
-          "path": "/swagger",
-          "matched": false,
-          "reason": "Standard JSON format"
-        },
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}",
+          "path": "/books/{id}",
           "matched": false,
           "reason": "Standard JSON format"
         }
@@ -295,10 +225,10 @@
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 4,
+      "candidate_count": 2,
       "suggestions": [
         {
-          "target": "GET /swagger  (add CBOR variant)",
+          "target": "GET /books  (add CBOR variant)",
           "action": "Add a binary format alternative (CBOR or Protobuf)",
           "priority": "low",
           "impact": "+10 pts \u2014 binary formats are 30-50% smaller than JSON",
@@ -309,43 +239,43 @@
     "LO01_observability": {
       "id": "LO01",
       "label": "Observabilite",
-      "description": "Actuator / health / metrics doit etre expose.",
+      "description": "Actuator / health / metrics must be exposed.",
       "max_pts": 5,
       "candidates": [
         {
           "method": "GET",
           "path": "/actuator/health",
-          "matched": true,
-          "reason": "HTTP 200 OK"
+          "matched": false,
+          "reason": "Unreachable"
         },
         {
           "method": "GET",
           "path": "/health",
           "matched": false,
-          "reason": "HTTP 404"
+          "reason": "Unreachable"
         },
         {
           "method": "GET",
           "path": "/actuator",
-          "matched": true,
-          "reason": "HTTP 200 OK"
+          "matched": false,
+          "reason": "Unreachable"
         },
         {
           "method": "GET",
           "path": "/actuator/metrics",
-          "matched": true,
-          "reason": "HTTP 200 OK"
+          "matched": false,
+          "reason": "Unreachable"
         },
         {
           "method": "GET",
           "path": "/actuator/info",
-          "matched": true,
-          "reason": "HTTP 200 OK"
+          "matched": false,
+          "reason": "Unreachable"
         }
       ],
-      "validated": true,
-      "score": 4,
-      "matched_count": 4,
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
       "candidate_count": 5,
       "suggestions": [
         {
@@ -360,30 +290,18 @@
     "US07_rate_limit": {
       "id": "US07",
       "label": "Rate Limiting",
-      "description": "Un mecanisme de rate limiting doit etre present.",
+      "description": "A rate-limiting mechanism must be present.",
       "max_pts": 5,
       "candidates": [
         {
           "method": "GET",
-          "path": "/agreements/{identifier}/operations",
-          "matched": false,
-          "reason": "No rate-limit headers in response"
-        },
-        {
-          "method": "POST",
-          "path": "/agreements/{identifier}/operations",
+          "path": "/books",
           "matched": false,
           "reason": "No rate-limit headers in response"
         },
         {
           "method": "GET",
-          "path": "/swagger",
-          "matched": false,
-          "reason": "No rate-limit headers in response"
-        },
-        {
-          "method": "GET",
-          "path": "/agreements/{identifier}",
+          "path": "/books/{id}",
           "matched": false,
           "reason": "No rate-limit headers in response"
         }
@@ -391,7 +309,7 @@
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 4,
+      "candidate_count": 2,
       "suggestions": [
         {
           "target": "ALL endpoints (server-level)",
@@ -405,61 +323,42 @@
     "AR01_event_driven": {
       "id": "AR01",
       "label": "Architecture \u00e9v\u00e9nementielle",
-      "description": "Utiliser une architecture \u00e9v\u00e9nementielle (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) pour \u00e9viter le polling.",
+      "description": "Use an event-driven architecture (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) to avoid polling.",
       "max_pts": 6,
       "category": "architecture",
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 4,
+      "candidate_count": 2,
       "candidates": [],
       "evidence": [],
       "recommendations": [
-        "Aucun signal EDA d\u00e9tect\u00e9 mais 1 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor)."
+        "No EDA signal detected. Document your event flows with AsyncAPI or add callbacks/webhooks to your OpenAPI."
       ],
       "suggestions": [
         {
-          "target": "POST /agreements/{identifier}/operations",
-          "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-          "priority": "high",
-          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-          "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
-          "source": "AR01_eda_advisor"
-        },
-        {
           "target": "AR01",
-          "action": "Aucun signal EDA d\u00e9tect\u00e9 mais 1 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor).",
+          "action": "No EDA signal detected. Document your event flows with AsyncAPI or add callbacks/webhooks to your OpenAPI.",
           "priority": "medium",
           "impact": "+6 pts (AR01).",
           "how": "",
           "source": "AR01_reco"
         }
       ],
-      "migration_advice": [
-        {
-          "endpoint": {
-            "method": "POST",
-            "path": "/agreements/{identifier}/operations"
-          },
-          "condition": "mutating-without-callback",
-          "evidence": "Mutation declared but no OAS callbacks/webhooks",
-          "suggestion": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-          "target_pattern": "Domain Event publication"
-        }
-      ],
+      "migration_advice": [],
       "duplicates": [],
       "detected_provider": null
     },
     "AR02_runtime_close": {
       "id": "AR02",
       "label": "Runtime proche du consommateur",
-      "description": "D\u00e9ployer l'API au plus pr\u00e8s des consommateurs (CDN, edge, anycast multi-r\u00e9gions).",
+      "description": "Deploy the API as close as possible to consumers (CDN, edge, multi-region anycast).",
       "max_pts": 7,
       "category": "architecture",
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 4,
+      "candidate_count": 2,
       "candidates": [],
       "evidence": [
         {
@@ -469,14 +368,14 @@
         }
       ],
       "recommendations": [
-        "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs.",
-        "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
-        "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne."
+        "No cross-validated edge/CDN signal (runtime + HEAD). Place the API behind a multi-region edge/CDN (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) to bring the runtime closer to consumers.",
+        "The OpenAPI spec declares only one server URL. Add multiple regional `servers[]` entries (e.g. eu-west, us-east) to document a multi-region deployment.",
+        "Enable HTTPS on the target to measure TLS latency and benefit from a modern edge/CDN."
       ],
       "suggestions": [
         {
           "target": "AR02",
-          "action": "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs.",
+          "action": "No cross-validated edge/CDN signal (runtime + HEAD). Place the API behind a multi-region edge/CDN (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) to bring the runtime closer to consumers.",
           "priority": "medium",
           "impact": "+7 pts (AR02).",
           "how": "",
@@ -484,7 +383,7 @@
         },
         {
           "target": "AR02",
-          "action": "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
+          "action": "The OpenAPI spec declares only one server URL. Add multiple regional `servers[]` entries (e.g. eu-west, us-east) to document a multi-region deployment.",
           "priority": "medium",
           "impact": "+7 pts (AR02).",
           "how": "",
@@ -492,7 +391,7 @@
         },
         {
           "target": "AR02",
-          "action": "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne.",
+          "action": "Enable HTTPS on the target to measure TLS latency and benefit from a modern edge/CDN.",
           "priority": "medium",
           "impact": "+7 pts (AR02).",
           "how": "",
@@ -506,13 +405,13 @@
     "AR03_unique_api": {
       "id": "AR03",
       "label": "Une seule API par besoin",
-      "description": "\u00c9viter la duplication d'APIs servant le m\u00eame besoin (double infrastructure = double empreinte).",
+      "description": "Avoid duplicating APIs that serve the same purpose (duplicate infrastructure = duplicate footprint).",
       "max_pts": 3,
       "category": "architecture",
       "validated": true,
       "score": 3,
-      "matched_count": 4,
-      "candidate_count": 4,
+      "matched_count": 2,
+      "candidate_count": 2,
       "candidates": [],
       "evidence": [
         {
@@ -530,23 +429,23 @@
     "AR04_scalable_infra": {
       "id": "AR04",
       "label": "Infrastructure scalable",
-      "description": "Pr\u00e9f\u00e9rer une infrastructure auto-scalable (HPA, KEDA, autoscale, serverless).",
+      "description": "Prefer auto-scalable infrastructure (HPA, KEDA, autoscaling, serverless).",
       "max_pts": 5,
       "category": "infrastructure",
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 4,
+      "candidate_count": 2,
       "candidates": [],
       "evidence": [],
       "recommendations": [
-        "Aucun signal d'auto-scaling d\u00e9tect\u00e9 dans les fichiers IaC/build.",
-        "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou d\u00e9ployer en serverless (Azure Functions, AWS Lambda, Cloud Run)."
+        "No auto-scaling signal detected in IaC/build files.",
+        "Enable HPA/KEDA (Kubernetes), Terraform/Bicep autoscaling, or deploy serverless (Azure Functions, AWS Lambda, Cloud Run)."
       ],
       "suggestions": [
         {
           "target": "AR04",
-          "action": "Aucun signal d'auto-scaling d\u00e9tect\u00e9 dans les fichiers IaC/build.",
+          "action": "No auto-scaling signal detected in IaC/build files.",
           "priority": "medium",
           "impact": "+5 pts (AR04).",
           "how": "",
@@ -554,7 +453,7 @@
         },
         {
           "target": "AR04",
-          "action": "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou d\u00e9ployer en serverless (Azure Functions, AWS Lambda, Cloud Run).",
+          "action": "Enable HPA/KEDA (Kubernetes), Terraform/Bicep autoscaling, or deploy serverless (Azure Functions, AWS Lambda, Cloud Run).",
           "priority": "medium",
           "impact": "+5 pts (AR04).",
           "how": "",
@@ -568,35 +467,44 @@
     "AR05_cloud_footprint": {
       "id": "AR05",
       "label": "Dashboard d'empreinte cloud",
-      "description": "Suivre l'empreinte carbone via le dashboard natif du provider cloud.",
+      "description": "Track the carbon footprint through the cloud provider's native dashboard.",
       "max_pts": 2,
       "category": "infrastructure",
-      "validated": true,
-      "score": 2,
-      "matched_count": 4,
-      "candidate_count": 4,
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
+      "candidate_count": 2,
       "candidates": [],
-      "evidence": [
+      "evidence": [],
+      "recommendations": [
+        "No cloud provider detected through HTTP headers. If the API is hosted on AWS/Azure/GCP/OVH, check edge header exposure or manually confirm dashboard usage with ``--cloud-footprint-confirmed``.",
+        "No standard telemetry detected (/actuator/metrics, /metrics, /q/metrics). Expose metrics to feed the dashboard."
+      ],
+      "suggestions": [
         {
-          "kind": "observability",
-          "where": "http://localhost:8082",
-          "value": "http://localhost:8082/actuator/metrics"
+          "target": "AR05",
+          "action": "No cloud provider detected through HTTP headers. If the API is hosted on AWS/Azure/GCP/OVH, check edge header exposure or manually confirm dashboard usage with ``--cloud-footprint-confirmed``.",
+          "priority": "medium",
+          "impact": "+2 pts (AR05).",
+          "how": "",
+          "source": "AR05_reco"
         },
         {
-          "kind": "attestation",
-          "where": "operator",
-          "value": "--cloud-footprint-confirmed"
+          "target": "AR05",
+          "action": "No standard telemetry detected (/actuator/metrics, /metrics, /q/metrics). Expose metrics to feed the dashboard.",
+          "priority": "medium",
+          "impact": "+2 pts (AR05).",
+          "how": "",
+          "source": "AR05_reco"
         }
       ],
-      "recommendations": [],
-      "suggestions": [],
       "migration_advice": [],
       "duplicates": [],
       "detected_provider": null
     }
   },
   "endpoint_rules": {
-    "get:/swagger": [
+    "get:/books": [
       "DE11_pagination",
       "DE08_fields",
       "DE01_compression",
@@ -610,36 +518,12 @@
       "AR04_scalable_infra",
       "AR05_cloud_footprint"
     ],
-    "get:/agreements/{identifier}/operations": [
+    "get:/books/{id}": [
       "DE08_fields",
       "DE01_compression",
       "DE02_DE03_cache",
       "DE06_delta",
       "range_206",
-      "AR02_format_cbor",
-      "US07_rate_limit",
-      "AR01_event_driven",
-      "AR02_runtime_close",
-      "AR03_unique_api",
-      "AR04_scalable_infra",
-      "AR05_cloud_footprint"
-    ],
-    "get:/agreements/{identifier}": [
-      "DE08_fields",
-      "DE01_compression",
-      "DE02_DE03_cache",
-      "DE06_delta",
-      "range_206",
-      "AR02_format_cbor",
-      "US07_rate_limit",
-      "AR01_event_driven",
-      "AR02_runtime_close",
-      "AR03_unique_api",
-      "AR04_scalable_infra",
-      "AR05_cloud_footprint"
-    ],
-    "post:/agreements/{identifier}/operations": [
-      "DE01_compression",
       "AR02_format_cbor",
       "US07_rate_limit",
       "AR01_event_driven",

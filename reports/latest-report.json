@@ -1,19 +1,19 @@
 {
-  "appname": "optremjava",
+  "appname": "example-java-sample",
   "report": {
-    "timestamp": "2026-04-30T15:24:52Z",
+    "timestamp": "2026-11-02T10:45:07Z",
     "green_score": {
-      "total": 52,
+      "total": 18,
       "max": 123,
-      "grade": "D",
+      "grade": "E",
       "breakdown": {
-        "DE11_pagination": 5,
-        "DE08_fields": 2,
-        "DE01_compression": 15,
-        "DE02_DE03_cache": 15,
-        "DE06_delta": 1,
-        "range_206": 10,
-        "AR02_format_cbor": 1,
+        "DE11_pagination": 15,
+        "DE08_fields": 0,
+        "DE01_compression": 0,
+        "DE02_DE03_cache": 0,
+        "DE06_delta": 0,
+        "range_206": 0,
+        "AR02_format_cbor": 0,
         "LO01_observability": 0,
         "US07_rate_limit": 0,
         "AR01_event_driven": 0,
@@ -24,313 +24,106 @@
       },
       "details": {
         "DE11_pagination": {
-          "note": "Pagination on 4/11 collection endpoint(s)"
+          "note": "Pagination on 1/1 collection endpoint(s)"
         },
         "DE08_fields": {
-          "note": "Field filtering on 2 endpoint(s)"
+          "note": "No field filter found"
         },
         "DE01_compression": {
-          "note": "Gzip compression active (OpenAPI servers.x-server-compression.enabled=true)"
+          "algorithm": null,
+          "note": "Neither gzip nor brotli detected"
         },
         "DE02_DE03_cache": {
-          "http_code": 304,
-          "note": "ETag + 304 supported (OpenAPI servers.x-server-etag-support.enabled=true)"
+          "note": "ETag/304 not detected"
         },
         "DE06_delta": {
-          "note": "Delta endpoint(s) found: 2"
+          "note": "No delta endpoint found"
         },
         "range_206": {
-          "http_code": 206,
-          "note": "Range/206 supported (OpenAPI servers.x-server-range-support.enabled=true)"
+          "note": "Range not supported"
         },
         "AR02_format_cbor": {
-          "note": "Binary format on 2 endpoint(s)"
+          "note": "No binary format endpoint (spec + runtime probes empty)",
+          "runtime_hits": []
         },
         "LO01_observability": {
           "note": "No health endpoint"
         },
         "US07_rate_limit": {
-          "note": "Assumed present (API running, no explicit headers)"
+          "note": "Cannot verify"
         },
         "AR01_event_driven": {
-          "note": "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor)."
+          "note": "No EDA signal detected. Document your event flows with AsyncAPI or add callbacks/webhooks to your OpenAPI."
         },
         "AR02_runtime_close": {
-          "note": "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs. | La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r"
+          "note": "No cross-validated edge/CDN signal (runtime + HEAD). Place the API behind a multi-region edge/CDN (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) to bring the runtime closer to consumers. | The OpenAPI spec declares only one server URL. Add multiple regional `servers[]` entries (e.g. eu-west, "
         },
         "AR03_unique_api": {
           "note": ""
         },
         "AR04_scalable_infra": {
-          "note": "AR04 sera \u00e9valu\u00e9 via scan IaC (HPA, KEDA, autoscale Terraform/Bicep) et marqueurs serverless dans pom.xml/*.csproj/package.json \u2014 passer --source-dir <chemin> pour activer le scan Phase 2."
+          "note": "No auto-scaling signal detected in IaC/build files. | Enable HPA/KEDA (Kubernetes), Terraform/Bicep autoscaling, or deploy serverless (Azure Functions, AWS Lambda, Cloud Run)."
         },
         "AR05_cloud_footprint": {
-          "note": "Aucun cloud provider d\u00e9tect\u00e9 via les en-t\u00eates HTTP. Si l'API est h\u00e9berg\u00e9e sur AWS/Azure/GCP/OVH, v\u00e9rifiez l'exposition des en-t\u00eates edge ou confirmez l'usage du dashboard manuellement via ``--cloud-footprint-confirmed``. | Aucune t\u00e9l\u00e9m\u00e9trie standard d\u00e9tect\u00e9e (/actuator/metrics, /metrics, /q/metrics)"
+          "note": "No cloud provider detected through HTTP headers. If the API is hosted on AWS/Azure/GCP/OVH, check edge header exposure or manually confirm dashboard usage with ``--cloud-footprint-confirmed``. | No standard telemetry detected (/actuator/metrics, /metrics, /q/metrics). Expose metrics to feed the dash"
         }
       },
       "rule_resource_mapping": {
         "DE11_pagination": {
           "id": "DE11",
           "label": "Pagination",
-          "description": "Les endpoints de collection doivent supporter la pagination (page/size ou limit/offset).",
+          "description": "Collection endpoints must support pagination (page/size or limit/offset).",
           "max_pts": 15,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": true,
-              "reason": "Pagination params: page, size"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": true,
-              "reason": "Pagination params: page, size"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
             {
               "method": "GET",
               "path": "/books",
               "matched": true,
               "reason": "Pagination params: page, size"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": true,
-              "reason": "Pagination params: page, size"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
             }
           ],
           "validated": true,
-          "score": 5,
-          "matched_count": 4,
-          "candidate_count": 11,
-          "suggestions": [
-            {
-              "target": "GET /reactive/books/changes",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            },
-            {
-              "target": "GET /reactive/books/cbor",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            },
-            {
-              "target": "GET /reactive/books/cacheable",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            },
-            {
-              "target": "GET /books/changes",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            },
-            {
-              "target": "GET /books/cbor",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            }
-          ]
+          "score": 15,
+          "matched_count": 1,
+          "candidate_count": 1,
+          "suggestions": []
         },
         "DE08_fields": {
           "id": "DE08",
           "label": "Filtrage de champs",
-          "description": "Supporter un parametre 'fields' pour reduire le payload.",
+          "description": "Support a 'fields' parameter to reduce the payload.",
           "max_pts": 15,
           "candidates": [
+            {
+              "method": "GET",
+              "path": "/books",
+              "matched": false,
+              "reason": "No field filter param (fields/select)"
+            },
             {
               "method": "GET",
               "path": "/books/{id}",
               "matched": false,
               "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": true,
-              "reason": "Field filter params: fields"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": true,
-              "reason": "Field filter params: fields"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
             }
           ],
-          "validated": true,
-          "score": 2,
-          "matched_count": 2,
-          "candidate_count": 17,
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 2,
           "suggestions": [
+            {
+              "target": "GET /books",
+              "action": "Add a 'fields' query parameter for sparse fieldsets",
+              "priority": "high",
+              "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
+            },
             {
               "target": "GET /books/{id}",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
               "priority": "medium",
-              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
-              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-            },
-            {
-              "target": "GET /reactive/books/{id}/summary",
-              "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
-              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-            },
-            {
-              "target": "GET /books/{id}/summary",
-              "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
-              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-            },
-            {
-              "target": "GET /reactive/books",
-              "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "high",
-              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
-              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-            },
-            {
-              "target": "GET /reactive/books/{id}",
-              "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             }
           ]
@@ -338,245 +131,69 @@
         "DE01_compression": {
           "id": "DE01",
           "label": "Compression",
-          "description": "Le serveur doit supporter Accept-Encoding: gzip.",
+          "description": "The server must support Accept-Encoding: gzip.",
           "max_pts": 15,
           "candidates": [
             {
               "method": "GET",
-              "path": "/books/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "PUT",
-              "path": "/books/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "POST",
-              "path": "/reactive/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "POST",
-              "path": "/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
               "path": "/books",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
+              "matched": false,
+              "reason": "No gzip/brotli compression detected"
             },
             {
               "method": "GET",
-              "path": "/books/select",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-compression.enabled=true"
+              "path": "/books/{id}",
+              "matched": false,
+              "reason": "No gzip/brotli compression detected"
             }
           ],
-          "validated": true,
-          "score": 15,
-          "matched_count": 20,
-          "candidate_count": 20,
-          "suggestions": []
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 2,
+          "suggestions": [
+            {
+              "target": "ALL endpoints (server-level)",
+              "action": "Enable gzip compression on the server",
+              "priority": "high",
+              "impact": "+7.5 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
+              "how": "Option 1 \u2014 Spring Boot application.yml:\n  server:\n    compression:\n      enabled: true\n      min-response-size: 1024\n      mime-types: application/json,application/xml,text/html,text/plain\n\nOption 2 \u2014 Nginx (if reverse proxy):\n  gzip on;\n  gzip_types application/json application/xml text/plain;\n  gzip_min_length 1024;\n  gzip_comp_level 6;\n\nBoth options apply to ALL endpoints automatically."
+            }
+          ]
         },
         "DE02_DE03_cache": {
           "id": "DE02/DE03",
           "label": "Cache ETag/304",
-          "description": "Les ressources unitaires doivent supporter ETag + If-None-Match -> 304.",
+          "description": "Individual resources must support ETag + If-None-Match -> 304.",
           "max_pts": 15,
           "candidates": [
             {
               "method": "GET",
               "path": "/books/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
+              "matched": false,
+              "reason": "No ETag header in HEAD/GET response"
             }
           ],
-          "validated": true,
-          "score": 15,
-          "matched_count": 6,
-          "candidate_count": 6,
-          "suggestions": []
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 1,
+          "suggestions": [
+            {
+              "target": "GET /books/{id}",
+              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
+              "priority": "high",
+              "impact": "+15.0 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
+              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
+            }
+          ]
         },
         "DE06_delta": {
           "id": "DE06",
           "label": "Delta / Changes",
-          "description": "Un endpoint /changes?since= ou equivalent doit exister.",
+          "description": "A /changes?since= endpoint or equivalent must exist.",
           "max_pts": 10,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": true,
-              "reason": "Path contains 'change', 'delta' or 'since'"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
             {
               "method": "GET",
               "path": "/books",
@@ -585,268 +202,71 @@
             },
             {
               "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": true,
-              "reason": "Path contains 'change', 'delta' or 'since'"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
+              "path": "/books/{id}",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             }
           ],
-          "validated": true,
-          "score": 1,
-          "matched_count": 2,
-          "candidate_count": 17,
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 2,
           "suggestions": [
             {
-              "target": "GET /reactive/books/changes  (new endpoint)",
+              "target": "GET /books/changes  (new endpoint)",
               "action": "Add a delta/changes endpoint with a 'since' parameter",
               "priority": "medium",
-              "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
-              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books."
-            },
-            {
-              "target": "GET /reactive/books/select/changes  (new endpoint)",
-              "action": "Add a delta/changes endpoint with a 'since' parameter",
-              "priority": "medium",
-              "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
-              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books/select."
-            },
-            {
-              "target": "GET /reactive/books/changes/changes  (new endpoint)",
-              "action": "Add a delta/changes endpoint with a 'since' parameter",
-              "priority": "medium",
-              "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
-              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books/changes."
+              "impact": "+5.0 pts/endpoint (total gap: 10 pts) \u2014 clients fetch only what changed since last sync",
+              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /books."
             }
           ]
         },
         "range_206": {
           "id": "206",
           "label": "Range / Partial Content",
-          "description": "Supporter le header Range pour les gros payloads.",
+          "description": "Support the Range header for large payloads.",
           "max_pts": 10,
           "candidates": [
             {
               "method": "GET",
               "path": "/books/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
+              "matched": false,
+              "reason": "Range: bytes=0-99 \u2192 0 (not 206)"
             },
             {
               "method": "GET",
               "path": "/books",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
-              "matched": true,
-              "reason": "OpenAPI servers.x-server-range-support.enabled=true"
+              "matched": false,
+              "reason": "Range: bytes=0-99 \u2192 0 (not 206)"
             }
           ],
-          "validated": true,
-          "score": 10,
-          "matched_count": 17,
-          "candidate_count": 17,
-          "suggestions": []
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 2,
+          "suggestions": [
+            {
+              "target": "GET /books/{id}",
+              "action": "Support HTTP Range header for partial content (206)",
+              "priority": "low",
+              "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
+              "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
+            },
+            {
+              "target": "GET /books",
+              "action": "Support HTTP Range header for partial content (206)",
+              "priority": "low",
+              "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
+              "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
+            }
+          ]
         },
         "AR02_format_cbor": {
           "id": "BIN01",
           "label": "Format binaire (CBOR)",
-          "description": "Un endpoint en format binaire (CBOR, protobuf...) doit exister.",
+          "description": "A binary-format endpoint (CBOR, protobuf...) must exist.",
           "max_pts": 10,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "PUT",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "POST",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "POST",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": true,
-              "reason": "Binary format (CBOR/protobuf/octet-stream)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
             {
               "method": "GET",
               "path": "/books",
@@ -855,61 +275,18 @@
             },
             {
               "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": true,
-              "reason": "Binary format (CBOR/protobuf/octet-stream)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
+              "path": "/books/{id}",
               "matched": false,
               "reason": "Standard JSON format"
             }
           ],
-          "validated": true,
-          "score": 1,
-          "matched_count": 2,
-          "candidate_count": 20,
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 2,
           "suggestions": [
             {
-              "target": "GET /reactive/books  (add CBOR variant)",
-              "action": "Add a binary format alternative (CBOR or Protobuf)",
-              "priority": "low",
-              "impact": "+10 pts \u2014 binary formats are 30-50% smaller than JSON",
-              "how": "Spring Boot + CBOR:\n  1. Add dependency: com.fasterxml.jackson.dataformat:jackson-dataformat-cbor\n  2. Register the converter:\n     @Bean\n     public HttpMessageConverter<Object> cborConverter(ObjectMapper mapper) {\n       ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());\n       return new MappingJackson2CborHttpMessageConverter(cborMapper);\n     }\n  3. Clients send: Accept: application/cbor\n\nAlternative (Protobuf):\n  Add spring-boot-starter-protobuf and define .proto schemas.\n  Register ProtobufHttpMessageConverter."
-            },
-            {
-              "target": "GET /reactive/books/select  (add CBOR variant)",
+              "target": "GET /books  (add CBOR variant)",
               "action": "Add a binary format alternative (CBOR or Protobuf)",
               "priority": "low",
               "impact": "+10 pts \u2014 binary formats are 30-50% smaller than JSON",
@@ -920,38 +297,38 @@
         "LO01_observability": {
           "id": "LO01",
           "label": "Observabilite",
-          "description": "Actuator / health / metrics doit etre expose.",
+          "description": "Actuator / health / metrics must be exposed.",
           "max_pts": 5,
           "candidates": [
             {
               "method": "GET",
               "path": "/actuator/health",
               "matched": false,
-              "reason": "HTTP 429"
+              "reason": "Unreachable"
             },
             {
               "method": "GET",
               "path": "/health",
               "matched": false,
-              "reason": "HTTP 429"
+              "reason": "Unreachable"
             },
             {
               "method": "GET",
               "path": "/actuator",
               "matched": false,
-              "reason": "HTTP 429"
+              "reason": "Unreachable"
             },
             {
               "method": "GET",
               "path": "/actuator/metrics",
               "matched": false,
-              "reason": "HTTP 429"
+              "reason": "Unreachable"
             },
             {
               "method": "GET",
               "path": "/actuator/info",
               "matched": false,
-              "reason": "HTTP 429"
+              "reason": "Unreachable"
             }
           ],
           "validated": false,
@@ -971,81 +348,9 @@
         "US07_rate_limit": {
           "id": "US07",
           "label": "Rate Limiting",
-          "description": "Un mecanisme de rate limiting doit etre present.",
+          "description": "A rate-limiting mechanism must be present.",
           "max_pts": 5,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "PUT",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "POST",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "POST",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
             {
               "method": "GET",
               "path": "/books",
@@ -1054,43 +359,7 @@
             },
             {
               "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
+              "path": "/books/{id}",
               "matched": false,
               "reason": "No rate-limit headers in response"
             }
@@ -1098,7 +367,7 @@
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 20,
+          "candidate_count": 2,
           "suggestions": [
             {
               "target": "ALL endpoints (server-level)",
@@ -1112,169 +381,42 @@
         "AR01_event_driven": {
           "id": "AR01",
           "label": "Architecture \u00e9v\u00e9nementielle",
-          "description": "Utiliser une architecture \u00e9v\u00e9nementielle (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) pour \u00e9viter le polling.",
+          "description": "Use an event-driven architecture (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) to avoid polling.",
           "max_pts": 6,
           "category": "architecture",
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 20,
+          "candidate_count": 2,
           "candidates": [],
           "evidence": [],
           "recommendations": [
-            "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor)."
+            "No EDA signal detected. Document your event flows with AsyncAPI or add callbacks/webhooks to your OpenAPI."
           ],
           "suggestions": [
             {
-              "target": "PUT /books/{id}",
-              "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-              "priority": "high",
-              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-              "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
-              "source": "AR01_eda_advisor"
-            },
-            {
-              "target": "POST /reactive/books/{id}/summary",
-              "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-              "priority": "high",
-              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-              "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
-              "source": "AR01_eda_advisor"
-            },
-            {
-              "target": "POST /books/{id}/summary",
-              "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-              "priority": "high",
-              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-              "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
-              "source": "AR01_eda_advisor"
-            },
-            {
-              "target": "GET /reactive/books/changes",
-              "action": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
-              "priority": "high",
-              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-              "how": "Condition d\u00e9tect\u00e9e: polling-path-token\nIndice: Path matches /(changes|since|events|notifications|updates|polls)/\nCible recommand\u00e9e: SSE or AsyncAPI subscription",
-              "source": "AR01_eda_advisor"
-            },
-            {
-              "target": "GET /reactive/books/changes",
-              "action": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
-              "priority": "high",
-              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-              "how": "Condition d\u00e9tect\u00e9e: long-polling-query\nIndice: Query params suggesting long-poll: since\nCible recommand\u00e9e: WebSocket or SSE",
-              "source": "AR01_eda_advisor"
-            },
-            {
-              "target": "GET /books/changes",
-              "action": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
-              "priority": "high",
-              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-              "how": "Condition d\u00e9tect\u00e9e: polling-path-token\nIndice: Path matches /(changes|since|events|notifications|updates|polls)/\nCible recommand\u00e9e: SSE or AsyncAPI subscription",
-              "source": "AR01_eda_advisor"
-            },
-            {
-              "target": "GET /books/changes",
-              "action": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
-              "priority": "high",
-              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
-              "how": "Condition d\u00e9tect\u00e9e: long-polling-query\nIndice: Query params suggesting long-poll: since\nCible recommand\u00e9e: WebSocket or SSE",
-              "source": "AR01_eda_advisor"
-            },
-            {
               "target": "AR01",
-              "action": "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor).",
+              "action": "No EDA signal detected. Document your event flows with AsyncAPI or add callbacks/webhooks to your OpenAPI.",
               "priority": "medium",
               "impact": "+6 pts (AR01).",
               "how": "",
               "source": "AR01_reco"
             }
           ],
-          "migration_advice": [
-            {
-              "endpoint": {
-                "method": "PUT",
-                "path": "/books/{id}"
-              },
-              "condition": "mutating-without-callback",
-              "evidence": "Mutation declared but no OAS callbacks/webhooks",
-              "suggestion": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-              "target_pattern": "Domain Event publication"
-            },
-            {
-              "endpoint": {
-                "method": "POST",
-                "path": "/reactive/books/{id}/summary"
-              },
-              "condition": "mutating-without-callback",
-              "evidence": "Mutation declared but no OAS callbacks/webhooks",
-              "suggestion": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-              "target_pattern": "Domain Event publication"
-            },
-            {
-              "endpoint": {
-                "method": "POST",
-                "path": "/books/{id}/summary"
-              },
-              "condition": "mutating-without-callback",
-              "evidence": "Mutation declared but no OAS callbacks/webhooks",
-              "suggestion": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
-              "target_pattern": "Domain Event publication"
-            },
-            {
-              "endpoint": {
-                "method": "GET",
-                "path": "/reactive/books/changes"
-              },
-              "condition": "polling-path-token",
-              "evidence": "Path matches /(changes|since|events|notifications|updates|polls)/",
-              "suggestion": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
-              "target_pattern": "SSE or AsyncAPI subscription"
-            },
-            {
-              "endpoint": {
-                "method": "GET",
-                "path": "/reactive/books/changes"
-              },
-              "condition": "long-polling-query",
-              "evidence": "Query params suggesting long-poll: since",
-              "suggestion": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
-              "target_pattern": "WebSocket or SSE"
-            },
-            {
-              "endpoint": {
-                "method": "GET",
-                "path": "/books/changes"
-              },
-              "condition": "polling-path-token",
-              "evidence": "Path matches /(changes|since|events|notifications|updates|polls)/",
-              "suggestion": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
-              "target_pattern": "SSE or AsyncAPI subscription"
-            },
-            {
-              "endpoint": {
-                "method": "GET",
-                "path": "/books/changes"
-              },
-              "condition": "long-polling-query",
-              "evidence": "Query params suggesting long-poll: since",
-              "suggestion": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
-              "target_pattern": "WebSocket or SSE"
-            }
-          ],
+          "migration_advice": [],
           "duplicates": [],
           "detected_provider": null
         },
         "AR02_runtime_close": {
           "id": "AR02",
           "label": "Runtime proche du consommateur",
-          "description": "D\u00e9ployer l'API au plus pr\u00e8s des consommateurs (CDN, edge, anycast multi-r\u00e9gions).",
+          "description": "Deploy the API as close as possible to consumers (CDN, edge, multi-region anycast).",
           "max_pts": 7,
           "category": "architecture",
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 20,
+          "candidate_count": 2,
           "candidates": [],
           "evidence": [
             {
@@ -1284,14 +426,14 @@
             }
           ],
           "recommendations": [
-            "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs.",
-            "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
-            "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne."
+            "No cross-validated edge/CDN signal (runtime + HEAD). Place the API behind a multi-region edge/CDN (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) to bring the runtime closer to consumers.",
+            "The OpenAPI spec declares only one server URL. Add multiple regional `servers[]` entries (e.g. eu-west, us-east) to document a multi-region deployment.",
+            "Enable HTTPS on the target to measure TLS latency and benefit from a modern edge/CDN."
           ],
           "suggestions": [
             {
               "target": "AR02",
-              "action": "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs.",
+              "action": "No cross-validated edge/CDN signal (runtime + HEAD). Place the API behind a multi-region edge/CDN (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) to bring the runtime closer to consumers.",
               "priority": "medium",
               "impact": "+7 pts (AR02).",
               "how": "",
@@ -1299,7 +441,7 @@
             },
             {
               "target": "AR02",
-              "action": "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
+              "action": "The OpenAPI spec declares only one server URL. Add multiple regional `servers[]` entries (e.g. eu-west, us-east) to document a multi-region deployment.",
               "priority": "medium",
               "impact": "+7 pts (AR02).",
               "how": "",
@@ -1307,7 +449,7 @@
             },
             {
               "target": "AR02",
-              "action": "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne.",
+              "action": "Enable HTTPS on the target to measure TLS latency and benefit from a modern edge/CDN.",
               "priority": "medium",
               "impact": "+7 pts (AR02).",
               "how": "",
@@ -1321,13 +463,13 @@
         "AR03_unique_api": {
           "id": "AR03",
           "label": "Une seule API par besoin",
-          "description": "\u00c9viter la duplication d'APIs servant le m\u00eame besoin (double infrastructure = double empreinte).",
+          "description": "Avoid duplicating APIs that serve the same purpose (duplicate infrastructure = duplicate footprint).",
           "max_pts": 3,
           "category": "architecture",
           "validated": true,
           "score": 3,
-          "matched_count": 20,
-          "candidate_count": 20,
+          "matched_count": 2,
+          "candidate_count": 2,
           "candidates": [],
           "evidence": [
             {
@@ -1345,22 +487,31 @@
         "AR04_scalable_infra": {
           "id": "AR04",
           "label": "Infrastructure scalable",
-          "description": "Pr\u00e9f\u00e9rer une infrastructure auto-scalable (HPA, KEDA, autoscale, serverless).",
+          "description": "Prefer auto-scalable infrastructure (HPA, KEDA, autoscaling, serverless).",
           "max_pts": 5,
           "category": "infrastructure",
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 20,
+          "candidate_count": 2,
           "candidates": [],
           "evidence": [],
           "recommendations": [
-            "AR04 sera \u00e9valu\u00e9 via scan IaC (HPA, KEDA, autoscale Terraform/Bicep) et marqueurs serverless dans pom.xml/*.csproj/package.json \u2014 passer --source-dir <chemin> pour activer le scan Phase 2."
+            "No auto-scaling signal detected in IaC/build files.",
+            "Enable HPA/KEDA (Kubernetes), Terraform/Bicep autoscaling, or deploy serverless (Azure Functions, AWS Lambda, Cloud Run)."
           ],
           "suggestions": [
             {
               "target": "AR04",
-              "action": "AR04 sera \u00e9valu\u00e9 via scan IaC (HPA, KEDA, autoscale Terraform/Bicep) et marqueurs serverless dans pom.xml/*.csproj/package.json \u2014 passer --source-dir <chemin> pour activer le scan Phase 2.",
+              "action": "No auto-scaling signal detected in IaC/build files.",
+              "priority": "medium",
+              "impact": "+5 pts (AR04).",
+              "how": "",
+              "source": "AR04_reco"
+            },
+            {
+              "target": "AR04",
+              "action": "Enable HPA/KEDA (Kubernetes), Terraform/Bicep autoscaling, or deploy serverless (Azure Functions, AWS Lambda, Cloud Run).",
               "priority": "medium",
               "impact": "+5 pts (AR04).",
               "how": "",
@@ -1374,23 +525,23 @@
         "AR05_cloud_footprint": {
           "id": "AR05",
           "label": "Dashboard d'empreinte cloud",
-          "description": "Suivre l'empreinte carbone via le dashboard natif du provider cloud.",
+          "description": "Track the carbon footprint through the cloud provider's native dashboard.",
           "max_pts": 2,
           "category": "infrastructure",
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 20,
+          "candidate_count": 2,
           "candidates": [],
           "evidence": [],
           "recommendations": [
-            "Aucun cloud provider d\u00e9tect\u00e9 via les en-t\u00eates HTTP. Si l'API est h\u00e9berg\u00e9e sur AWS/Azure/GCP/OVH, v\u00e9rifiez l'exposition des en-t\u00eates edge ou confirmez l'usage du dashboard manuellement via ``--cloud-footprint-confirmed``.",
-            "Aucune t\u00e9l\u00e9m\u00e9trie standard d\u00e9tect\u00e9e (/actuator/metrics, /metrics, /q/metrics). Exposez les m\u00e9triques pour alimenter le dashboard."
+            "No cloud provider detected through HTTP headers. If the API is hosted on AWS/Azure/GCP/OVH, check edge header exposure or manually confirm dashboard usage with ``--cloud-footprint-confirmed``.",
+            "No standard telemetry detected (/actuator/metrics, /metrics, /q/metrics). Expose metrics to feed the dashboard."
           ],
           "suggestions": [
             {
               "target": "AR05",
-              "action": "Aucun cloud provider d\u00e9tect\u00e9 via les en-t\u00eates HTTP. Si l'API est h\u00e9berg\u00e9e sur AWS/Azure/GCP/OVH, v\u00e9rifiez l'exposition des en-t\u00eates edge ou confirmez l'usage du dashboard manuellement via ``--cloud-footprint-confirmed``.",
+              "action": "No cloud provider detected through HTTP headers. If the API is hosted on AWS/Azure/GCP/OVH, check edge header exposure or manually confirm dashboard usage with ``--cloud-footprint-confirmed``.",
               "priority": "medium",
               "impact": "+2 pts (AR05).",
               "how": "",
@@ -1398,7 +549,7 @@
             },
             {
               "target": "AR05",
-              "action": "Aucune t\u00e9l\u00e9m\u00e9trie standard d\u00e9tect\u00e9e (/actuator/metrics, /metrics, /q/metrics). Exposez les m\u00e9triques pour alimenter le dashboard.",
+              "action": "No standard telemetry detected (/actuator/metrics, /metrics, /q/metrics). Expose metrics to feed the dashboard.",
               "priority": "medium",
               "impact": "+2 pts (AR05).",
               "how": "",
@@ -1411,147 +562,7 @@
         }
       },
       "endpoint_rules": {
-        "get:/reactive/books": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/reactive/books/select": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/reactive/books/changes": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/reactive/books/cbor": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/reactive/books/cacheable": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
         "get:/books": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/select": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/changes": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/cbor": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/batch": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/async": [
           "DE11_pagination",
           "DE08_fields",
           "DE01_compression",
@@ -1579,106 +590,6 @@
           "AR04_scalable_infra",
           "AR05_cloud_footprint"
         ],
-        "get:/reactive/books/{id}/summary": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/{id}/summary": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/reactive/books/{id}": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/noCache/{id}": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "get:/books/async/{id}": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "put:/books/{id}": [
-          "DE01_compression",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "post:/reactive/books/{id}/summary": [
-          "DE01_compression",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
-        "post:/books/{id}/summary": [
-          "DE01_compression",
-          "AR02_format_cbor",
-          "US07_rate_limit",
-          "AR01_event_driven",
-          "AR02_runtime_close",
-          "AR03_unique_api",
-          "AR04_scalable_infra",
-          "AR05_cloud_footprint"
-        ],
         "get:/actuator/health": [
           "LO01_observability"
         ],
@@ -1695,8 +606,8 @@
           "LO01_observability"
         ]
       },
-      "score_normalised_100": 42,
-      "legacy_total": 49,
+      "score_normalised_100": 15,
+      "legacy_total": 15,
       "legacy_max": 100,
       "architecture_total": 3,
       "architecture_max": 23
@@ -1723,426 +634,36 @@
         }
       },
       "optimized": {
-        "range_206": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.075535,
-          "speed_download": 0
-        },
-        "fields_filter": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.016018,
-          "speed_download": 0
-        },
-        "delta_changes": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.025435,
-          "speed_download": 0
-        },
-        "cbor_format": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.017079,
-          "speed_download": 0
-        },
         "full_payload": {
-          "http_code": 200,
-          "size_download": 212,
-          "time_total": 0.014974,
-          "speed_download": 14157
+          "http_code": 0,
+          "size_download": 0,
+          "time_total": 0,
+          "speed_download": 0
         }
       }
     },
     "auto_discovery": {
-      "base_url": "http://localhost:8081",
-      "endpoints_discovered": 20,
-      "endpoints_measured": 20,
-      "all_measurements": {
-        "get:/books/{id}": {
-          "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.032288,
-          "speed_download": 5698
-        },
-        "put:/books/{id}": {
-          "http_code": 200,
-          "size_download": 212,
-          "time_total": 0.014974,
-          "speed_download": 14157
-        },
-        "get:/reactive/books/{id}/summary": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.075535,
-          "speed_download": 0
-        },
-        "post:/reactive/books/{id}/summary": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.064093,
-          "speed_download": 0
-        },
-        "get:/books/{id}/summary": {
-          "http_code": 200,
-          "size_download": 36,
-          "time_total": 0.005658,
-          "speed_download": 6362
-        },
-        "post:/books/{id}/summary": {
-          "http_code": 200,
-          "size_download": 210,
-          "time_total": 0.005071,
-          "speed_download": 41415
-        },
-        "get:/reactive/books": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.029137,
-          "speed_download": 0
-        },
-        "get:/reactive/books/{id}": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.013529,
-          "speed_download": 0
-        },
-        "get:/reactive/books/select": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.016018,
-          "speed_download": 0
-        },
-        "get:/reactive/books/changes": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.025435,
-          "speed_download": 0
-        },
-        "get:/reactive/books/cbor": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.017079,
-          "speed_download": 0
-        },
-        "get:/reactive/books/cacheable": {
-          "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.015529,
-          "speed_download": 858
-        },
-        "get:/books": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.011379,
-          "speed_download": 1757
-        },
-        "get:/books/select": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.013617,
-          "speed_download": 1468
-        },
-        "get:/books/noCache/{id}": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004443,
-          "speed_download": 4501
-        },
-        "get:/books/changes": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004732,
-          "speed_download": 4226
-        },
-        "get:/books/cbor": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004573,
-          "speed_download": 4373
-        },
-        "get:/books/batch": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.0117,
-          "speed_download": 1709
-        },
-        "get:/books/async": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004824,
-          "speed_download": 4146
-        },
-        "get:/books/async/{id}": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.005618,
-          "speed_download": 3560
-        }
-      },
+      "base_url": "http://localhost:8080",
+      "endpoints_discovered": 2,
+      "endpoints_measured": 0,
+      "all_measurements": {},
       "discovered_endpoints": [
         {
           "method": "GET",
-          "path": "/books/{id}",
-          "operationId": "byId",
-          "summary": "Get a book by id with ETag/Last-Modified (DE02/DE03)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.032288,
-          "speed_download": 5698
-        },
-        {
-          "method": "PUT",
-          "path": "/books/{id}",
-          "operationId": "updateBook",
-          "summary": "Replace an existing book (full update)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 200,
-          "size_download": 212,
-          "time_total": 0.014974,
-          "speed_download": 14157
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/{id}/summary",
-          "operationId": "summaryRange",
-          "summary": "Get reactive book summary, supports Range requests (206 Partial Content)",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.075535,
-          "speed_download": 0
-        },
-        {
-          "method": "POST",
-          "path": "/reactive/books/{id}/summary",
-          "operationId": "updateSummary",
-          "summary": "Update only the summary field of a reactive book",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.064093,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}/summary",
-          "operationId": "summaryRange_1",
-          "summary": "Get book summary, supports Range requests (206 Partial Content)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 200,
-          "size_download": 36,
-          "time_total": 0.005658,
-          "speed_download": 6362
-        },
-        {
-          "method": "POST",
-          "path": "/books/{id}/summary",
-          "operationId": "updateSummary_1",
-          "summary": "Update only the summary field of a book",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 200,
-          "size_download": 210,
-          "time_total": 0.005071,
-          "speed_download": 41415
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books",
-          "operationId": "allBooksWithoutCache",
-          "summary": "List reactive books with pagination (DE11)",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.029137,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/{id}",
-          "operationId": "byId_1",
-          "summary": "Get a reactive book by id with ETag/Last-Modified (DE02/DE03)",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.013529,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/select",
-          "operationId": "select",
-          "summary": "List reactive books with field selection (DE08/US01)",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.016018,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/changes",
-          "operationId": "changes",
-          "summary": "List reactive books changed since a given timestamp (DE06)",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.025435,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/cbor",
-          "operationId": "getBooksCbor",
-          "summary": "List reactive books encoded as CBOR (AR02 binary format)",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.017079,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/cacheable",
-          "operationId": "allBooks",
-          "summary": "List all reactive books (cached)",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.015529,
-          "speed_download": 858
-        },
-        {
-          "method": "GET",
           "path": "/books",
-          "operationId": "all",
-          "summary": "List books with pagination (DE11)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.011379,
-          "speed_download": 1757
+          "operationId": "listBooks",
+          "summary": "",
+          "tags": []
         },
         {
           "method": "GET",
-          "path": "/books/select",
-          "operationId": "select_1",
-          "summary": "List books with field selection (DE08/US01)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.013617,
-          "speed_download": 1468
-        },
-        {
-          "method": "GET",
-          "path": "/books/noCache/{id}",
-          "operationId": "byId_2",
-          "summary": "Get a book by id (no cache)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004443,
-          "speed_download": 4501
-        },
-        {
-          "method": "GET",
-          "path": "/books/changes",
-          "operationId": "changes_1",
-          "summary": "List books changed since a given timestamp (DE06)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004732,
-          "speed_download": 4226
-        },
-        {
-          "method": "GET",
-          "path": "/books/cbor",
-          "operationId": "getBooksCbor_1",
-          "summary": "List books encoded as CBOR (AR02 binary format)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004573,
-          "speed_download": 4373
-        },
-        {
-          "method": "GET",
-          "path": "/books/batch",
-          "operationId": "batch",
-          "summary": "Batch fetch books by ids (AR02)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.0117,
-          "speed_download": 1709
-        },
-        {
-          "method": "GET",
-          "path": "/books/async",
-          "operationId": "getBooksAsync",
-          "summary": "List books asynchronously (CompletableFuture)",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.004824,
-          "speed_download": 4146
-        },
-        {
-          "method": "GET",
-          "path": "/books/async/{id}",
-          "operationId": "getBookByIdAsync",
-          "summary": "Get a book by id asynchronously",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.005618,
-          "speed_download": 3560
+          "path": "/books/{id}",
+          "operationId": "getBook",
+          "summary": "",
+          "tags": []
         }
       ]
-    }
+    },
+    "spec_only": true
   }
 }
